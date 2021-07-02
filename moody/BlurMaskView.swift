@@ -15,7 +15,7 @@ struct BlurMaskView: UIViewRepresentable {
 	
 	private var tool: PKInkingTool {
 		PKInkingTool(
-			.marker, color: .white, width: markerWidth)
+			.marker, color: .black, width: markerWidth)
 	}
 	
 	func makeUIView(context: Context) -> PKCanvasView {

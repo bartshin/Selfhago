@@ -11,46 +11,43 @@ struct TuningPanel: View {
 	
 	@EnvironmentObject var editor: ImageEditor
 	@Binding var currentControl: String
+	private let allControls: [String]
 
 	var body: some View {
-		
 		VStack {
-			HStack {
-				ForEach(ImageColorControl.allCases, id: \.rawValue) {
-					drawButton(for: $0)
+			ScrollView (.horizontal, showsIndicators: false) {
+				HStack {
+					ForEach(allControls, id: \.self) {
+						drawButton(for: $0, label: getLabel(for: $0))
+					}
 				}
-				blurButton
 			}
-			controlLabel
-			if let colorControl = ImageColorControl(rawValue: currentControl) {
+			if let colorControl = BuiltInColorControl(rawValue: currentControl) {
 				drawSlider(for: colorControl)
-			}else {
-				blurControlSlider
+			}else if ImageBlurControl(rawValue: currentControl) != nil {
+				blurmaskControlSlider
+			}else if let presetFilter = PresetFilter(rawValue: currentControl) {
+				drawPresetControl(for: presetFilter)
 			}
 		}
 		.padding(.horizontal, Constant.horizontalPadding)
-		.padding(.vertical, Constant.verticalPadding)
 	}
 	
-	private var controlLabel: some View {
-		Text(currentControl)
-			.foregroundColor(.blue)
-	}
-	
-	private var blurButton: some View {
-		Button(action: {
-			withAnimation {
-				currentControl = ImageBlurControl.mask.rawValue
-			}
-		}) {
-			Image(systemName: "lasso")
+	private func getLabel(for control: String) -> Image {
+		if let colorControl = BuiltInColorControl(rawValue: control) {
+			return colorControl.label
+		}else if let blurControl = ImageBlurControl(rawValue: control) {
+			return blurControl.label
+		}else if let selectiveControl = ImageSelectiveControl(rawValue: control) {
+			return selectiveControl.label
+		}else if let presetFilter = PresetFilter(rawValue: control) {
+			return presetFilter.label
+		}else {
+			return Image(uiImage: UIImage())
 		}
-		.buttonStyle(BottomNavigation())
-		.foregroundColor(currentControl == ImageBlurControl.mask.rawValue ? .yellow: .white)
-		.scaleEffect(currentControl == ImageBlurControl.mask.rawValue ? 1.3: 1)
 	}
 	
-	private var blurControlSlider: some View {
+	private var blurmaskControlSlider: some View {
 		VStack {
 			HStack {
 				Text("강도")
@@ -61,32 +58,42 @@ struct TuningPanel: View {
 				Slider(value: $editor.blurMarkerWidth, in: 10...60, step: 5)
 			}
 		}
-		.padding()
+		.padding(.top, Constant.verticalPadding)
 	}
 	
-	private func drawButton(for colorControl: ImageColorControl) -> some View {
+	private func drawButton<L>(for control: String, label: L) -> some View where L: View {
 		Button(action: {
-			withAnimation{
-				currentControl = colorControl.rawValue
+			if currentControl == control {
+				withAnimation {
+					editor.resetControls()
+				}
+			}else {
+				withAnimation{
+					currentControl = control
+				}
 			}
 		}) {
-			colorControl.label
+			label
 		}
 		.buttonStyle(BottomNavigation())
-		.foregroundColor(colorControl.rawValue == currentControl ? .yellow: .white)
-		.scaleEffect(colorControl.rawValue == currentControl ? 1.3: 1)
+		.foregroundColor(control == currentControl ? .yellow: .white)
+		.scaleEffect(control == currentControl ? 1.3: 1)
 		.padding(.horizontal)
 	}
 		
-	private func drawSlider(for colorControl: ImageColorControl) -> some View {
+	private func drawSlider(for colorControl: BuiltInColorControl) -> some View {
+		VStack {
 		Slider(value: createBinding(to: colorControl), in: -0.5...0.5,
-			   step: 0.05) {
-			// For accessbility
-			controlLabel
+			   step: 0.05)
+			if colorControl == .brightness {
+				drawSliders(for: .brightness)
+					.layoutPriority(1)
+			}
 		}
+		.padding(.top, colorControl != .brightness ? Constant.verticalPadding: 0)
 	}
 	
-	private func createBinding(to colorControl: ImageColorControl) -> Binding<Double> {
+	private func createBinding(to colorControl: BuiltInColorControl) -> Binding<Double> {
 		Binding<Double> {
 			editor.colorControl[colorControl]! - colorControl.defaultValue
 		} set: {
@@ -94,16 +101,72 @@ struct TuningPanel: View {
 		}
 	}
 
+	private func drawSliders(for selectiveControl: ImageSelectiveControl) -> some View {
+		GeometryReader { geometry in
+			HStack {
+				ForEach(0..<4) {
+					VSlider(value: createBinding(
+								to: selectiveControl, at: $0),
+							in: calcRange(for: $0), step: 0.05,
+							sliderSize: .init(width: geometry.size.width * 0.25,
+											  height: geometry.size.height ))
+						
+				}
+			}
+			.frame(width: geometry.size.width, height: geometry.size.height)
+		}
+	}
+	private func calcRange(for index: Int) -> ClosedRange<CGFloat> {
+		let min = -(1.0 - CGFloat(index)*0.1)
+		let max = 1.0 - CGFloat(index)*0.1
+		return ClosedRange<CGFloat>(uncheckedBounds: (lower: min, upper: max))
+	}
+	
+	private func createBinding(to selectiveControl: ImageSelectiveControl, at index: Int) -> Binding<CGFloat> {
+		switch selectiveControl {
+			case .brightness:
+				return Binding<CGFloat> {
+					var value: CGFloat = 0
+					FilterParameter.RGBColor.allCases.forEach {
+						value += editor.selectiveControl[$0]![index]
+					}
+					return value/3
+				} set: { value in
+					FilterParameter.RGBColor.allCases.forEach { rgb in
+						editor.selectiveControl[rgb]![index] = value
+					}
+					editor.setSelectiveBrightness()
+				}
+		}
+	}
+	
+	private func drawPresetControl(for presetFilter: PresetFilter) -> some View {
+		HStack (spacing: 30) {
+			ForEach(presetFilter.luts.enumerated().sorted(by: { lhs, rhs in
+				lhs.element < rhs.element
+			}), id: \.element) { filter in
+				Button("\(presetFilter.code)\(filter.offset)") {
+					editor.setLutFilter(filter.element)
+				}
+			}
+		}
+	}
 	
 	struct Constant {
 		static let horizontalPadding: CGFloat = 50
 		static let verticalPadding: CGFloat = 30
 	}
 	
+	init(currentControl: Binding<String>) {
+		self._currentControl = currentControl
+		allControls = BuiltInColorControl.allCases.compactMap{ $0.rawValue } + [ImageBlurControl.mask.rawValue, PresetFilter.portrait.rawValue,  PresetFilter.landscape.rawValue]
+	}
 }
 
 struct ImageTuningPanel_Previews: PreviewProvider {
     static var previews: some View {
-		TuningPanel(currentControl: Binding<String>.constant(ImageColorControl.brightness.rawValue))
+		TuningPanel(currentControl: Binding<String>.constant(ImageSelectiveControl.brightness.rawValue))
+			.environmentObject(ImageEditor.forPreview)
+			.preferredColorScheme(.dark)
     }
 }

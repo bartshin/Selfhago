@@ -50,6 +50,7 @@ struct ImagePicker: UIViewControllerRepresentable {
 						if error == nil,
 						   let uiImage = image as? UIImage {
 							parent.passImage?(uiImage)
+							
 						}
 						DispatchQueue.main.async {
 							self.parent.imageData = (image as! UIImage).pngData()!

@@ -44,7 +44,7 @@ struct EditingImage: View {
 				fixedZoomScale = getScaleToFit(in: size)
 				editor.blurMarkerWidth = min(60 / fixedZoomScale, 60)
 			}
-			.onChange(of: editor.originalImage) {
+			.onChange(of: editor.cgImage) {
 				if $0 != nil {
 					zoomToFit(for: size)
 					editor.blurMask.drawing.strokes = []
@@ -59,7 +59,7 @@ struct EditingImage: View {
 			}
 			.overlay(
 				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editor.blurMarkerWidth)
-					.colorInvert()
+					.colorScheme(.dark)
 					.allowsHitTesting(isDrawingMask)
 			)
 	}
@@ -186,7 +186,7 @@ struct EditingImage: View {
 
 struct EditingImage_Previews: PreviewProvider {
 	static var previews: some View {
-		EditingImage(currentControl: Binding<String>.constant(ImageColorControl.brightness.rawValue))
+		EditingImage(currentControl: Binding<String>.constant(BuiltInColorControl.brightness.rawValue))
 			.environmentObject(ImageEditor.forPreview)
 	}
 }

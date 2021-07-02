@@ -8,16 +8,33 @@
 
 /* Begin PBXBuildFile section */
 		89110C812680AB50002779AA /* FilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C802680AB50002779AA /* FilterView.swift */; };
-		89110C832680AD0E002779AA /* ImageEditFactor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C822680AD0E002779AA /* ImageEditFactor.swift */; };
+		89110C832680AD0E002779AA /* ImageControlEnum.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C822680AD0E002779AA /* ImageControlEnum.swift */; };
 		89110C862680BCA0002779AA /* EditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C852680BCA0002779AA /* EditView.swift */; };
 		89110C882680BCEB002779AA /* BottomNavigationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C872680BCEB002779AA /* BottomNavigationButton.swift */; };
 		89110C8B2680BD57002779AA /* BottomNavigationBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C8A2680BD57002779AA /* BottomNavigationBar.swift */; };
 		89110C8D2680C729002779AA /* ImageEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C8C2680C729002779AA /* ImageEditor.swift */; };
 		891DF6912684277A00A314B8 /* EditingImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 891DF6902684277A00A314B8 /* EditingImage.swift */; };
 		891DF6932684283400A314B8 /* FeedBackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 891DF6922684283400A314B8 /* FeedBackView.swift */; };
-		894A3B1E2686BE020091D5FE /* Publish.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894A3B1D2686BE020091D5FE /* Publish.swift */; };
+		8938E2DC268ADE1E00A2209F /* MetalFileData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8938E2DB268ADE1E00A2209F /* MetalFileData.swift */; };
+		894FD1EA268D7D0900511253 /* LUTCubeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894FD1E9268D7D0900511253 /* LUTCubeFilter.swift */; };
+		89544349268B2EDE00B0F085 /* Kernel.ci.metal in Sources */ = {isa = PBXBuildFile; fileRef = 89544348268B2EDE00B0F085 /* Kernel.ci.metal */; };
 		895BFC3A2680829000EB783E /* TuningPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895BFC392680829000EB783E /* TuningPanel.swift */; };
+		895ECE34268C45D80050DF2E /* SelectiveBrightness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895ECE33268C45D80050DF2E /* SelectiveBrightness.swift */; };
+		895ECE38268C4D3E0050DF2E /* FilterParameter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895ECE37268C4D3E0050DF2E /* FilterParameter.swift */; };
+		895ECE3A268C78500050DF2E /* VSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895ECE39268C78500050DF2E /* VSlider.swift */; };
 		898C02CC2685BA78008A2B2C /* BlurMaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898C02CB2685BA78008A2B2C /* BlurMaskView.swift */; };
+		89AF31EB268E0AE10091F298 /* Seattle.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31E5268E0AE00091F298 /* Seattle.png */; };
+		89AF31EC268E0AE10091F298 /* Tahoe.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31E6268E0AE00091F298 /* Tahoe.png */; };
+		89AF31ED268E0AE10091F298 /* Pocatello.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31E7268E0AE00091F298 /* Pocatello.png */; };
+		89AF31EE268E0AE10091F298 /* LochNess.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31E8268E0AE10091F298 /* LochNess.png */; };
+		89AF31EF268E0AE10091F298 /* Oslo.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31E9268E0AE10091F298 /* Oslo.png */; };
+		89AF31F0268E0AE10091F298 /* Reykjavik.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31EA268E0AE10091F298 /* Reykjavik.png */; };
+		89AF31F7268E0C940091F298 /* Oaxaca.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31F2268E0C940091F298 /* Oaxaca.png */; };
+		89AF31F8268E0C940091F298 /* Boulder.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31F3268E0C940091F298 /* Boulder.png */; };
+		89AF31F9268E0C940091F298 /* Everest.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31F4268E0C940091F298 /* Everest.png */; };
+		89AF31FA268E0C940091F298 /* Prague.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31F5268E0C940091F298 /* Prague.png */; };
+		89AF31FB268E0C940091F298 /* Travelgram.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31F6268E0C940091F298 /* Travelgram.png */; };
+		89AF31FD268E11EA0091F298 /* UIImageAlpha.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89AF31FC268E11EA0091F298 /* UIImageAlpha.swift */; };
 		C19759F8267CCE0B006003CA /* moodyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19759F7267CCE0B006003CA /* moodyApp.swift */; };
 		C19759FA267CCE0B006003CA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19759F9267CCE0B006003CA /* ContentView.swift */; };
 		C19759FC267CCE0D006003CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C19759FB267CCE0D006003CA /* Assets.xcassets */; };
@@ -51,16 +68,33 @@
 
 /* Begin PBXFileReference section */
 		89110C802680AB50002779AA /* FilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterView.swift; sourceTree = "<group>"; };
-		89110C822680AD0E002779AA /* ImageEditFactor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageEditFactor.swift; sourceTree = "<group>"; };
+		89110C822680AD0E002779AA /* ImageControlEnum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageControlEnum.swift; sourceTree = "<group>"; };
 		89110C852680BCA0002779AA /* EditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditView.swift; sourceTree = "<group>"; };
 		89110C872680BCEB002779AA /* BottomNavigationButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomNavigationButton.swift; sourceTree = "<group>"; };
 		89110C8A2680BD57002779AA /* BottomNavigationBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomNavigationBar.swift; sourceTree = "<group>"; };
 		89110C8C2680C729002779AA /* ImageEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageEditor.swift; sourceTree = "<group>"; };
 		891DF6902684277A00A314B8 /* EditingImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditingImage.swift; sourceTree = "<group>"; };
 		891DF6922684283400A314B8 /* FeedBackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedBackView.swift; sourceTree = "<group>"; };
-		894A3B1D2686BE020091D5FE /* Publish.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Publish.swift; sourceTree = "<group>"; };
+		8938E2DB268ADE1E00A2209F /* MetalFileData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalFileData.swift; sourceTree = "<group>"; };
+		894FD1E9268D7D0900511253 /* LUTCubeFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LUTCubeFilter.swift; sourceTree = "<group>"; };
+		89544348268B2EDE00B0F085 /* Kernel.ci.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Kernel.ci.metal; sourceTree = "<group>"; };
 		895BFC392680829000EB783E /* TuningPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningPanel.swift; sourceTree = "<group>"; };
+		895ECE33268C45D80050DF2E /* SelectiveBrightness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectiveBrightness.swift; sourceTree = "<group>"; };
+		895ECE37268C4D3E0050DF2E /* FilterParameter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterParameter.swift; sourceTree = "<group>"; };
+		895ECE39268C78500050DF2E /* VSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSlider.swift; sourceTree = "<group>"; };
 		898C02CB2685BA78008A2B2C /* BlurMaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurMaskView.swift; sourceTree = "<group>"; };
+		89AF31E5268E0AE00091F298 /* Seattle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Seattle.png; path = Resource/LUT/Seattle.png; sourceTree = SOURCE_ROOT; };
+		89AF31E6268E0AE00091F298 /* Tahoe.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Tahoe.png; path = Resource/LUT/Tahoe.png; sourceTree = SOURCE_ROOT; };
+		89AF31E7268E0AE00091F298 /* Pocatello.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Pocatello.png; path = Resource/LUT/Pocatello.png; sourceTree = SOURCE_ROOT; };
+		89AF31E8268E0AE10091F298 /* LochNess.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LochNess.png; path = Resource/LUT/LochNess.png; sourceTree = SOURCE_ROOT; };
+		89AF31E9268E0AE10091F298 /* Oslo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Oslo.png; path = Resource/LUT/Oslo.png; sourceTree = SOURCE_ROOT; };
+		89AF31EA268E0AE10091F298 /* Reykjavik.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Reykjavik.png; path = Resource/LUT/Reykjavik.png; sourceTree = SOURCE_ROOT; };
+		89AF31F2268E0C940091F298 /* Oaxaca.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Oaxaca.png; path = Resource/LUT/Oaxaca.png; sourceTree = SOURCE_ROOT; };
+		89AF31F3268E0C940091F298 /* Boulder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Boulder.png; path = Resource/LUT/Boulder.png; sourceTree = SOURCE_ROOT; };
+		89AF31F4268E0C940091F298 /* Everest.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Everest.png; path = Resource/LUT/Everest.png; sourceTree = SOURCE_ROOT; };
+		89AF31F5268E0C940091F298 /* Prague.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Prague.png; path = Resource/LUT/Prague.png; sourceTree = SOURCE_ROOT; };
+		89AF31F6268E0C940091F298 /* Travelgram.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Travelgram.png; path = Resource/LUT/Travelgram.png; sourceTree = SOURCE_ROOT; };
+		89AF31FC268E11EA0091F298 /* UIImageAlpha.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIImageAlpha.swift; sourceTree = "<group>"; };
 		C19759F4267CCE0A006003CA /* moody.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = moody.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C19759F7267CCE0B006003CA /* moodyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = moodyApp.swift; sourceTree = "<group>"; };
 		C19759F9267CCE0B006003CA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -110,8 +144,11 @@
 			isa = PBXGroup;
 			children = (
 				89110C872680BCEB002779AA /* BottomNavigationButton.swift */,
-				89110C822680AD0E002779AA /* ImageEditFactor.swift */,
-				894A3B1D2686BE020091D5FE /* Publish.swift */,
+				89110C822680AD0E002779AA /* ImageControlEnum.swift */,
+				89AF31FC268E11EA0091F298 /* UIImageAlpha.swift */,
+				895ECE39268C78500050DF2E /* VSlider.swift */,
+				8938E2DB268ADE1E00A2209F /* MetalFileData.swift */,
+				895ECE37268C4D3E0050DF2E /* FilterParameter.swift */,
 			);
 			path = Helper;
 			sourceTree = "<group>";
@@ -126,10 +163,69 @@
 			name = Edit;
 			sourceTree = "<group>";
 		};
+		895ECE35268C45E50050DF2E /* Filters */ = {
+			isa = PBXGroup;
+			children = (
+				89C9AAEF268D5C6900A63F33 /* External */,
+				89C9AAEE268D5C6300A63F33 /* Custom */,
+			);
+			path = Filters;
+			sourceTree = "<group>";
+		};
+		89AF31E3268E0A700091F298 /* Resource */ = {
+			isa = PBXGroup;
+			children = (
+				89AF31F1268E0C510091F298 /* Landscape Filter */,
+				89AF31E4268E0A7A0091F298 /* Portrait Filter */,
+			);
+			path = Resource;
+			sourceTree = "<group>";
+		};
+		89AF31E4268E0A7A0091F298 /* Portrait Filter */ = {
+			isa = PBXGroup;
+			children = (
+				89AF31E8268E0AE10091F298 /* LochNess.png */,
+				89AF31E9268E0AE10091F298 /* Oslo.png */,
+				89AF31E7268E0AE00091F298 /* Pocatello.png */,
+				89AF31EA268E0AE10091F298 /* Reykjavik.png */,
+				89AF31E5268E0AE00091F298 /* Seattle.png */,
+				89AF31E6268E0AE00091F298 /* Tahoe.png */,
+			);
+			path = "Portrait Filter";
+			sourceTree = "<group>";
+		};
+		89AF31F1268E0C510091F298 /* Landscape Filter */ = {
+			isa = PBXGroup;
+			children = (
+				89AF31F3268E0C940091F298 /* Boulder.png */,
+				89AF31F4268E0C940091F298 /* Everest.png */,
+				89AF31F2268E0C940091F298 /* Oaxaca.png */,
+				89AF31F5268E0C940091F298 /* Prague.png */,
+				89AF31F6268E0C940091F298 /* Travelgram.png */,
+			);
+			path = "Landscape Filter";
+			sourceTree = "<group>";
+		};
+		89C9AAEE268D5C6300A63F33 /* Custom */ = {
+			isa = PBXGroup;
+			children = (
+				895ECE33268C45D80050DF2E /* SelectiveBrightness.swift */,
+				89544348268B2EDE00B0F085 /* Kernel.ci.metal */,
+			);
+			path = Custom;
+			sourceTree = "<group>";
+		};
+		89C9AAEF268D5C6900A63F33 /* External */ = {
+			isa = PBXGroup;
+			children = (
+				894FD1E9268D7D0900511253 /* LUTCubeFilter.swift */,
+			);
+			path = External;
+			sourceTree = "<group>";
+		};
 		C19759EB267CCE0A006003CA = {
 			isa = PBXGroup;
 			children = (
-				898C02CB2685BA78008A2B2C /* BlurMaskView.swift */,
 				C19759F6267CCE0A006003CA /* moody */,
 				C1975A0D267CCE0D006003CA /* moodyTests */,
 				C1975A18267CCE0D006003CA /* moodyUITests */,
@@ -150,14 +246,15 @@
 		C19759F6267CCE0A006003CA /* moody */ = {
 			isa = PBXGroup;
 			children = (
+				89AF31E3268E0A700091F298 /* Resource */,
 				C1975A29267CCE38006003CA /* View */,
 				C1975A28267CCE32006003CA /* ViewModel */,
 				C1975A27267CCE2B006003CA /* Model */,
-				C19759F7267CCE0B006003CA /* moodyApp.swift */,
 				89110C842680AD30002779AA /* Helper */,
 				C19759F9267CCE0B006003CA /* ContentView.swift */,
 				C19759FB267CCE0D006003CA /* Assets.xcassets */,
 				C1975A00267CCE0D006003CA /* Persistence.swift */,
+				C19759F7267CCE0B006003CA /* moodyApp.swift */,
 				C1975A05267CCE0D006003CA /* Info.plist */,
 				C1975A02267CCE0D006003CA /* moody.xcdatamodeld */,
 				C19759FD267CCE0D006003CA /* Preview Content */,
@@ -194,6 +291,7 @@
 		C1975A27267CCE2B006003CA /* Model */ = {
 			isa = PBXGroup;
 			children = (
+				895ECE35268C45E50050DF2E /* Filters */,
 				C1975A30267CCEE2006003CA /* FilteredImage.swift */,
 			);
 			path = Model;
@@ -214,8 +312,9 @@
 				89110C892680BD18002779AA /* Edit */,
 				C1975A2A267CCE8E006003CA /* HomeView.swift */,
 				891DF6922684283400A314B8 /* FeedBackView.swift */,
-				89110C8A2680BD57002779AA /* BottomNavigationBar.swift */,
 				89110C802680AB50002779AA /* FilterView.swift */,
+				89110C8A2680BD57002779AA /* BottomNavigationBar.swift */,
+				898C02CB2685BA78008A2B2C /* BlurMaskView.swift */,
 				C1975A2C267CCEAF006003CA /* ImagePicker.swift */,
 			);
 			name = View;
@@ -324,8 +423,19 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				89AF31F7268E0C940091F298 /* Oaxaca.png in Resources */,
+				89AF31FB268E0C940091F298 /* Travelgram.png in Resources */,
+				89AF31F9268E0C940091F298 /* Everest.png in Resources */,
+				89AF31F0268E0AE10091F298 /* Reykjavik.png in Resources */,
+				89AF31EE268E0AE10091F298 /* LochNess.png in Resources */,
 				C19759FF267CCE0D006003CA /* Preview Assets.xcassets in Resources */,
+				89AF31FA268E0C940091F298 /* Prague.png in Resources */,
+				89AF31ED268E0AE10091F298 /* Pocatello.png in Resources */,
+				89AF31EC268E0AE10091F298 /* Tahoe.png in Resources */,
 				C19759FC267CCE0D006003CA /* Assets.xcassets in Resources */,
+				89AF31F8268E0C940091F298 /* Boulder.png in Resources */,
+				89AF31EB268E0AE10091F298 /* Seattle.png in Resources */,
+				89AF31EF268E0AE10091F298 /* Oslo.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -350,16 +460,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				894FD1EA268D7D0900511253 /* LUTCubeFilter.swift in Sources */,
 				C1975A31267CCEE2006003CA /* FilteredImage.swift in Sources */,
-				894A3B1E2686BE020091D5FE /* Publish.swift in Sources */,
+				8938E2DC268ADE1E00A2209F /* MetalFileData.swift in Sources */,
 				C1975A01267CCE0D006003CA /* Persistence.swift in Sources */,
+				89544349268B2EDE00B0F085 /* Kernel.ci.metal in Sources */,
 				89110C882680BCEB002779AA /* BottomNavigationButton.swift in Sources */,
 				898C02CC2685BA78008A2B2C /* BlurMaskView.swift in Sources */,
 				89110C862680BCA0002779AA /* EditView.swift in Sources */,
 				891DF6912684277A00A314B8 /* EditingImage.swift in Sources */,
 				C19759FA267CCE0B006003CA /* ContentView.swift in Sources */,
+				895ECE3A268C78500050DF2E /* VSlider.swift in Sources */,
 				C1975A2F267CCEC8006003CA /* HomeViewModel.swift in Sources */,
-				89110C832680AD0E002779AA /* ImageEditFactor.swift in Sources */,
+				895ECE34268C45D80050DF2E /* SelectiveBrightness.swift in Sources */,
+				89110C832680AD0E002779AA /* ImageControlEnum.swift in Sources */,
 				C1975A2B267CCE8E006003CA /* HomeView.swift in Sources */,
 				891DF6932684283400A314B8 /* FeedBackView.swift in Sources */,
 				89110C8D2680C729002779AA /* ImageEditor.swift in Sources */,
@@ -367,6 +481,8 @@
 				C1975A04267CCE0D006003CA /* moody.xcdatamodeld in Sources */,
 				895BFC3A2680829000EB783E /* TuningPanel.swift in Sources */,
 				89110C812680AB50002779AA /* FilterView.swift in Sources */,
+				89AF31FD268E11EA0091F298 /* UIImageAlpha.swift in Sources */,
+				895ECE38268C4D3E0050DF2E /* FilterParameter.swift in Sources */,
 				89110C8B2680BD57002779AA /* BottomNavigationBar.swift in Sources */,
 				C19759F8267CCE0B006003CA /* moodyApp.swift in Sources */,
 			);
@@ -535,6 +651,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MTLLINKER_FLAGS = "-fcikernel";
+				MTL_COMPILER_FLAGS = "-fcikernel";
+				MTL_LANGUAGE_REVISION = UseDeploymentTarget;
 				PRODUCT_BUNDLE_IDENTIFIER = doitduri.moody;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
@@ -557,6 +676,9 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				MTLLINKER_FLAGS = "-fcikernel";
+				MTL_COMPILER_FLAGS = "-fcikernel";
+				MTL_LANGUAGE_REVISION = UseDeploymentTarget;
 				PRODUCT_BUNDLE_IDENTIFIER = doitduri.moody;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;

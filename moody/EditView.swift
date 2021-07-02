@@ -12,27 +12,30 @@ struct EditView: View, EditorDelegation {
 	@EnvironmentObject var editor: ImageEditor
 	@State private var isShowingPicker = false
 	@State private var feedBackImage: Image?
-	@State private var currentControl: String = ImageColorControl.brightness.rawValue
+	@State private var currentControl: String = BuiltInColorControl.brightness.rawValue
 	
     var body: some View {
-		ZStack {
-			VStack(spacing: 0) {
-				EditingImage(currentControl: $currentControl) 
-					.contentShape(Rectangle())
-				TuningPanel(currentControl: $currentControl)
-					.onChange(of: isShowingPicker, perform: resetTunner(_:))
-					.disabled(editor.imageForDisplay == nil)
+		GeometryReader { geometry in
+			ZStack {
+				VStack(spacing: 0) {
+					EditingImage(currentControl: $currentControl)
+						.contentShape(Rectangle())
+					TuningPanel(currentControl: $currentControl)
+						.onChange(of: isShowingPicker, perform: resetTunner(_:))
+						.disabled(editor.imageForDisplay == nil)
+						.frame(maxHeight: geometry.size.height * 0.3)
+				}
+				FeedBackView(feedBackImage: $feedBackImage)
 			}
-			FeedBackView(feedBackImage: $feedBackImage)
+			.toolbar{
+				ToolbarItem(placement: .navigationBarLeading, content: drawSaveButton)
+				ToolbarItem(placement: .navigationBarTrailing,
+							content: drawPickerButton)
+			}
+			.sheet(isPresented: $isShowingPicker, content: createImagePicker)
+			.onAppear (perform: showPickerIfNeeded)
+			.navigationTitle("Edit")
 		}
-		.toolbar{
-			ToolbarItem(placement: .navigationBarLeading, content: drawSaveButton)
-			ToolbarItem(placement: .navigationBarTrailing,
-						content: drawPickerButton)
-		}
-		.sheet(isPresented: $isShowingPicker, content: createImagePicker)
-		.onAppear (perform: showPickerIfNeeded)
-		.navigationTitle("Edit")
     }
 	
 	private func drawSaveButton() -> some View {
@@ -63,7 +66,7 @@ struct EditView: View, EditorDelegation {
 	private func resetTunner(_ pickerPresenting: Bool) {
 		guard !isShowingPicker else { return }
 		withAnimation {
-			editor.colorControl = ImageColorControl.defaults
+			editor.resetControls()
 		}
 	}
 	
@@ -94,6 +97,7 @@ struct EditView: View, EditorDelegation {
 struct EditView_Previews: PreviewProvider {
     static var previews: some View {
         EditView()
+			.preferredColorScheme(.dark)
 			.environmentObject(ImageEditor.forPreview)
     }
 }
