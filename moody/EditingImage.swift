@@ -10,6 +10,7 @@ import PencilKit
 
 struct EditingImage: View {
 	
+	@Environment(\.colorScheme) var colorScheme
 	@EnvironmentObject var editor: ImageEditor
 	@Binding var currentControl: String
 	
@@ -52,14 +53,14 @@ struct EditingImage: View {
 			}
 			.onChange(of: currentControl) {
 				if $0 == ImageBlurControl.mask.rawValue {
-					zoomToFit(for: size)
+//					zoomToFit(for: size)
 				}else {
 					editor.blurMask.drawing.strokes = []
 				}
 			}
 			.overlay(
-				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editor.blurMarkerWidth)
-					.colorScheme(.dark)
+				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editor.blurMarkerWidth, in: colorScheme)
+					.colorInvert()
 					.allowsHitTesting(isDrawingMask)
 			)
 	}

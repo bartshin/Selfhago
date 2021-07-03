@@ -7,6 +7,7 @@
 
 #include <CoreImage/CoreImage.h>
 using namespace metal;
+
 #define minHue 0
 #define maxHue 6
 #define minSat 0
@@ -15,15 +16,10 @@ using namespace metal;
 #define maxVal 1
 
 // Luma range
-#define blackRange 0.05
-#define darKRange 0.1
-#define darkShadowRange 0.16
-#define shadowRange 0.23
-#define brigtShadowRange 0.31
-#define midtoneRange 0.40
-#define brightMidtoneRange 0.5
-#define highlightRange 0.6
-#define whiteRange 0.7
+#define darkRange 0.1
+#define shadowRange 0.4
+#define highlightRange 0.7
+#define whiteRange 1.0
 
 extern "C" {
 	
@@ -61,53 +57,31 @@ extern "C" {
 			return s.r * 0.2126 + s.g * 0.7152 + s.b * 0.0722;
 		}
 		
-		float4 selectiveBrightness(sample_t s, float4 red, float4 green, float4 blue) {
+		float4 selectiveBrightness(sample_t s,
+								   float4 red,
+								   float4 green,
+								   float4 blue,
+								   float4 ranges) {
 			
 			float luma = getLuma(s);
-			if (luma < blackRange) {
-				s.r *= (red.x * 1.1);
-				s.g *= (green.x * 1.1);
-				s.b *= (blue.x * 1.1);
-			}else if (luma < darKRange) {
-				s.r *= red.x;
-				s.g *= green.x;
-				s.b *= blue.x;
-			}else if (luma < darkShadowRange) {
-				s.r *= red.x*0.66 + red.y*0.33;
-				s.g *= green.x*0.66 + green.y*0.33;
-				s.b *= blue.x*0.66 + blue.y*0.33;
-			}else if (luma < shadowRange) {
-				s.r *= red.x*0.33 + red.y*0.66;
-				s.g *= green.x*0.33 + green.y*0.66;
-				s.b *= blue.x*0.33 + blue.y*0.66;
-			}else if (luma < brigtShadowRange) {
-				s.r *= red.y;
-				s.g *= green.y;
-				s.b *= blue.y;
-			}else if (luma < midtoneRange) {
-				s.r *= red.y*0.66 + red.z*0.33;
-				s.g *= green.y*0.66 + green.z*0.33;
-				s.b *= blue.y*0.66 + blue.z*0.33;
-			}else if (luma < brightMidtoneRange) {
-				s.r *= red.y*0.33 + red.z*0.66;
-				s.g *= green.y*0.33 + green.z*0.66;
-				s.b *= blue.y*0.33 + blue.z*0.66;
-			}else if (luma < highlightRange) {
-				s.r *= red.z;
-				s.g *= green.z;
-				s.b *= blue.z;
-			}else if (luma < whiteRange) {
-				s.r *= (red.z + red.w)/2;
-				s.g *= (green.z + green.w)/2;
-				s.b *= (blue.z + blue.w)/2;
-			}else {
-				s.r *= red.w;
-				s.g *= green.w;
-				s.b *= blue.w;
-			}
+			
+			float pfDark = pow(1 - abs(luma - ranges.x), 3);
+			float pfShadow = pow( 1 - abs(luma - ranges.y), 3);
+			float pfHighlight = pow(1 - abs(luma - ranges.z), 3);
+			float pfWhite = pow(1 - abs(luma - ranges.w), 3) ;
+			
+			float pfRed = pfDark * red.x + pfShadow * red.y + pfHighlight * red.z + pfWhite * red.w;
+			float pfGreen = pfDark * green.x + pfShadow * green.y + pfHighlight * green.z + pfWhite * green.w;
+			float pfBlue = pfDark * blue.x + pfShadow * blue.y + pfHighlight * blue.z + pfWhite * blue.w;
+			
+			s.r *= (3 + pfRed) / 3;
+			s.g *= (3 + pfGreen) / 3;
+			s.b *= (3 + pfBlue) / 3;
+			
 			
 			return s;
 		}
+		
 	}
 }
 

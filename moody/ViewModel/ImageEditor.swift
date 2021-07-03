@@ -18,13 +18,13 @@ class ImageEditor: NSObject, ObservableObject {
 	
 	/// [ Filter name : CI Filter]
 	private var editingFilters = [String: CIFilter]()
-	
 	private(set) var cgImage: CGImage?
 	private var imageOrientation: UIImage.Orientation?
 	var imageForDisplay: UIImage?
 	var blurMask: PKCanvasView
 	var blurIntensity: Double
 	@Published var blurMarkerWidth: CGFloat
+	private var averageLuminace: Float
 	
 	var colorControl: [BuiltInColorControl: Double] {
 		didSet {
@@ -51,6 +51,9 @@ class ImageEditor: NSObject, ObservableObject {
 		cgImage = image.cgImage
 		imageOrientation = image.imageOrientation
 		setImageForDisplay()
+		DispatchQueue.global(qos: .userInitiated).async {
+			self.setAverageLuminace()
+		}
 	}
 	
 	func setLutFilter(_ lutName: String) {
@@ -76,7 +79,8 @@ class ImageEditor: NSObject, ObservableObject {
 				.shadow: selectiveControl[rgb]![1],
 				.highlight: selectiveControl[rgb]![2],
 				.white: selectiveControl[rgb]![3]
-			])
+			],
+			with: averageLuminace)
 		}
 		editingFilters[String(describing: SelectiveBrightness.self)] = filter
 		setImageForDisplay()
@@ -117,7 +121,7 @@ class ImageEditor: NSObject, ObservableObject {
 	}
 	
 	private func setImageForDisplay() {
-		DispatchQueue.global(qos:.userInitiated).sync { [self] in
+		DispatchQueue.global(qos:.userInteractive).sync { [self] in
 			if let ciImage = applyFilters(),
 			   let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent),
 			   imageOrientation != nil{
@@ -140,6 +144,21 @@ class ImageEditor: NSObject, ObservableObject {
 		return ciImage
 	}
 	
+	private func setAverageLuminace() {
+		guard let image = cgImage ,
+			  let imageData = image.dataProvider?.data ,
+			  let ptr = CFDataGetBytePtr(imageData) else { return  }
+		let length = CFDataGetLength(imageData)
+		var luminance: Float = 0
+		for i in stride(from: 0, to: length, by: 4) {
+			let r = ptr[i]
+			let g = ptr[i + 1]
+			let b = ptr[i + 2]
+			luminance += ((0.299 * Float(r) + 0.587 * Float(g) + 0.114 * Float(b))) / 255
+		}
+		averageLuminace = luminance / Float(length/4)
+	}
+	
 	private func publishOnMainThread() {
 		if Thread.isMainThread {
 			objectWillChange.send()
@@ -159,12 +178,14 @@ class ImageEditor: NSObject, ObservableObject {
 		blurMask = PKCanvasView()
 		blurIntensity = 10
 		blurMarkerWidth = 30
+		averageLuminace = 0.5
 		selectiveControl = FilterParameter.RGBColor.allCases.reduce(into: [FilterParameter.RGBColor: SelectiveBrightness.selectableValues]()) {
 			$0[$1] = SelectiveBrightness.emptyValues
 		}
 		super.init()
 		blurMask.delegate = self
 	}
+	
 }
 
 extension ImageEditor: PKCanvasViewDelegate {

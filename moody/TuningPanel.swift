@@ -100,7 +100,7 @@ struct TuningPanel: View {
 			editor.colorControl[colorControl] = $0 + colorControl.defaultValue
 		}
 	}
-
+	
 	private func drawSliders(for selectiveControl: ImageSelectiveControl) -> some View {
 		GeometryReader { geometry in
 			HStack {
@@ -116,10 +116,11 @@ struct TuningPanel: View {
 			.frame(width: geometry.size.width, height: geometry.size.height)
 		}
 	}
+	
 	private func calcRange(for index: Int) -> ClosedRange<CGFloat> {
-		let min = -(1.0 - CGFloat(index)*0.1)
-		let max = 1.0 - CGFloat(index)*0.1
-		return ClosedRange<CGFloat>(uncheckedBounds: (lower: min, upper: max))
+		let min = -(1.0*(1 - CGFloat(index)*0.1))
+		let max = 1.0*(1 - CGFloat(index)*0.1)
+		return min...max
 	}
 	
 	private func createBinding(to selectiveControl: ImageSelectiveControl, at index: Int) -> Binding<CGFloat> {
