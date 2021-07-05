@@ -85,6 +85,18 @@ class ImageEditor: NSObject, ObservableObject {
 		editingFilters[String(describing: SelectiveBrightness.self)] = filter
 		setImageForDisplay()
 	}
+	// FIXME:- Not working
+	func applyBilateral() {
+		let filter = BilateralFilter()
+		filter.setValue(CIImage(cgImage: cgImage!), forKey: kCIInputImageKey)
+		if let ciImage = filter.outputImage,
+		   let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent){
+			imageForDisplay = UIImage(cgImage: cgImage, scale: 1, orientation: imageOrientation!)
+			publishOnMainThread()
+		}else {
+			print("Fail to apply bilateral")
+		}
+	}
 	
 	/// Edit image immediately not reversible
 	func applyBlurByMask() {

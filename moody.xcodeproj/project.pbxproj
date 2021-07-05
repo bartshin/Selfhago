@@ -17,11 +17,12 @@
 		891DF6932684283400A314B8 /* FeedBackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 891DF6922684283400A314B8 /* FeedBackView.swift */; };
 		8938E2DC268ADE1E00A2209F /* MetalFileData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8938E2DB268ADE1E00A2209F /* MetalFileData.swift */; };
 		894FD1EA268D7D0900511253 /* LUTCubeFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 894FD1E9268D7D0900511253 /* LUTCubeFilter.swift */; };
-		89544349268B2EDE00B0F085 /* Kernel.ci.metal in Sources */ = {isa = PBXBuildFile; fileRef = 89544348268B2EDE00B0F085 /* Kernel.ci.metal */; };
+		89544349268B2EDE00B0F085 /* FilterKernel.ci.metal in Sources */ = {isa = PBXBuildFile; fileRef = 89544348268B2EDE00B0F085 /* FilterKernel.ci.metal */; };
 		895BFC3A2680829000EB783E /* TuningPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895BFC392680829000EB783E /* TuningPanel.swift */; };
 		895ECE34268C45D80050DF2E /* SelectiveBrightness.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895ECE33268C45D80050DF2E /* SelectiveBrightness.swift */; };
 		895ECE38268C4D3E0050DF2E /* FilterParameter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895ECE37268C4D3E0050DF2E /* FilterParameter.swift */; };
 		895ECE3A268C78500050DF2E /* VSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 895ECE39268C78500050DF2E /* VSlider.swift */; };
+		8961DDFA2691DDA100804606 /* BilateralFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8961DDF92691DDA100804606 /* BilateralFilter.swift */; };
 		898C02CC2685BA78008A2B2C /* BlurMaskView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 898C02CB2685BA78008A2B2C /* BlurMaskView.swift */; };
 		89AF31EB268E0AE10091F298 /* Seattle.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31E5268E0AE00091F298 /* Seattle.png */; };
 		89AF31EC268E0AE10091F298 /* Tahoe.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AF31E6268E0AE00091F298 /* Tahoe.png */; };
@@ -77,11 +78,12 @@
 		891DF6922684283400A314B8 /* FeedBackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedBackView.swift; sourceTree = "<group>"; };
 		8938E2DB268ADE1E00A2209F /* MetalFileData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalFileData.swift; sourceTree = "<group>"; };
 		894FD1E9268D7D0900511253 /* LUTCubeFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LUTCubeFilter.swift; sourceTree = "<group>"; };
-		89544348268B2EDE00B0F085 /* Kernel.ci.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Kernel.ci.metal; sourceTree = "<group>"; };
+		89544348268B2EDE00B0F085 /* FilterKernel.ci.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = FilterKernel.ci.metal; sourceTree = "<group>"; };
 		895BFC392680829000EB783E /* TuningPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TuningPanel.swift; sourceTree = "<group>"; };
 		895ECE33268C45D80050DF2E /* SelectiveBrightness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectiveBrightness.swift; sourceTree = "<group>"; };
 		895ECE37268C4D3E0050DF2E /* FilterParameter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterParameter.swift; sourceTree = "<group>"; };
 		895ECE39268C78500050DF2E /* VSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSlider.swift; sourceTree = "<group>"; };
+		8961DDF92691DDA100804606 /* BilateralFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BilateralFilter.swift; sourceTree = "<group>"; };
 		898C02CB2685BA78008A2B2C /* BlurMaskView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlurMaskView.swift; sourceTree = "<group>"; };
 		89AF31E5268E0AE00091F298 /* Seattle.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Seattle.png; path = Resource/LUT/Seattle.png; sourceTree = SOURCE_ROOT; };
 		89AF31E6268E0AE00091F298 /* Tahoe.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Tahoe.png; path = Resource/LUT/Tahoe.png; sourceTree = SOURCE_ROOT; };
@@ -210,7 +212,8 @@
 			isa = PBXGroup;
 			children = (
 				895ECE33268C45D80050DF2E /* SelectiveBrightness.swift */,
-				89544348268B2EDE00B0F085 /* Kernel.ci.metal */,
+				8961DDF92691DDA100804606 /* BilateralFilter.swift */,
+				89544348268B2EDE00B0F085 /* FilterKernel.ci.metal */,
 			);
 			path = Custom;
 			sourceTree = "<group>";
@@ -464,7 +467,7 @@
 				C1975A31267CCEE2006003CA /* FilteredImage.swift in Sources */,
 				8938E2DC268ADE1E00A2209F /* MetalFileData.swift in Sources */,
 				C1975A01267CCE0D006003CA /* Persistence.swift in Sources */,
-				89544349268B2EDE00B0F085 /* Kernel.ci.metal in Sources */,
+				89544349268B2EDE00B0F085 /* FilterKernel.ci.metal in Sources */,
 				89110C882680BCEB002779AA /* BottomNavigationButton.swift in Sources */,
 				898C02CC2685BA78008A2B2C /* BlurMaskView.swift in Sources */,
 				89110C862680BCA0002779AA /* EditView.swift in Sources */,
@@ -476,6 +479,7 @@
 				89110C832680AD0E002779AA /* ImageControlEnum.swift in Sources */,
 				C1975A2B267CCE8E006003CA /* HomeView.swift in Sources */,
 				891DF6932684283400A314B8 /* FeedBackView.swift in Sources */,
+				8961DDFA2691DDA100804606 /* BilateralFilter.swift in Sources */,
 				89110C8D2680C729002779AA /* ImageEditor.swift in Sources */,
 				C1975A2D267CCEAF006003CA /* ImagePicker.swift in Sources */,
 				C1975A04267CCE0D006003CA /* moody.xcdatamodeld in Sources */,

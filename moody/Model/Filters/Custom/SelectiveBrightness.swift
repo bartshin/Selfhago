@@ -28,7 +28,7 @@ class SelectiveBrightness: CIFilter {
 	private var green = emptyValues
 	private var blue = emptyValues
 	private var averageLumiance: Float = 0.5
-	private let brightnessRange: (dark: CGFloat, shadow: CGFloat, highlight: CGFloat, white: CGFloat) = (0.1, 0.4, 0.7, 1.0)
+	private let brightnessRange: (dark: CGFloat, shadow: CGFloat, highlight: CGFloat, white: CGFloat) = (0.0, 0.4, 0.7, 1.0)
 	
 	override func setValue(_ value: Any?, forKey key: String) {
 		if key == kCIInputImageKey {
@@ -61,10 +61,10 @@ class SelectiveBrightness: CIFilter {
 		}
 		let intercept = pow(CGFloat(averageLumiance) - 0.5, 3) * 10
 		let ranges = CIVector(
-			x: max(brightnessRange.dark + intercept, 0.05),
+			x: max(brightnessRange.dark + intercept, 0.0),
 			y: brightnessRange.shadow + intercept,
 			z: brightnessRange.highlight + intercept,
-			w: min(brightnessRange.white + intercept, 0.9))
+			w: min(brightnessRange.white + intercept, 1.0))
 		return kernel.apply(
 			extent: input.extent,
 			roiCallback: { index, rect in

@@ -107,7 +107,7 @@ struct TuningPanel: View {
 				ForEach(0..<4) {
 					VSlider(value: createBinding(
 								to: selectiveControl, at: $0),
-							in: calcRange(for: $0), step: 0.05,
+							in: -0.5...0.5, step: 0.05,
 							sliderSize: .init(width: geometry.size.width * 0.25,
 											  height: geometry.size.height ))
 						
@@ -115,12 +115,6 @@ struct TuningPanel: View {
 			}
 			.frame(width: geometry.size.width, height: geometry.size.height)
 		}
-	}
-	
-	private func calcRange(for index: Int) -> ClosedRange<CGFloat> {
-		let min = -(1.0*(1 - CGFloat(index)*0.1))
-		let max = 1.0*(1 - CGFloat(index)*0.1)
-		return min...max
 	}
 	
 	private func createBinding(to selectiveControl: ImageSelectiveControl, at index: Int) -> Binding<CGFloat> {
