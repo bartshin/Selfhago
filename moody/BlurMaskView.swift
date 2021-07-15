@@ -12,13 +12,13 @@ struct BlurMaskView: UIViewRepresentable {
 	
 	@Binding var canvas: PKCanvasView
 	@Binding var markerWidth: CGFloat
-	private let colorScheme: ColorScheme
 	
 	private var tool: PKInkingTool {
-		PKInkingTool(.marker,
-					 color: colorScheme == .light ? .black: .white,
+		let colorScheme = UIApplication.shared.windows.first?.traitCollection.userInterfaceStyle
+		let color: UIColor = colorScheme == .dark ? .black: .white
+		return PKInkingTool(.marker,
+					 color: color,
 					 width: markerWidth)
-			
 	}
 	
 	func makeUIView(context: Context) -> PKCanvasView {
@@ -32,9 +32,8 @@ struct BlurMaskView: UIViewRepresentable {
 		canvas.tool = tool
 	}
 	
-	init(canvas: Binding<PKCanvasView>, markerWidth: Binding<CGFloat>, in colorScheme: ColorScheme) {
+	init(canvas: Binding<PKCanvasView>, markerWidth: Binding<CGFloat>) {
 		_canvas = canvas
 		_markerWidth = markerWidth
-		self.colorScheme = colorScheme
 	}
 }

@@ -12,7 +12,7 @@ struct EditView: View, EditorDelegation {
 	@EnvironmentObject var editor: ImageEditor
 	@State private var isShowingPicker = false
 	@State private var feedBackImage: Image?
-	@State private var currentControl: String = BuiltInColorControl.brightness.rawValue
+	@State private var currentControl: String = CIColorControlFilter.brightness.rawValue
 	
     var body: some View {
 		GeometryReader { geometry in

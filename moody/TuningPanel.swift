@@ -22,23 +22,25 @@ struct TuningPanel: View {
 					}
 				}
 			}
-			if let colorControl = BuiltInColorControl(rawValue: currentControl) {
+			if let colorControl = CIColorControlFilter(rawValue: currentControl) {
 				drawSlider(for: colorControl)
-			}else if ImageBlurControl(rawValue: currentControl) != nil {
+			}else if DrawableFilter(rawValue: currentControl) != nil {
 				blurmaskControlSlider
 			}else if let presetFilter = PresetFilter(rawValue: currentControl) {
 				drawPresetControl(for: presetFilter)
+			}else if let tunableFilter = TunableFilter(rawValue: currentControl) {
+				drawSliders(for: tunableFilter)
 			}
 		}
 		.padding(.horizontal, Constant.horizontalPadding)
 	}
 	
 	private func getLabel(for control: String) -> Image {
-		if let colorControl = BuiltInColorControl(rawValue: control) {
+		if let colorControl = CIColorControlFilter(rawValue: control) {
 			return colorControl.label
-		}else if let blurControl = ImageBlurControl(rawValue: control) {
+		}else if let blurControl = DrawableFilter(rawValue: control) {
 			return blurControl.label
-		}else if let selectiveControl = ImageSelectiveControl(rawValue: control) {
+		}else if let selectiveControl = TunableFilter(rawValue: control) {
 			return selectiveControl.label
 		}else if let presetFilter = PresetFilter(rawValue: control) {
 			return presetFilter.label
@@ -81,7 +83,7 @@ struct TuningPanel: View {
 		.padding(.horizontal)
 	}
 		
-	private func drawSlider(for colorControl: BuiltInColorControl) -> some View {
+	private func drawSlider(for colorControl: CIColorControlFilter) -> some View {
 		VStack {
 		Slider(value: createBinding(to: colorControl), in: -0.5...0.5,
 			   step: 0.05)
@@ -93,7 +95,7 @@ struct TuningPanel: View {
 		.padding(.top, colorControl != .brightness ? Constant.verticalPadding: 0)
 	}
 	
-	private func createBinding(to colorControl: BuiltInColorControl) -> Binding<Double> {
+	private func createBinding(to colorControl: CIColorControlFilter) -> Binding<Double> {
 		Binding<Double> {
 			editor.colorControl[colorControl]! - colorControl.defaultValue
 		} set: {
@@ -101,24 +103,25 @@ struct TuningPanel: View {
 		}
 	}
 	
-	private func drawSliders(for selectiveControl: ImageSelectiveControl) -> some View {
+	private func drawSliders(for filter: TunableFilter) -> some View {
 		GeometryReader { geometry in
 			HStack {
-				ForEach(0..<4) {
+				ForEach(0..<filter.tunableFactors) {
 					VSlider(value: createBinding(
-								to: selectiveControl, at: $0),
-							in: -0.5...0.5, step: 0.05,
-							sliderSize: .init(width: geometry.size.width * 0.25,
-											  height: geometry.size.height ))
-						
+								to: filter, at: $0),
+							in: filter.getRange(for: $0),
+							step: 0.05,
+							sliderSize:
+								.init(width: geometry.size.width * 0.25,
+									  height: geometry.size.height ))
 				}
 			}
 			.frame(width: geometry.size.width, height: geometry.size.height)
 		}
 	}
 	
-	private func createBinding(to selectiveControl: ImageSelectiveControl, at index: Int) -> Binding<CGFloat> {
-		switch selectiveControl {
+	private func createBinding(to tunableControl: TunableFilter, at index: Int) -> Binding<CGFloat> {
+		switch tunableControl {
 			case .brightness:
 				return Binding<CGFloat> {
 					var value: CGFloat = 0
@@ -131,6 +134,18 @@ struct TuningPanel: View {
 						editor.selectiveControl[rgb]![index] = value
 					}
 					editor.setSelectiveBrightness()
+				}
+			case .bilateral:
+				return Binding<CGFloat> {
+					CGFloat(index == 0 ? editor.bilateralFactor.radius:
+								editor.bilateralFactor.intensity)
+				}set: {
+					if index == 0 {
+						editor.bilateralFactor.radius = Float($0)
+					}else {
+						editor.bilateralFactor.intensity = Float($0)
+					}
+					editor.setBilateral()
 				}
 		}
 	}
@@ -154,13 +169,16 @@ struct TuningPanel: View {
 	
 	init(currentControl: Binding<String>) {
 		self._currentControl = currentControl
-		allControls = BuiltInColorControl.allCases.compactMap{ $0.rawValue } + [ImageBlurControl.mask.rawValue, PresetFilter.portrait.rawValue,  PresetFilter.landscape.rawValue]
+		allControls = CIColorControlFilter.allCases.compactMap{ $0.rawValue } + [
+			TunableFilter.bilateral.rawValue,
+			DrawableFilter.mask.rawValue,
+			PresetFilter.portrait.rawValue,  PresetFilter.landscape.rawValue]
 	}
 }
 
 struct ImageTuningPanel_Previews: PreviewProvider {
     static var previews: some View {
-		TuningPanel(currentControl: Binding<String>.constant(ImageSelectiveControl.brightness.rawValue))
+		TuningPanel(currentControl: Binding<String>.constant(TunableFilter.brightness.rawValue))
 			.environmentObject(ImageEditor.forPreview)
 			.preferredColorScheme(.dark)
     }

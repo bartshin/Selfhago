@@ -1,5 +1,5 @@
 //
-//  ImageControlEnum.swift
+//  ImageFilter.swift
 //  moody
 //
 //  Created by bart Shin on 21/06/2021.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum ImageBlurControl: String {
+enum DrawableFilter: String {
 	case mask
 	
 	var label: Image {
@@ -18,13 +18,34 @@ enum ImageBlurControl: String {
 	}
 }
 
-enum ImageSelectiveControl: String {
+enum TunableFilter: String {
 	case brightness
+	case bilateral
 	
 	var label: Image{
 		switch self {
 			case .brightness:
 				return Image(systemName: "dial.max")
+			case .bilateral:
+				return Image(systemName: "wand.and.stars")
+		}
+	}
+	
+	var tunableFactors: Int {
+		switch self {
+			case .brightness:
+				return 4
+			case .bilateral:
+				return 2
+		}
+	}
+	
+	func getRange<T>(for index: Int) -> ClosedRange<T> where T: BinaryFloatingPoint {
+		switch self {
+			case .brightness:
+				return -0.5...0.5
+			case .bilateral:
+				return index == 0 ? 0.1...3.0: 0.1...0.3
 		}
 	}
 }
@@ -62,7 +83,7 @@ enum PresetFilter: String {
 	}
 }
 
-enum BuiltInColorControl: String, Hashable, CaseIterable {
+enum CIColorControlFilter: String, Hashable, CaseIterable {
 	
 	case brightness = "밝기"
 	case saturation = "채도"

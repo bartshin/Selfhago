@@ -19,7 +19,7 @@ struct EditingImage: View {
 	}
 	
 	private var isDrawingMask: Bool {
-		currentControl == ImageBlurControl.mask.rawValue
+		currentControl == DrawableFilter.mask.rawValue
 	}
 	
 	var body: some View {
@@ -45,24 +45,34 @@ struct EditingImage: View {
 				fixedZoomScale = getScaleToFit(in: size)
 				editor.blurMarkerWidth = min(60 / fixedZoomScale, 60)
 			}
-			.onChange(of: editor.cgImage) {
-				if $0 != nil {
+			.onChange(of: editor.ciImage) {
+				if $0 != nil,
+				   currentControl != DrawableFilter.mask.rawValue {
 					zoomToFit(for: size)
-					editor.blurMask.drawing.strokes = []
 				}
+				editor.blurMask.drawing.strokes = []
 			}
 			.onChange(of: currentControl) {
-				if $0 == ImageBlurControl.mask.rawValue {
-//					zoomToFit(for: size)
-				}else {
+				if $0 != DrawableFilter.mask.rawValue {
 					editor.blurMask.drawing.strokes = []
 				}
 			}
 			.overlay(
-				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editor.blurMarkerWidth, in: colorScheme)
-					.colorInvert()
+				blurmaskView
 					.allowsHitTesting(isDrawingMask)
 			)
+	}
+	
+	private var blurmaskView: some View {
+		let colorScheme = UIApplication.shared.windows.first?.traitCollection.userInterfaceStyle
+		return Group {
+			if colorScheme == .dark {
+				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editor.blurMarkerWidth)
+			}else {
+				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editor.blurMarkerWidth)
+					.colorInvert()
+			}
+		}
 	}
 	
 	
@@ -187,7 +197,7 @@ struct EditingImage: View {
 
 struct EditingImage_Previews: PreviewProvider {
 	static var previews: some View {
-		EditingImage(currentControl: Binding<String>.constant(BuiltInColorControl.brightness.rawValue))
+		EditingImage(currentControl: Binding<String>.constant(CIColorControlFilter.brightness.rawValue))
 			.environmentObject(ImageEditor.forPreview)
 	}
 }
