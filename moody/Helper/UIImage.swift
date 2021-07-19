@@ -17,3 +17,12 @@ extension UIImage {
 		}
 	}
 }
+
+extension UIImage.Orientation {
+	var cgOrientation: CGImagePropertyOrientation {
+		let cgiOrientations : [ CGImagePropertyOrientation ] = [
+			.up, .down, .left, .right, .upMirrored, .downMirrored, .leftMirrored, .rightMirrored
+		]
+		return cgiOrientations[self.rawValue]
+	}
+}

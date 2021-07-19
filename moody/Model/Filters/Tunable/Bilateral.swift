@@ -1,5 +1,5 @@
 //
-//  BilateralFilter.swift
+//  Bilateral.swift
 //  moody
 //
 //  Created by bart Shin on 04/07/2021.
@@ -7,25 +7,16 @@
 
 import CoreImage
 
-class BilateralFilter: CIFilter {
+class Bilateral: CIFilter {
 	
 	static let faceRegionsKey = "faceRegionsKey"
 	private let maxVetor = 10
 	private var faceRegion = CIVector(x: 0, y: 0, z: 0, w: 0)
-	private var spacialSigma: Float = 1.0
-	private var luminaceSigma: Float = 0.1
-	private var minimumDistance: Float = 1.0
+	private var spacialSigma: CGFloat = 0.1
+	private var luminaceSigma: CGFloat = 0.1
+	private var minimumDistance: CGFloat = 1.0
 	
-	private lazy var kernel: CIKernel = {
-		let data = CIFilter.metalLibData
-		let kernelName = "bilateral"
-		if let kernel = try? CIKernel(functionName: kernelName, fromMetalLibraryData: data) {
-			return kernel
-		}else {
-			assertionFailure("Fail to find \(kernelName)")
-			return CIKernel()
-		}
-	}()
+	private lazy var kernel: CIKernel = findKernel(by: "bilateral")
 	
 	
 	private var inputImage: CIImage?
@@ -35,17 +26,17 @@ class BilateralFilter: CIFilter {
 			inputImage = value as? CIImage
 		}
 		else if key == kCIInputRadiusKey,
-		   let value = value as? Float{
+		   let value = value as? CGFloat{
 			spacialSigma = value
 		}
 		else if key == kCIInputIntensityKey ,
-		   let value = value as? Float{
+		   let value = value as? CGFloat{
 			luminaceSigma = value
 		}
 		else if key == kCIInputExtentKey ,
-				let size = value as? CGSize{
-			let scale = max(Int(log10(size.width)), Int(log10(size.height)))
-			minimumDistance = pow(0.1, Float(scale))
+				let extent = value as? CGRect{
+			let scale = max(Int(log10(extent.size.width)), Int(log10(extent.size.height)))
+			minimumDistance = pow(0.1, CGFloat(scale))
 		}
 		else if key == Self.faceRegionsKey,
 				let regions = value as? [CGRect] {
@@ -60,6 +51,16 @@ class BilateralFilter: CIFilter {
 			else {
 				faceRegion = CIVector(x: 0, y: 0, z: 0, w: 0)
 			}
+		}
+	}
+	override func value(forKey key: String) -> Any? {
+		switch key {
+			case kCIInputRadiusKey:
+				return spacialSigma
+			case kCIInputIntensityKey:
+				return luminaceSigma
+			default:
+				return nil
 		}
 	}
 	
@@ -81,5 +82,12 @@ class BilateralFilter: CIFilter {
 						luminaceSigma,
 						minimumDistance
 			])
+	}
+	
+	override var attributes: [String : Any]
+	{
+		return [
+			kCIAttributeFilterName: String(describing: Self.self)
+		]
 	}
 }

@@ -23,3 +23,15 @@ extension CIFilter {
 	}
 	
 }
+
+extension CIFilter {
+	func findKernel(by kernelName: String) -> CIKernel {
+		let data = CIFilter.metalLibData
+		if let kernel = try? CIKernel(functionName: kernelName, fromMetalLibraryData: data) {
+			return kernel
+		}else {
+			assertionFailure("Fail to find \(kernelName)")
+			return CIKernel()
+		}
+	}
+}

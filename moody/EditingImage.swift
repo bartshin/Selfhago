@@ -12,18 +12,19 @@ struct EditingImage: View {
 	
 	@Environment(\.colorScheme) var colorScheme
 	@EnvironmentObject var editor: ImageEditor
+	@EnvironmentObject var editingState: EditingState
 	@Binding var currentControl: String
 	
 	private var image: UIImage {
-		editor.imageForDisplay!
+		editor.uiImage!
 	}
 	
 	private var isDrawingMask: Bool {
-		currentControl == DrawableFilter.mask.rawValue
+		currentControl == DrawableFilterControl.mask.rawValue
 	}
 	
 	var body: some View {
-		if editor.imageForDisplay != nil {
+		if editor.uiImage != nil {
 			GeometryReader { geometry in
 				drawImage(in: geometry.size)
 					.scaleEffect(zoomScale)
@@ -43,18 +44,11 @@ struct EditingImage: View {
 			.aspectRatio(contentMode: .fit)
 			.onAppear {
 				fixedZoomScale = getScaleToFit(in: size)
-				editor.blurMarkerWidth = min(60 / fixedZoomScale, 60)
+				editingState.blurMarkerWidth = min(60 / fixedZoomScale, 60)
 			}
-			.onChange(of: editor.ciImage) {
-				if $0 != nil,
-				   currentControl != DrawableFilter.mask.rawValue {
+			.onChange(of: editingState.originalCgImage) {
+				if $0 != nil{
 					zoomToFit(for: size)
-				}
-				editor.blurMask.drawing.strokes = []
-			}
-			.onChange(of: currentControl) {
-				if $0 != DrawableFilter.mask.rawValue {
-					editor.blurMask.drawing.strokes = []
 				}
 			}
 			.overlay(
@@ -67,9 +61,9 @@ struct EditingImage: View {
 		let colorScheme = UIApplication.shared.windows.first?.traitCollection.userInterfaceStyle
 		return Group {
 			if colorScheme == .dark {
-				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editor.blurMarkerWidth)
+				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editingState.blurMarkerWidth)
 			}else {
-				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editor.blurMarkerWidth)
+				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editingState.blurMarkerWidth) 
 					.colorInvert()
 			}
 		}
@@ -92,7 +86,6 @@ struct EditingImage: View {
 				gestureZoomScale = lastScale
 			}
 			.onEnded { scale in
-				guard !isDrawingMask else { return }
 				let defaultScale = getScaleToFit(in: size)
 				fixedZoomScale *= scale
 				if defaultScale > fixedZoomScale * scale {
@@ -197,7 +190,7 @@ struct EditingImage: View {
 
 struct EditingImage_Previews: PreviewProvider {
 	static var previews: some View {
-		EditingImage(currentControl: Binding<String>.constant(CIColorControlFilter.brightness.rawValue))
+		EditingImage(currentControl: Binding<String>.constant(CIColorFilterControl.brightness.rawValue))
 			.environmentObject(ImageEditor.forPreview)
 	}
 }

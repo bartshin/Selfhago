@@ -19,11 +19,14 @@ struct ContentView: View {
                 .preferredColorScheme(.dark)
         }
 		.environmentObject(editor)
+		.environmentObject(editor.editingState)
     }
 }
 struct ContentView_Previews: PreviewProvider {
+	static let editor = ImageEditor.forPreview
     static var previews: some View {
         ContentView()
-			.environmentObject(ImageEditor.forPreview)
+			.environmentObject(editor)
+			.environmentObject(editor.editingState)
     }
 }

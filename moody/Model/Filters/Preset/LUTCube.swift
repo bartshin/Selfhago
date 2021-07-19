@@ -1,5 +1,5 @@
 //
-//  LUTCubeFilter.swift
+//  LUTCube.swift
 //  moody
 //
 // code: https://eunjin3786.tistory.com/192 ,https://github.com/muukii/ColorCube
@@ -9,7 +9,7 @@
 import CoreImage
 import UIKit
 
-class LUTCubeFilter: CIFilter {
+class LUTCube: CIFilter {
 	
 	private var inputImage: CIImage? = nil
 	private var lutName: String?
@@ -18,21 +18,29 @@ class LUTCubeFilter: CIFilter {
 		if key == kCIInputImageKey {
 			inputImage = value as? CIImage
 		}
+		else if key == kCIInputMaskImageKey,
+				let lutName = value as? String {
+			self.lutName = lutName
+		}
 	}
 	
-	func setLut(_ lutName: String) {
-		self.lutName = lutName
+	override func value(forKey key: String) -> Any? {
+		if key == kCIInputMaskImageKey {
+			return lutName
+		}
+		return nil
 	}
 	
 	override var outputImage: CIImage? {
-		guard lutName != nil,
-			  inputImage != nil,
+		guard inputImage != nil,
 			  let lutImage = UIImage(named: lutName!),
 			let data = getCubeData(
 				lutImage:  lutImage,
 				dimension: 64,
 				colorSpace: CGColorSpaceCreateDeviceRGB()) else { return nil }
-		
+		if lutName == nil {
+			return inputImage
+		}
 		let filter = CIFilter(name: "CIColorCube", parameters: [
 			"inputCubeDimension": 64,
 			"inputCubeData": data,
@@ -40,6 +48,13 @@ class LUTCubeFilter: CIFilter {
 		])
 		
 		return filter?.outputImage
+	}
+	
+	override var attributes: [String : Any]
+	{
+		return [
+			kCIAttributeFilterName: String(describing: Self.self)
+		]
 	}
 	
 	private func getCubeData(lutImage: UIImage, dimension: Int, colorSpace: CGColorSpace) -> Data? {

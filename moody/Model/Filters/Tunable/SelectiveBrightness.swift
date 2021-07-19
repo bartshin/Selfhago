@@ -12,22 +12,13 @@ class SelectiveBrightness: CIFilter {
 	typealias selectableValues = [CGFloat]
 	static let emptyValues: selectableValues = [0, 0, 0, 0]
 	
-	private lazy var kernel: CIKernel = {
-		let data = CIFilter.metalLibData
-		let kernelName = "selectiveBrightness"
-		if let kernel = try? CIKernel(functionName: kernelName, fromMetalLibraryData: data) {
-			return kernel
-		}else {
-			assertionFailure("Fail to find \(kernelName)")
-			return CIKernel()
-		}
-	}()
+	private lazy var kernel: CIKernel = findKernel(by: "selectiveBrightness")
 	
 	private var inputImage: CIImage?
-	private var red = emptyValues
-	private var green = emptyValues
-	private var blue = emptyValues
-	private var averageLumiance: Float = 0.5
+	private(set) var red = emptyValues
+	private(set) var green = emptyValues
+	private(set) var blue = emptyValues
+	private(set) var averageLumiance: CGFloat = 0.5
 	private let brightnessRange: (dark: CGFloat, shadow: CGFloat, highlight: CGFloat, white: CGFloat) = (0.0, 0.4, 0.7, 1.0)
 	
 	override func setValue(_ value: Any?, forKey key: String) {
@@ -38,7 +29,7 @@ class SelectiveBrightness: CIFilter {
 	
 	func setBrightness(for component: FilterParameter.RGBColor,
 					   values: [FilterParameter.Threshold: CGFloat],
-					   with averageLumiance: Float) {
+					   with averageLumiance: CGFloat) {
 		let selectedValues: [CGFloat] = [values[.black] ?? 0, values[.shadow] ?? 0, values[.highlight] ?? 0, values[.white] ?? 0]
 		self.averageLumiance = averageLumiance
 		switch component {
@@ -48,6 +39,21 @@ class SelectiveBrightness: CIFilter {
 				green = selectedValues
 			case .blue:
 				blue = selectedValues
+		}
+	}
+	
+	override func value(forKey key: String) -> Any? {
+		switch key {
+			case "red":
+				return red
+			case "blue":
+				return blue
+			case "green":
+				return green
+			case "averageLumiance":
+			return averageLumiance
+			default:
+				return nil
 		}
 	}
 	
@@ -65,6 +71,7 @@ class SelectiveBrightness: CIFilter {
 			y: brightnessRange.shadow + intercept,
 			z: brightnessRange.highlight + intercept,
 			w: min(brightnessRange.white + intercept, 1.0))
+		
 		return kernel.apply(
 			extent: input.extent,
 			roiCallback: { index, rect in
@@ -76,5 +83,29 @@ class SelectiveBrightness: CIFilter {
 						vectorValues[2],
 						ranges
 			])
+	}
+	
+	override var attributes: [String : Any]
+	{
+		return [
+			kCIAttributeFilterName: String(describing: Self.self)
+		]
+	}
+	
+	
+	struct FilterParameter {
+		
+		enum Threshold: CGFloat {
+			case black = 0.25
+			case shadow = 0.5
+			case highlight = 0.75
+			case white = 1.0
+		}
+		
+		enum RGBColor: Int, CaseIterable {
+			case red
+			case green
+			case blue
+		}
 	}
 }

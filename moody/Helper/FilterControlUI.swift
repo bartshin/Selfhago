@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum DrawableFilter: String {
+enum DrawableFilterControl: String {
 	case mask
 	
 	var label: Image {
@@ -18,76 +18,98 @@ enum DrawableFilter: String {
 	}
 }
 
-enum TunableFilter: String {
-	case brightness
+enum TunableFilterControl: String {
+	case rgb
 	case bilateral
+	case vignette
 	
 	var label: Image{
 		switch self {
-			case .brightness:
+			case .rgb:
 				return Image(systemName: "dial.max")
 			case .bilateral:
 				return Image(systemName: "wand.and.stars")
+			case .vignette:
+				return Image(systemName: "v.circle.fill")
 		}
 	}
 	
 	var tunableFactors: Int {
 		switch self {
-			case .brightness:
+			case .rgb:
 				return 4
 			case .bilateral:
 				return 2
+			case .vignette:
+				return 3
 		}
 	}
 	
 	func getRange<T>(for index: Int) -> ClosedRange<T> where T: BinaryFloatingPoint {
 		switch self {
-			case .brightness:
+			case .rgb:
 				return -0.5...0.5
 			case .bilateral:
 				return index == 0 ? 0.1...3.0: 0.1...0.3
+			case .vignette:
+				if index == 0 {
+					return 0...2
+				}
+				else if index == 1 {
+					return 0...10
+				}
+				else {
+					return -1...1
+				}
 		}
 	}
 }
 
-enum PresetFilter: String {
-	case portrait
-	case landscape
+enum PresetFilterControl: String, CaseIterable {
+	case portraitLut
+	case landscapeLut
+	case outline
 	
-	var code: String {
+	var lutCode: String? {
 		switch self {
-			case .portrait:
+			case .portraitLut:
 				return "S"
-			case .landscape:
+			case .landscapeLut:
 				return "P"
+			case .outline:
+				return nil
 		}
 	}
 	
 	var label: Image {
 		switch self {
-			case .portrait:
+			case .portraitLut:
 				return Image(systemName: "person.crop.circle.fill")
-			case .landscape:
+			case .landscapeLut:
 				return Image(systemName: "leaf.fill")
+			case .outline:
+				return Image(systemName: "pencil.and.outline")
 		}
 	}
 	
-	var luts: [String] {
+	var luts: [String]? {
 		switch self {
-			case .portrait:
+			case .portraitLut:
 				return ["LochNess", "Oslo", "Pocatello", "Reykjavik", "Seattle", "Tahoe"]
-			case .landscape:
+			case .landscapeLut:
 				return ["Boulder", "Everest", "Oaxaca",
 				"Prague", "Travelgram"]
+			case .outline:
+				return nil
 		}
 	}
 }
 
-enum CIColorControlFilter: String, Hashable, CaseIterable {
+enum CIColorFilterControl: String, Hashable, CaseIterable {
 	
-	case brightness = "밝기"
-	case saturation = "채도"
-	case contrast = "대비"
+	case brightness
+	case saturation
+	case contrast
 	
 	var defaultValue: Double {
 		switch self {

@@ -12,7 +12,7 @@ struct EditView: View, EditorDelegation {
 	@EnvironmentObject var editor: ImageEditor
 	@State private var isShowingPicker = false
 	@State private var feedBackImage: Image?
-	@State private var currentControl: String = CIColorControlFilter.brightness.rawValue
+	@State private var currentControl: String = CIColorFilterControl.brightness.rawValue
 	
     var body: some View {
 		GeometryReader { geometry in
@@ -22,13 +22,17 @@ struct EditView: View, EditorDelegation {
 						.contentShape(Rectangle())
 					TuningPanel(currentControl: $currentControl)
 						.onChange(of: isShowingPicker, perform: resetTunner(_:))
-						.disabled(editor.imageForDisplay == nil)
+						.disabled(editor.uiImage == nil)
 						.frame(maxHeight: geometry.size.height * 0.3)
 				}
 				FeedBackView(feedBackImage: $feedBackImage)
 			}
 			.toolbar{
 				ToolbarItem(placement: .navigationBarLeading, content: drawSaveButton)
+				ToolbarItem(placement: .navigationBarTrailing,
+							content: drawUndoButton)
+				ToolbarItem(placement: .navigationBarTrailing,
+							content: drawRedoButton)
 				ToolbarItem(placement: .navigationBarTrailing,
 							content: drawPickerButton)
 			}
@@ -37,6 +41,24 @@ struct EditView: View, EditorDelegation {
 			.navigationTitle("Edit")
 		}
     }
+	
+	private func drawRedoButton() -> some View {
+		Button(action: {
+			editor.redo()
+		}) {
+			Text("Redo")
+				.font(.title)
+		}.disabled(!editor.historyManager.redoAble)
+	}
+	
+	private func drawUndoButton() -> some View {
+		Button(action: {
+			editor.undo()
+		}) {
+			Text("Undo")
+				.font(.title)
+		}.disabled(!editor.historyManager.undoAble)
+	}
 	
 	private func drawSaveButton() -> some View {
 		Button(action: {
@@ -75,7 +97,7 @@ struct EditView: View, EditorDelegation {
 			return 
 		}
 		editor.delegate = self
-		if editor.imageForDisplay == nil {
+		if editor.uiImage == nil {
 			DispatchQueue.main.async {
 				isShowingPicker = true
 			}

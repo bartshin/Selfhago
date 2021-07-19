@@ -10,6 +10,7 @@ import SwiftUI
 struct TuningPanel: View {
 	
 	@EnvironmentObject var editor: ImageEditor
+	@EnvironmentObject var editingState: EditingState
 	@Binding var currentControl: String
 	private let allControls: [String]
 
@@ -22,27 +23,27 @@ struct TuningPanel: View {
 					}
 				}
 			}
-			if let colorControl = CIColorControlFilter(rawValue: currentControl) {
+			if let colorControl = CIColorFilterControl(rawValue: currentControl) {
 				drawSlider(for: colorControl)
-			}else if DrawableFilter(rawValue: currentControl) != nil {
+			}else if DrawableFilterControl(rawValue: currentControl) != nil {
 				blurmaskControlSlider
-			}else if let presetFilter = PresetFilter(rawValue: currentControl) {
+			}else if let presetFilter = PresetFilterControl(rawValue: currentControl) {
 				drawPresetControl(for: presetFilter)
-			}else if let tunableFilter = TunableFilter(rawValue: currentControl) {
-				drawSliders(for: tunableFilter)
+			}else if let tunableFilter = TunableFilterControl(rawValue: currentControl) {
+				drawVerticalSliders(for: tunableFilter)
 			}
 		}
 		.padding(.horizontal, Constant.horizontalPadding)
 	}
 	
 	private func getLabel(for control: String) -> Image {
-		if let colorControl = CIColorControlFilter(rawValue: control) {
+		if let colorControl = CIColorFilterControl(rawValue: control) {
 			return colorControl.label
-		}else if let blurControl = DrawableFilter(rawValue: control) {
+		}else if let blurControl = DrawableFilterControl(rawValue: control) {
 			return blurControl.label
-		}else if let selectiveControl = TunableFilter(rawValue: control) {
+		}else if let selectiveControl = TunableFilterControl(rawValue: control) {
 			return selectiveControl.label
-		}else if let presetFilter = PresetFilter(rawValue: control) {
+		}else if let presetFilter = PresetFilterControl(rawValue: control) {
 			return presetFilter.label
 		}else {
 			return Image(uiImage: UIImage())
@@ -53,11 +54,11 @@ struct TuningPanel: View {
 		VStack {
 			HStack {
 				Text("강도")
-				Slider(value: $editor.blurIntensity, in: 0...20, step: 1)
+				Slider(value: $editingState.blurIntensity, in: 0...20, step: 1)
 			}
 			HStack {
 				Text("범위")
-				Slider(value: $editor.blurMarkerWidth, in: 10...60, step: 5)
+				Slider(value: $editingState.blurMarkerWidth, in: 10...60, step: 5)
 			}
 		}
 		.padding(.top, Constant.verticalPadding)
@@ -65,14 +66,8 @@ struct TuningPanel: View {
 	
 	private func drawButton<L>(for control: String, label: L) -> some View where L: View {
 		Button(action: {
-			if currentControl == control {
-				withAnimation {
-					editor.resetControls()
-				}
-			}else {
-				withAnimation{
-					currentControl = control
-				}
+			withAnimation{
+				currentControl = control
 			}
 		}) {
 			label
@@ -83,34 +78,35 @@ struct TuningPanel: View {
 		.padding(.horizontal)
 	}
 		
-	private func drawSlider(for colorControl: CIColorControlFilter) -> some View {
+	private func drawSlider(for colorControl: CIColorFilterControl) -> some View {
 		VStack {
-		Slider(value: createBinding(to: colorControl), in: -0.5...0.5,
-			   step: 0.05)
+			Slider(value: createBinding(to: colorControl, with: colorControl.rawValue), in: -0.5...0.5,
+			   step: 0.01)
 			if colorControl == .brightness {
-				drawSliders(for: .brightness)
+				drawVerticalSliders(for: .rgb)
 					.layoutPriority(1)
 			}
 		}
 		.padding(.top, colorControl != .brightness ? Constant.verticalPadding: 0)
 	}
 	
-	private func createBinding(to colorControl: CIColorControlFilter) -> Binding<Double> {
+	private func createBinding(to colorControl: CIColorFilterControl, with key: String) -> Binding<Double> {
 		Binding<Double> {
-			editor.colorControl[colorControl]! - colorControl.defaultValue
+			editingState.colorControl[colorControl]! - colorControl.defaultValue
 		} set: {
-			editor.colorControl[colorControl] = $0 + colorControl.defaultValue
+			editingState.colorControl[colorControl] = $0 + colorControl.defaultValue
+			editor.setCIColorControl(with: key)
 		}
 	}
 	
-	private func drawSliders(for filter: TunableFilter) -> some View {
+	private func drawVerticalSliders(for filter: TunableFilterControl) -> some View {
 		GeometryReader { geometry in
 			HStack {
 				ForEach(0..<filter.tunableFactors) {
 					VSlider(value: createBinding(
 								to: filter, at: $0),
 							in: filter.getRange(for: $0),
-							step: 0.05,
+							step: 0.01,
 							sliderSize:
 								.init(width: geometry.size.width * 0.25,
 									  height: geometry.size.height ))
@@ -120,44 +116,91 @@ struct TuningPanel: View {
 		}
 	}
 	
-	private func createBinding(to tunableControl: TunableFilter, at index: Int) -> Binding<CGFloat> {
+	private func createBinding(to tunableControl: TunableFilterControl, at index: Int) -> Binding<CGFloat> {
 		switch tunableControl {
-			case .brightness:
+			case .rgb:
 				return Binding<CGFloat> {
 					var value: CGFloat = 0
-					FilterParameter.RGBColor.allCases.forEach {
-						value += editor.selectiveControl[$0]![index]
+					SelectiveBrightness.FilterParameter.RGBColor.allCases.forEach {
+						value += editingState.selectiveControl[$0]![index]
 					}
-					return value/3
+					return value/3 // Average of rgb
 				} set: { value in
-					FilterParameter.RGBColor.allCases.forEach { rgb in
-						editor.selectiveControl[rgb]![index] = value
+					SelectiveBrightness.FilterParameter.RGBColor.allCases.forEach { component in
+						editingState.selectiveControl[component]![index] = value
 					}
 					editor.setSelectiveBrightness()
 				}
 			case .bilateral:
 				return Binding<CGFloat> {
-					CGFloat(index == 0 ? editor.bilateralFactor.radius:
-								editor.bilateralFactor.intensity)
+					index == 0 ? editingState.bilateralControl.radius:
+						editingState.bilateralControl.intensity
 				}set: {
 					if index == 0 {
-						editor.bilateralFactor.radius = Float($0)
+						editingState.bilateralControl.radius = $0
 					}else {
-						editor.bilateralFactor.intensity = Float($0)
+						editingState.bilateralControl.intensity = $0
 					}
 					editor.setBilateral()
 				}
+			case .vignette:
+				return Binding<CGFloat> {
+					if index == 0 {
+						return editingState.vignetteControl.radius
+					}
+					else if index == 1 {
+						return editingState.vignetteControl.intensity
+					}
+					else {
+						return editingState.vignetteControl.edgeBrightness
+					}
+				}set: {
+					if index == 0 {
+						editingState.vignetteControl.radius = $0
+					}
+					else if index == 1 {
+						editingState.vignetteControl.intensity = $0
+					}
+					else {
+						editingState.vignetteControl.edgeBrightness = $0
+					}
+					editor.setVignette()
+				}
 		}
 	}
-	
-	private func drawPresetControl(for presetFilter: PresetFilter) -> some View {
+	@ViewBuilder
+	private func drawPresetControl(for presetFilter: PresetFilterControl) -> some View {
 		HStack (spacing: 30) {
-			ForEach(presetFilter.luts.enumerated().sorted(by: { lhs, rhs in
-				lhs.element < rhs.element
-			}), id: \.element) { filter in
-				Button("\(presetFilter.code)\(filter.offset)") {
-					editor.setLutFilter(filter.element)
+			if let luts = presetFilter.luts {
+				ForEach(luts.enumerated().sorted(by: { lhs, rhs in
+					lhs.element < rhs.element
+				}), id: \.element) { filter in
+					Button("\(presetFilter.lutCode!)\(filter.offset)") {
+						editor.setLutCube(filter.element)
+					}
 				}
+			}else {
+				HStack (spacing: 20) {
+					VSlider(value: Binding<CGFloat>(
+								get: { editingState.outlineControl.bias
+								}, set: {
+									editingState.outlineControl.bias = $0
+									editor.setOutline()
+								}),
+							in: 0.1...2,
+							sliderSize: .init(width: 30,
+											  height: 100))
+					VSlider(value: Binding<CGFloat>(
+								get: { editingState.outlineControl.weight
+								}, set: {
+									editingState.outlineControl.weight = $0
+									editor.setOutline()
+								}),
+							in: 0.1...4,
+							sliderSize: .init(width: 30,
+											  height: 100))
+				}
+				.padding(.vertical, 20)
 			}
 		}
 	}
@@ -169,16 +212,15 @@ struct TuningPanel: View {
 	
 	init(currentControl: Binding<String>) {
 		self._currentControl = currentControl
-		allControls = CIColorControlFilter.allCases.compactMap{ $0.rawValue } + [
-			TunableFilter.bilateral.rawValue,
-			DrawableFilter.mask.rawValue,
-			PresetFilter.portrait.rawValue,  PresetFilter.landscape.rawValue]
+		allControls = CIColorFilterControl.allCases.compactMap{ $0.rawValue } + [
+			TunableFilterControl.bilateral.rawValue, TunableFilterControl.vignette.rawValue,
+			DrawableFilterControl.mask.rawValue] + PresetFilterControl.allCases.compactMap { $0.rawValue }
 	}
 }
 
 struct ImageTuningPanel_Previews: PreviewProvider {
     static var previews: some View {
-		TuningPanel(currentControl: Binding<String>.constant(TunableFilter.brightness.rawValue))
+		TuningPanel(currentControl: Binding<String>.constant(TunableFilterControl.rgb.rawValue))
 			.environmentObject(ImageEditor.forPreview)
 			.preferredColorScheme(.dark)
     }
