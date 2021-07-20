@@ -12,15 +12,15 @@ struct EditView: View, EditorDelegation {
 	@EnvironmentObject var editor: ImageEditor
 	@State private var isShowingPicker = false
 	@State private var feedBackImage: Image?
-	@State private var currentControl: String = CIColorFilterControl.brightness.rawValue
+	@State private var currentCategory = FilterCategory<Any>(rawValue: CIColorFilterControl.brightness.rawValue)!
 	
     var body: some View {
 		GeometryReader { geometry in
 			ZStack {
 				VStack(spacing: 0) {
-					EditingImage(currentControl: $currentControl)
+					EditingImage(category: $currentCategory)
 						.contentShape(Rectangle())
-					TuningPanel(currentControl: $currentControl)
+					TuningPanel(category: $currentCategory)
 						.onChange(of: isShowingPicker, perform: resetTunner(_:))
 						.disabled(editor.uiImage == nil)
 						.frame(maxHeight: geometry.size.height * 0.3)

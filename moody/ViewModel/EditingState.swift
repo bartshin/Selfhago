@@ -18,7 +18,7 @@ class EditingState: ObservableObject {
 	
 	// MARK: Filter
 	/// [ Filter name : CI Filter]
-	var filters: [String: CIFilter]
+	private(set) var filters: [String: CIFilter]
 	
 	// Blur
 	@Published var blurMarkerWidth: CGFloat
@@ -33,6 +33,11 @@ class EditingState: ObservableObject {
 	var selectiveControl: [SelectiveBrightness.FilterParameter.RGBColor: SelectiveBrightness.selectableValues]
 	// Vignette
 	var vignetteControl: (radius: CGFloat, intensity: CGFloat, edgeBrightness: CGFloat)
+	// Glitter
+	var thresholdBrightness: CGFloat
+	var glitterAnglesAndRadius: [CGFloat: CGFloat]
+	// LUT
+	var selectedLUTName: String?
 	
 	func setNewImageData(_ image: UIImage) -> CIImage {
 		originalCgImage = image.cgImage
@@ -73,6 +78,8 @@ class EditingState: ObservableObject {
 		bilateralControl = (0.1, 0.1)
 		outlineControl = (0.1, 0.1)
 		vignetteControl = (1, 2, -0.3)
+		thresholdBrightness = 1.0
+		glitterAnglesAndRadius = [:]
 		faceRegions = []
 		filters = [:]
 		selectiveControl = SelectiveBrightness.FilterParameter.RGBColor.allCases.reduce(into: [SelectiveBrightness.FilterParameter.RGBColor: SelectiveBrightness.selectableValues]()) {

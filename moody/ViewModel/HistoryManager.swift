@@ -127,6 +127,7 @@ class HistoryManager {
 			case LUTCube
 			case SobelEdgeDetection3x3
 			case Vignette
+			case Glitter
 			case brightness
 			case saturation
 			case contrast
@@ -167,6 +168,8 @@ class HistoryManager {
 				case .Vignette:
 					keys = [kCIInputIntensityKey, kCIInputRadiusKey,
 					kCIInputBrightnessKey]
+				case .Glitter:
+					keys = [ kCIInputBrightnessKey, kCIInputAngleKey ]
 				case .unManaged:
 					return [:]
 			}

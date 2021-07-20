@@ -88,7 +88,6 @@ class ImageEditor: NSObject, ObservableObject {
 		let outlineFilter = editingState.getFilter(SobelEdgeDetection3x3.self)
 		let key = String(describing: SobelEdgeDetection3x3.self)
 		let filterState = historyManager.createState(for: outlineFilter, specificKey: key)
-		editingState.filters[key] = outlineFilter
 		outlineFilter.setValue(editingState.outlineControl.bias, forKey: kCIInputBiasKey)
 		outlineFilter.setValue(editingState.outlineControl.weight, forKey: kCIInputWeightsKey)
 		applyFilter(outlineFilter, with: filterState)
@@ -101,6 +100,16 @@ class ImageEditor: NSObject, ObservableObject {
 		filter.setValue(editingState.vignetteControl.radius, forKey: kCIInputRadiusKey)
 		filter.setValue(editingState.vignetteControl.intensity, forKey: kCIInputIntensityKey)
 		filter.setValue(editingState.vignetteControl.edgeBrightness, forKey: kCIInputBrightnessKey)
+		applyFilter(filter, with: filterState)
+		setImageForDisplay()
+	}
+	
+	func setGlitter() {
+		let filter = editingState.getFilter(Glitter.self)
+		let filterState = historyManager.createState(for: filter)
+		let gilterControl: [CGFloat: CGFloat] = editingState.glitterAnglesAndRadius
+		filter.setValue(editingState.thresholdBrightness, forKey: kCIInputBrightnessKey)
+		filter.setValue(gilterControl, forKey: kCIInputAngleKey)
 		applyFilter(filter, with: filterState)
 		setImageForDisplay()
 	}
@@ -238,6 +247,7 @@ extension ImageEditor {
 		setImageForDisplay()
 	}
 	
+	/// Load previous setting for UI
 	func loadState(filter: HistoryManager.FilterState.Filter, state: [String: Any]) {
 		switch filter {
 			case .Bilateral:
@@ -265,10 +275,11 @@ extension ImageEditor {
 				editingState.colorControl[.saturation] = saturation
 				editingState.colorControl[.contrast] = contrast
 			case .LUTCube:
-				guard let lutName = state[kCIInputMaskImageKey] as? String else {
-					return
+				if let lutName = state[kCIInputMaskImageKey] as? String {
+					editingState.selectedLUTName = lutName
+				}else {
+					editingState.selectedLUTName = nil
 				}
-				print("lut \(lutName)")
 			case .SobelEdgeDetection3x3:
 				guard let bias = state[kCIInputBiasKey] as? CGFloat,
 					  let weight = state[kCIInputWeightsKey] as? CGFloat else {
@@ -284,7 +295,14 @@ extension ImageEditor {
 					  let radius = state[kCIInputRadiusKey] as? CGFloat else {
 					return
 				}
-				print("edge \(edgeBrightness), intensity \(intensity), radius \(radius)")
+				editingState.vignetteControl = (radius: radius, intensity: intensity, edgeBrightness: edgeBrightness)
+			case .Glitter:
+				guard let threshold = state[kCIInputBrightnessKey] as? CGFloat,
+					  let anglesAndRadius = state[kCIInputAngleKey] as? [CGFloat: CGFloat] else {
+					return
+				}
+				editingState.thresholdBrightness = threshold
+				editingState.glitterAnglesAndRadius = anglesAndRadius
 			case .unManaged:
 				break
 			

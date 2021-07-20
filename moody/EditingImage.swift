@@ -13,14 +13,14 @@ struct EditingImage: View {
 	@Environment(\.colorScheme) var colorScheme
 	@EnvironmentObject var editor: ImageEditor
 	@EnvironmentObject var editingState: EditingState
-	@Binding var currentControl: String
+	@Binding var category: FilterCategory<Any>
 	
 	private var image: UIImage {
 		editor.uiImage!
 	}
 	
 	private var isDrawingMask: Bool {
-		currentControl == DrawableFilterControl.mask.rawValue
+		category.control is DrawableFilterControl && category.subCategory == DrawableFilterControl.mask.rawValue
 	}
 	
 	var body: some View {
@@ -190,7 +190,7 @@ struct EditingImage: View {
 
 struct EditingImage_Previews: PreviewProvider {
 	static var previews: some View {
-		EditingImage(currentControl: Binding<String>.constant(CIColorFilterControl.brightness.rawValue))
+		EditingImage(category: .constant(FilterCategory(rawValue: CIColorFilterControl.brightness.rawValue)!))
 			.environmentObject(ImageEditor.forPreview)
 	}
 }
