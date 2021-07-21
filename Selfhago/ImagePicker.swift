@@ -1,9 +1,4 @@
-//
-//  ImagePicker.swift
-//  moody
-//
-//  Created by 김두리 on 2021/06/18.
-//
+
 
 import SwiftUI
 import PhotosUI

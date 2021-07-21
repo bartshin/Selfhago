@@ -17,7 +17,7 @@ class EditingState: ObservableObject {
 	var faceRegions: [CGRect]
 	
 	// MARK: Filter
-	/// [ Filter name : CI Filter]
+	/// [ Filter name : CI Filter] key = String(describing: FilterType.self)
 	private(set) var filters: [String: CIFilter]
 	
 	// Blur
@@ -63,27 +63,46 @@ class EditingState: ObservableObject {
 	
 	func resetControls() {
 		colorControl = CIColorFilterControl.defaults
-		selectiveControl.keys.forEach {
-			selectiveControl[$0] = SelectiveBrightness.emptyValues
+		blurIntensity = DefaultValues.blurIntensity
+		blurMarkerWidth = DefaultValues.blurMaskWidth
+		averageLuminace = DefaultValues.averageLuminance
+		bilateralControl = DefaultValues.bilateralControl
+		outlineControl = DefaultValues.outlineControl
+		vignetteControl = DefaultValues.vignetteControl
+		thresholdBrightness = DefaultValues.thresholdBrightness
+		selectiveControl.keys.forEach { rgbComponent in
+			selectiveControl[rgbComponent] = SelectiveBrightness.emptyValues
 		}
-		bilateralControl = (0.1, 0.1)
-		filters = [:]
+		glitterAnglesAndRadius.removeAll()
+		faceRegions.removeAll()
+		filters.removeAll()
 	}
 	
 	init() {
 		colorControl = CIColorFilterControl.defaults
-		blurIntensity = 10
-		blurMarkerWidth = 30
-		averageLuminace = 0.5
-		bilateralControl = (0.1, 0.1)
-		outlineControl = (0.1, 0.1)
-		vignetteControl = (1, 2, -0.3)
-		thresholdBrightness = 1.0
-		glitterAnglesAndRadius = [:]
-		faceRegions = []
-		filters = [:]
-		selectiveControl = SelectiveBrightness.FilterParameter.RGBColor.allCases.reduce(into: [SelectiveBrightness.FilterParameter.RGBColor: SelectiveBrightness.selectableValues]()) {
-			$0[$1] = SelectiveBrightness.emptyValues
+		blurIntensity = DefaultValues.blurIntensity
+		blurMarkerWidth = DefaultValues.blurMaskWidth
+		averageLuminace = DefaultValues.averageLuminance
+		bilateralControl = DefaultValues.bilateralControl
+		outlineControl = DefaultValues.outlineControl
+		vignetteControl = DefaultValues.vignetteControl
+		thresholdBrightness = DefaultValues.thresholdBrightness
+		glitterAnglesAndRadius = .init()
+		faceRegions = .init()
+		filters = .init()
+		selectiveControl = SelectiveBrightness.FilterParameter.RGBColor.allCases.reduce(
+			into: .init()) { dict , rgbComponent in
+			dict[rgbComponent] = SelectiveBrightness.emptyValues
 		}
+	}
+	
+	struct DefaultValues {
+		static let blurIntensity: Double = 10
+		static let blurMaskWidth: CGFloat = 30
+		static let averageLuminance: CGFloat = 0.5
+		static let outlineControl: (CGFloat, CGFloat) = (0.1, 0.1)
+		static let bilateralControl: (CGFloat, CGFloat) = (0.1, 0.1)
+		static let vignetteControl: (CGFloat, CGFloat, CGFloat) = (1, 2, -0.3)
+		static let thresholdBrightness: CGFloat = 1.0
 	}
 }

@@ -14,7 +14,7 @@ struct BottomNavigationBar: View {
 	var body: some View {
 		HStack {
 			createNavigationLink(for: EditView(), image: Image(systemName: "slider.horizontal.below.rectangle"))
-			createNavigationLink(for: FilterView(), image: Image(systemName: "camera.filters"))
+			
 		}
 	}
 	

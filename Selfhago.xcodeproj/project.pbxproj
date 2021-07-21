@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		890851B026A324CC000ACBD2 /* Vignette.swift in Sources */ = {isa = PBXBuildFile; fileRef = 890851AF26A324CC000ACBD2 /* Vignette.swift */; };
-		89110C812680AB50002779AA /* FilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C802680AB50002779AA /* FilterView.swift */; };
 		89110C832680AD0E002779AA /* FilterControlHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C822680AD0E002779AA /* FilterControlHelper.swift */; };
 		89110C862680BCA0002779AA /* EditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C852680BCA0002779AA /* EditView.swift */; };
 		89110C882680BCEB002779AA /* BottomNavigationButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89110C872680BCEB002779AA /* BottomNavigationButton.swift */; };
@@ -49,18 +48,13 @@
 		89E8726B26A190ED009C65EF /* SobelEdgeDetection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E8726A26A190ED009C65EF /* SobelEdgeDetection.swift */; };
 		89E8726D26A1912C009C65EF /* CIVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E8726C26A1912C009C65EF /* CIVector.swift */; };
 		89E8727326A1A106009C65EF /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E8727226A1A106009C65EF /* HistoryManager.swift */; };
-		C19759F8267CCE0B006003CA /* moodyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19759F7267CCE0B006003CA /* moodyApp.swift */; };
-		C19759FA267CCE0B006003CA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19759F9267CCE0B006003CA /* ContentView.swift */; };
+		C19759F8267CCE0B006003CA /* SelfhagoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19759F7267CCE0B006003CA /* SelfhagoApp.swift */; };
 		C19759FC267CCE0D006003CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C19759FB267CCE0D006003CA /* Assets.xcassets */; };
 		C19759FF267CCE0D006003CA /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C19759FE267CCE0D006003CA /* Preview Assets.xcassets */; };
-		C1975A01267CCE0D006003CA /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1975A00267CCE0D006003CA /* Persistence.swift */; };
-		C1975A04267CCE0D006003CA /* moody.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = C1975A02267CCE0D006003CA /* moody.xcdatamodeld */; };
 		C1975A0F267CCE0D006003CA /* moodyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1975A0E267CCE0D006003CA /* moodyTests.swift */; };
 		C1975A1A267CCE0D006003CA /* moodyUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1975A19267CCE0D006003CA /* moodyUITests.swift */; };
 		C1975A2B267CCE8E006003CA /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1975A2A267CCE8E006003CA /* HomeView.swift */; };
 		C1975A2D267CCEAF006003CA /* ImagePicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1975A2C267CCEAF006003CA /* ImagePicker.swift */; };
-		C1975A2F267CCEC8006003CA /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1975A2E267CCEC8006003CA /* HomeViewModel.swift */; };
-		C1975A31267CCEE2006003CA /* FilteredImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1975A30267CCEE2006003CA /* FilteredImage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,7 +76,6 @@
 
 /* Begin PBXFileReference section */
 		890851AF26A324CC000ACBD2 /* Vignette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Vignette.swift; sourceTree = "<group>"; };
-		89110C802680AB50002779AA /* FilterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterView.swift; sourceTree = "<group>"; };
 		89110C822680AD0E002779AA /* FilterControlHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterControlHelper.swift; sourceTree = "<group>"; };
 		89110C852680BCA0002779AA /* EditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditView.swift; sourceTree = "<group>"; };
 		89110C872680BCEB002779AA /* BottomNavigationButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomNavigationButton.swift; sourceTree = "<group>"; };
@@ -124,24 +117,19 @@
 		89E8726A26A190ED009C65EF /* SobelEdgeDetection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SobelEdgeDetection.swift; sourceTree = "<group>"; };
 		89E8726C26A1912C009C65EF /* CIVector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CIVector.swift; sourceTree = "<group>"; };
 		89E8727226A1A106009C65EF /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
-		C19759F4267CCE0A006003CA /* moody.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = moody.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C19759F7267CCE0B006003CA /* moodyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = moodyApp.swift; sourceTree = "<group>"; };
-		C19759F9267CCE0B006003CA /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C19759F4267CCE0A006003CA /* Selfhago.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Selfhago.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C19759F7267CCE0B006003CA /* SelfhagoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelfhagoApp.swift; sourceTree = "<group>"; };
 		C19759FB267CCE0D006003CA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C19759FE267CCE0D006003CA /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		C1975A00267CCE0D006003CA /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
-		C1975A03267CCE0D006003CA /* moody.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = moody.xcdatamodel; sourceTree = "<group>"; };
 		C1975A05267CCE0D006003CA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C1975A0A267CCE0D006003CA /* moodyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = moodyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1975A0A267CCE0D006003CA /* SelfhagoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SelfhagoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1975A0E267CCE0D006003CA /* moodyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = moodyTests.swift; sourceTree = "<group>"; };
 		C1975A10267CCE0D006003CA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		C1975A15267CCE0D006003CA /* moodyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = moodyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1975A15267CCE0D006003CA /* SelfhagoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SelfhagoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1975A19267CCE0D006003CA /* moodyUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = moodyUITests.swift; sourceTree = "<group>"; };
 		C1975A1B267CCE0D006003CA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C1975A2A267CCE8E006003CA /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		C1975A2C267CCEAF006003CA /* ImagePicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePicker.swift; sourceTree = "<group>"; };
-		C1975A2E267CCEC8006003CA /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
-		C1975A30267CCEE2006003CA /* FilteredImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilteredImage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -275,9 +263,9 @@
 		C19759EB267CCE0A006003CA = {
 			isa = PBXGroup;
 			children = (
-				C19759F6267CCE0A006003CA /* moody */,
-				C1975A0D267CCE0D006003CA /* moodyTests */,
-				C1975A18267CCE0D006003CA /* moodyUITests */,
+				C19759F6267CCE0A006003CA /* Selfhago */,
+				C1975A0D267CCE0D006003CA /* SelfhagoTests */,
+				C1975A18267CCE0D006003CA /* SelfhagoUITests */,
 				C19759F5267CCE0A006003CA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -285,14 +273,14 @@
 		C19759F5267CCE0A006003CA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C19759F4267CCE0A006003CA /* moody.app */,
-				C1975A0A267CCE0D006003CA /* moodyTests.xctest */,
-				C1975A15267CCE0D006003CA /* moodyUITests.xctest */,
+				C19759F4267CCE0A006003CA /* Selfhago.app */,
+				C1975A0A267CCE0D006003CA /* SelfhagoTests.xctest */,
+				C1975A15267CCE0D006003CA /* SelfhagoUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		C19759F6267CCE0A006003CA /* moody */ = {
+		C19759F6267CCE0A006003CA /* Selfhago */ = {
 			isa = PBXGroup;
 			children = (
 				89AF31E3268E0A700091F298 /* Resource */,
@@ -300,15 +288,12 @@
 				C1975A28267CCE32006003CA /* ViewModel */,
 				C1975A27267CCE2B006003CA /* Model */,
 				89110C842680AD30002779AA /* Helper */,
-				C19759F9267CCE0B006003CA /* ContentView.swift */,
 				C19759FB267CCE0D006003CA /* Assets.xcassets */,
-				C1975A00267CCE0D006003CA /* Persistence.swift */,
-				C19759F7267CCE0B006003CA /* moodyApp.swift */,
+				C19759F7267CCE0B006003CA /* SelfhagoApp.swift */,
 				C1975A05267CCE0D006003CA /* Info.plist */,
-				C1975A02267CCE0D006003CA /* moody.xcdatamodeld */,
 				C19759FD267CCE0D006003CA /* Preview Content */,
 			);
-			path = moody;
+			path = Selfhago;
 			sourceTree = "<group>";
 		};
 		C19759FD267CCE0D006003CA /* Preview Content */ = {
@@ -319,29 +304,28 @@
 			path = "Preview Content";
 			sourceTree = "<group>";
 		};
-		C1975A0D267CCE0D006003CA /* moodyTests */ = {
+		C1975A0D267CCE0D006003CA /* SelfhagoTests */ = {
 			isa = PBXGroup;
 			children = (
 				C1975A0E267CCE0D006003CA /* moodyTests.swift */,
 				C1975A10267CCE0D006003CA /* Info.plist */,
 			);
-			path = moodyTests;
+			path = SelfhagoTests;
 			sourceTree = "<group>";
 		};
-		C1975A18267CCE0D006003CA /* moodyUITests */ = {
+		C1975A18267CCE0D006003CA /* SelfhagoUITests */ = {
 			isa = PBXGroup;
 			children = (
 				C1975A19267CCE0D006003CA /* moodyUITests.swift */,
 				C1975A1B267CCE0D006003CA /* Info.plist */,
 			);
-			path = moodyUITests;
+			path = SelfhagoUITests;
 			sourceTree = "<group>";
 		};
 		C1975A27267CCE2B006003CA /* Model */ = {
 			isa = PBXGroup;
 			children = (
 				895ECE35268C45E50050DF2E /* Filters */,
-				C1975A30267CCEE2006003CA /* FilteredImage.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -349,7 +333,6 @@
 		C1975A28267CCE32006003CA /* ViewModel */ = {
 			isa = PBXGroup;
 			children = (
-				C1975A2E267CCEC8006003CA /* HomeViewModel.swift */,
 				89110C8C2680C729002779AA /* ImageEditor.swift */,
 				89E8727226A1A106009C65EF /* HistoryManager.swift */,
 				896FF712269EDDDF00533C23 /* ImageAnalyst.swift */,
@@ -364,7 +347,6 @@
 				89110C892680BD18002779AA /* Edit */,
 				C1975A2A267CCE8E006003CA /* HomeView.swift */,
 				891DF6922684283400A314B8 /* FeedBackView.swift */,
-				89110C802680AB50002779AA /* FilterView.swift */,
 				89110C8A2680BD57002779AA /* BottomNavigationBar.swift */,
 				898C02CB2685BA78008A2B2C /* BlurMaskView.swift */,
 				C1975A2C267CCEAF006003CA /* ImagePicker.swift */,
@@ -375,9 +357,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C19759F3267CCE0A006003CA /* moody */ = {
+		C19759F3267CCE0A006003CA /* Selfhago */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C1975A1E267CCE0D006003CA /* Build configuration list for PBXNativeTarget "moody" */;
+			buildConfigurationList = C1975A1E267CCE0D006003CA /* Build configuration list for PBXNativeTarget "Selfhago" */;
 			buildPhases = (
 				C19759F0267CCE0A006003CA /* Sources */,
 				C19759F1267CCE0A006003CA /* Frameworks */,
@@ -387,14 +369,14 @@
 			);
 			dependencies = (
 			);
-			name = moody;
+			name = Selfhago;
 			productName = moody;
-			productReference = C19759F4267CCE0A006003CA /* moody.app */;
+			productReference = C19759F4267CCE0A006003CA /* Selfhago.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C1975A09267CCE0D006003CA /* moodyTests */ = {
+		C1975A09267CCE0D006003CA /* SelfhagoTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C1975A21267CCE0D006003CA /* Build configuration list for PBXNativeTarget "moodyTests" */;
+			buildConfigurationList = C1975A21267CCE0D006003CA /* Build configuration list for PBXNativeTarget "SelfhagoTests" */;
 			buildPhases = (
 				C1975A06267CCE0D006003CA /* Sources */,
 				C1975A07267CCE0D006003CA /* Frameworks */,
@@ -405,14 +387,14 @@
 			dependencies = (
 				C1975A0C267CCE0D006003CA /* PBXTargetDependency */,
 			);
-			name = moodyTests;
+			name = SelfhagoTests;
 			productName = moodyTests;
-			productReference = C1975A0A267CCE0D006003CA /* moodyTests.xctest */;
+			productReference = C1975A0A267CCE0D006003CA /* SelfhagoTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C1975A14267CCE0D006003CA /* moodyUITests */ = {
+		C1975A14267CCE0D006003CA /* SelfhagoUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C1975A24267CCE0D006003CA /* Build configuration list for PBXNativeTarget "moodyUITests" */;
+			buildConfigurationList = C1975A24267CCE0D006003CA /* Build configuration list for PBXNativeTarget "SelfhagoUITests" */;
 			buildPhases = (
 				C1975A11267CCE0D006003CA /* Sources */,
 				C1975A12267CCE0D006003CA /* Frameworks */,
@@ -423,9 +405,9 @@
 			dependencies = (
 				C1975A17267CCE0D006003CA /* PBXTargetDependency */,
 			);
-			name = moodyUITests;
+			name = SelfhagoUITests;
 			productName = moodyUITests;
-			productReference = C1975A15267CCE0D006003CA /* moodyUITests.xctest */;
+			productReference = C1975A15267CCE0D006003CA /* SelfhagoUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -450,7 +432,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C19759EF267CCE0A006003CA /* Build configuration list for PBXProject "moody" */;
+			buildConfigurationList = C19759EF267CCE0A006003CA /* Build configuration list for PBXProject "Selfhago" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -463,9 +445,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C19759F3267CCE0A006003CA /* moody */,
-				C1975A09267CCE0D006003CA /* moodyTests */,
-				C1975A14267CCE0D006003CA /* moodyUITests */,
+				C19759F3267CCE0A006003CA /* Selfhago */,
+				C1975A09267CCE0D006003CA /* SelfhagoTests */,
+				C1975A14267CCE0D006003CA /* SelfhagoUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -514,18 +496,14 @@
 			files = (
 				894FD1EA268D7D0900511253 /* LUTCube.swift in Sources */,
 				8996B28A26A5610C0082527D /* CircularSlider.swift in Sources */,
-				C1975A31267CCEE2006003CA /* FilteredImage.swift in Sources */,
 				8938E2DC268ADE1E00A2209F /* MetalFileData.swift in Sources */,
-				C1975A01267CCE0D006003CA /* Persistence.swift in Sources */,
 				89544349268B2EDE00B0F085 /* SelectiveBrightness.ci.metal in Sources */,
 				89110C882680BCEB002779AA /* BottomNavigationButton.swift in Sources */,
 				898C02CC2685BA78008A2B2C /* BlurMaskView.swift in Sources */,
 				89110C862680BCA0002779AA /* EditView.swift in Sources */,
 				891DF6912684277A00A314B8 /* EditingImage.swift in Sources */,
-				C19759FA267CCE0B006003CA /* ContentView.swift in Sources */,
 				895ECE3A268C78500050DF2E /* VSlider.swift in Sources */,
 				89C7A4732692E0000014E097 /* shader_helper.metal in Sources */,
-				C1975A2F267CCEC8006003CA /* HomeViewModel.swift in Sources */,
 				896FF715269EE38600533C23 /* Future&Promise.swift in Sources */,
 				895ECE34268C45D80050DF2E /* SelectiveBrightness.swift in Sources */,
 				896FF713269EDDDF00533C23 /* ImageAnalyst.swift in Sources */,
@@ -539,15 +517,13 @@
 				89110C8D2680C729002779AA /* ImageEditor.swift in Sources */,
 				89E8726B26A190ED009C65EF /* SobelEdgeDetection.swift in Sources */,
 				C1975A2D267CCEAF006003CA /* ImagePicker.swift in Sources */,
-				C1975A04267CCE0D006003CA /* moody.xcdatamodeld in Sources */,
 				890851B026A324CC000ACBD2 /* Vignette.swift in Sources */,
 				89C7A4752692E3DE0014E097 /* Bilateral.ci.metal in Sources */,
 				895BFC3A2680829000EB783E /* TuningPanel.swift in Sources */,
 				8996B28626A534CE0082527D /* UtilityFilter.ci.metal in Sources */,
-				89110C812680AB50002779AA /* FilterView.swift in Sources */,
 				89AF31FD268E11EA0091F298 /* UIImage.swift in Sources */,
 				89110C8B2680BD57002779AA /* BottomNavigationBar.swift in Sources */,
-				C19759F8267CCE0B006003CA /* moodyApp.swift in Sources */,
+				C19759F8267CCE0B006003CA /* SelfhagoApp.swift in Sources */,
 				8996B28C26A57FA00082527D /* RandomColor.swift in Sources */,
 				8996B28826A53AD50082527D /* Glitter.swift in Sources */,
 				8996B2F826A5A6580082527D /* FilterControlView.swift in Sources */,
@@ -575,12 +551,12 @@
 /* Begin PBXTargetDependency section */
 		C1975A0C267CCE0D006003CA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C19759F3267CCE0A006003CA /* moody */;
+			target = C19759F3267CCE0A006003CA /* Selfhago */;
 			targetProxy = C1975A0B267CCE0D006003CA /* PBXContainerItemProxy */;
 		};
 		C1975A17267CCE0D006003CA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C19759F3267CCE0A006003CA /* moody */;
+			target = C19759F3267CCE0A006003CA /* Selfhago */;
 			targetProxy = C1975A16267CCE0D006003CA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -708,10 +684,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "\"moody/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Selfhago/Preview Content\"";
 				DEVELOPMENT_TEAM = 96XCF965VW;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = moody/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/Selfhago/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -721,7 +697,7 @@
 				MTL_COMPILER_FLAGS = "-fcikernel";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_LANGUAGE_REVISION = UseDeploymentTarget;
-				PRODUCT_BUNDLE_IDENTIFIER = doitduri.moody;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Selfhago.bartshin.github;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -734,10 +710,10 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_ASSET_PATHS = "\"moody/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Selfhago/Preview Content\"";
 				DEVELOPMENT_TEAM = 96XCF965VW;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = moody/Info.plist;
+				INFOPLIST_FILE = "$(SRCROOT)/Selfhago/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -747,7 +723,7 @@
 				MTL_COMPILER_FLAGS = "-fcikernel";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_LANGUAGE_REVISION = UseDeploymentTarget;
-				PRODUCT_BUNDLE_IDENTIFIER = doitduri.moody;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Selfhago.bartshin.github;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -771,7 +747,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/moody.app/moody";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Selfhago.app/Selfhago";
 			};
 			name = Debug;
 		};
@@ -792,7 +768,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/moody.app/moody";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Selfhago.app/Selfhago";
 			};
 			name = Release;
 		};
@@ -837,56 +813,43 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		C19759EF267CCE0A006003CA /* Build configuration list for PBXProject "moody" */ = {
+		C19759EF267CCE0A006003CA /* Build configuration list for PBXProject "Selfhago" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C1975A1C267CCE0D006003CA /* Debug */,
 				C1975A1D267CCE0D006003CA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		C1975A1E267CCE0D006003CA /* Build configuration list for PBXNativeTarget "moody" */ = {
+		C1975A1E267CCE0D006003CA /* Build configuration list for PBXNativeTarget "Selfhago" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C1975A1F267CCE0D006003CA /* Debug */,
 				C1975A20267CCE0D006003CA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		C1975A21267CCE0D006003CA /* Build configuration list for PBXNativeTarget "moodyTests" */ = {
+		C1975A21267CCE0D006003CA /* Build configuration list for PBXNativeTarget "SelfhagoTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C1975A22267CCE0D006003CA /* Debug */,
 				C1975A23267CCE0D006003CA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
-		C1975A24267CCE0D006003CA /* Build configuration list for PBXNativeTarget "moodyUITests" */ = {
+		C1975A24267CCE0D006003CA /* Build configuration list for PBXNativeTarget "SelfhagoUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C1975A25267CCE0D006003CA /* Debug */,
 				C1975A26267CCE0D006003CA /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCVersionGroup section */
-		C1975A02267CCE0D006003CA /* moody.xcdatamodeld */ = {
-			isa = XCVersionGroup;
-			children = (
-				C1975A03267CCE0D006003CA /* moody.xcdatamodel */,
-			);
-			currentVersion = C1975A03267CCE0D006003CA /* moody.xcdatamodel */;
-			path = moody.xcdatamodeld;
-			sourceTree = "<group>";
-			versionGroupType = wrapper.xcdatamodel;
-		};
-/* End XCVersionGroup section */
 	};
 	rootObject = C19759EC267CCE0A006003CA /* Project object */;
 }

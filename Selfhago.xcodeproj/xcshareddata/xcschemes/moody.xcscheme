@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C19759F3267CCE0A006003CA"
-               BuildableName = "moody.app"
-               BlueprintName = "moody"
-               ReferencedContainer = "container:moody.xcodeproj">
+               BuildableName = "Selfhago.app"
+               BlueprintName = "Selfhago"
+               ReferencedContainer = "container:Selfhago.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C1975A09267CCE0D006003CA"
-               BuildableName = "moodyTests.xctest"
-               BlueprintName = "moodyTests"
-               ReferencedContainer = "container:moody.xcodeproj">
+               BuildableName = "SelfhagoTests.xctest"
+               BlueprintName = "SelfhagoTests"
+               ReferencedContainer = "container:Selfhago.xcodeproj">
             </BuildableReference>
          </TestableReference>
          <TestableReference
@@ -43,9 +43,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C1975A14267CCE0D006003CA"
-               BuildableName = "moodyUITests.xctest"
-               BlueprintName = "moodyUITests"
-               ReferencedContainer = "container:moody.xcodeproj">
+               BuildableName = "SelfhagoUITests.xctest"
+               BlueprintName = "SelfhagoUITests"
+               ReferencedContainer = "container:Selfhago.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -67,9 +67,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C19759F3267CCE0A006003CA"
-            BuildableName = "moody.app"
-            BlueprintName = "moody"
-            ReferencedContainer = "container:moody.xcodeproj">
+            BuildableName = "Selfhago.app"
+            BlueprintName = "Selfhago"
+            ReferencedContainer = "container:Selfhago.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -84,9 +84,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C19759F3267CCE0A006003CA"
-            BuildableName = "moody.app"
-            BlueprintName = "moody"
-            ReferencedContainer = "container:moody.xcodeproj">
+            BuildableName = "Selfhago.app"
+            BlueprintName = "Selfhago"
+            ReferencedContainer = "container:Selfhago.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

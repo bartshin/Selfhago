@@ -1,9 +1,4 @@
-//
-//  Home.swift
-//  moody
-//
-//  Created by 김두리 on 2021/06/18.
-//
+
 
 import SwiftUI
 
@@ -13,11 +8,6 @@ struct HomeView: View {
 	
     var body: some View {
 		VStack {
-			Text("Camera")
-				.foregroundColor(.primary)
-				.frame(width: UIScreen.main.bounds.width,
-					   height: UIScreen.main.bounds.width)
-			
 			BottomNavigationBar(navigationTag: $navigationDestination)
 				.padding(.top, Constant.verticalMargin)
 		}
