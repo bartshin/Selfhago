@@ -11,21 +11,16 @@ import PencilKit
 
 class ImageEditor: NSObject, ObservableObject {
 	
-	static var forPreview: ImageEditor {
-		let editor = ImageEditor()
-		editor.setNewImage(UIImage(named: "selfie_dummy")!)
-		return editor
-	}
 	private(set) var uiImage: UIImage?
 	private let analyst: ImageAnalyst
 	let historyManager: HistoryManager
 	let editingState: EditingState
-	var blurMask: PKCanvasView
-	var delegate: EditorDelegation?
+	var drawingMaskView: PKCanvasView
+	var savingDelegate: EditorDelegation?
 	private lazy var ciContext = CIContext(options: [.cacheIntermediates: false])
 	
 	func resetControls() {
-		editingState.resetControls()
+		editingState.reset()
 	}
 	
 	func setNewImage(_ image: UIImage) {
@@ -33,8 +28,8 @@ class ImageEditor: NSObject, ObservableObject {
 		let ciImage = editingState.setNewImageData(image)
 		historyManager.clearHistory(with: ciImage)
 		setImageForDisplay()
-		setAverageLuminance()
-		setFaceRegions(for: image.imageOrientation.cgOrientation)
+		calcAverageLuminance()
+		calcFaceRegions(for: image.imageOrientation.cgOrientation)
 	}
 	
 	// MARK: - Set Tunable filter
@@ -42,9 +37,9 @@ class ImageEditor: NSObject, ObservableObject {
 	func setCIColorControl(with key: String){
 		let filter = editingState.getFilter(CIFilter.self, name: "CIColorControls")
 		let filterState = historyManager.createState(for: filter, specificKey: key)
-		filter.setValue(editingState.colorControl[.brightness], forKey: kCIInputBrightnessKey)
-		filter.setValue(editingState.colorControl[.contrast], forKey: kCIInputContrastKey)
-		filter.setValue(editingState.colorControl[.saturation], forKey: kCIInputSaturationKey)
+		filter.setValue(editingState.control.colorControl[.brightness], forKey: kCIInputBrightnessKey)
+		filter.setValue(editingState.control.colorControl[.contrast], forKey: kCIInputContrastKey)
+		filter.setValue(editingState.control.colorControl[.saturation], forKey: kCIInputSaturationKey)
 		applyFilter(filter, with: filterState)
 		setImageForDisplay()
 	}
@@ -52,12 +47,12 @@ class ImageEditor: NSObject, ObservableObject {
 	func setSelectiveBrightness() {
 		let filter = editingState.getFilter(SelectiveBrightness.self)
 		let filterState = historyManager.createState(for: filter)
-		editingState.selectiveControl.keys.forEach { rgb in
+		editingState.control.selectiveControl.keys.forEach { rgb in
 			filter.setBrightness(for: rgb, values: [
-				.black : editingState.selectiveControl[rgb]![0],
-				.shadow: editingState.selectiveControl[rgb]![1],
-				.highlight: editingState.selectiveControl[rgb]![2],
-				.white: editingState.selectiveControl[rgb]![3]
+				.black : editingState.control.selectiveControl[rgb]![0],
+				.shadow: editingState.control.selectiveControl[rgb]![1],
+				.highlight: editingState.control.selectiveControl[rgb]![2],
+				.white: editingState.control.selectiveControl[rgb]![3]
 			],
 			with: editingState.averageLuminace)
 		}
@@ -68,8 +63,8 @@ class ImageEditor: NSObject, ObservableObject {
 	func setBilateral() {
 		let filter = editingState.getFilter(Bilateral.self)
 		let filterState = historyManager.createState(for: filter)
-		filter.setValue(editingState.bilateralControl.radius, forKey: kCIInputRadiusKey)
-		filter.setValue(editingState.bilateralControl.intensity, forKey: kCIInputIntensityKey)
+		filter.setValue(editingState.control.bilateralControl.radius, forKey: kCIInputRadiusKey)
+		filter.setValue(editingState.control.bilateralControl.intensity, forKey: kCIInputIntensityKey)
 		filter.setValue(editingState.imageExtent, forKey: kCIInputExtentKey)
 		filter.setValue(editingState.faceRegions, forKey: Bilateral.faceRegionsKey)
 		applyFilter(filter, with: filterState)
@@ -88,8 +83,8 @@ class ImageEditor: NSObject, ObservableObject {
 		let outlineFilter = editingState.getFilter(SobelEdgeDetection3x3.self)
 		let key = String(describing: SobelEdgeDetection3x3.self)
 		let filterState = historyManager.createState(for: outlineFilter, specificKey: key)
-		outlineFilter.setValue(editingState.outlineControl.bias, forKey: kCIInputBiasKey)
-		outlineFilter.setValue(editingState.outlineControl.weight, forKey: kCIInputWeightsKey)
+		outlineFilter.setValue(editingState.control.outlineControl.bias, forKey: kCIInputBiasKey) 
+		outlineFilter.setValue(editingState.control.outlineControl.weight, forKey: kCIInputWeightsKey)
 		applyFilter(outlineFilter, with: filterState)
 		setImageForDisplay()
 	}
@@ -97,9 +92,9 @@ class ImageEditor: NSObject, ObservableObject {
 	func setVignette() {
 		let filter = editingState.getFilter(Vignette.self)
 		let filterState = historyManager.createState(for: filter)
-		filter.setValue(editingState.vignetteControl.radius, forKey: kCIInputRadiusKey)
-		filter.setValue(editingState.vignetteControl.intensity, forKey: kCIInputIntensityKey)
-		filter.setValue(editingState.vignetteControl.edgeBrightness, forKey: kCIInputBrightnessKey)
+		filter.setValue(editingState.control.vignetteControl.radius, forKey: kCIInputRadiusKey)
+		filter.setValue(editingState.control.vignetteControl.intensity, forKey: kCIInputIntensityKey)
+		filter.setValue(editingState.control.vignetteControl.edgeBrightness, forKey: kCIInputBrightnessKey)
 		applyFilter(filter, with: filterState)
 		setImageForDisplay()
 	}
@@ -107,9 +102,17 @@ class ImageEditor: NSObject, ObservableObject {
 	func setGlitter() {
 		let filter = editingState.getFilter(Glitter.self)
 		let filterState = historyManager.createState(for: filter)
-		let gilterControl: [CGFloat: CGFloat] = editingState.glitterAnglesAndRadius
-		filter.setValue(editingState.thresholdBrightness, forKey: kCIInputBrightnessKey)
+		let gilterControl: [CGFloat: CGFloat] = editingState.control.glitterAnglesAndRadius
+		filter.setValue(editingState.control.thresholdBrightness, forKey: kCIInputBrightnessKey)
 		filter.setValue(gilterControl, forKey: kCIInputAngleKey)
+		applyFilter(filter, with: filterState)
+		setImageForDisplay()
+	}
+	
+	func setPainter() {
+		let filter = editingState.getMetalFilter(initClosure: KuwaharaMetal.init, ciContext: ciContext)
+		let filterState = historyManager.createState(for: filter)
+		filter.setValue(editingState.control.painterRadius, forKey: kCIInputRadiusKey)
 		applyFilter(filter, with: filterState)
 		setImageForDisplay()
 	}
@@ -121,7 +124,7 @@ class ImageEditor: NSObject, ObservableObject {
 		}
 		
 		var ciImage: CIImage? = historyManager.sourceImage
-		editingState.filters.enumerated().forEach {
+		editingState.applyingFilters.enumerated().forEach {
 			let filter = $0.element.value
 			filter.setValue(ciImage, forKey: kCIInputImageKey)
 			ciImage = filter.outputImage
@@ -133,10 +136,10 @@ class ImageEditor: NSObject, ObservableObject {
 		historyManager.writeHistory(filter: filter, state: state, image: finalImage)
 	}
 	
-	func setMaskBlur() {
+	func applyMaskBlur() {
 		let sourceImage = historyManager.lastImage
 		guard let mask = CIImage(
-			image: blurMask.drawing.image(
+			image: drawingMaskView.drawing.image(
 				from: sourceImage.extent, scale: 1)
 		) else {
 			assertionFailure("Fail to create mask image")
@@ -144,12 +147,30 @@ class ImageEditor: NSObject, ObservableObject {
 		}
 		let filter = CIFilter(name: "CIMaskedVariableBlur")!
 		filter.setValue(mask, forKey: "inputMask")
-		filter.setValue(editingState.blurIntensity, forKey: kCIInputRadiusKey)
+		filter.setValue(editingState.control.blurIntensity, forKey: kCIInputRadiusKey)
 		filter.setValue(historyManager.lastImage, forKey: kCIInputImageKey)
 		if let filteredImage = filter.outputImage?.cropped(to: sourceImage.extent) {
 			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: filteredImage)
 		}
-		blurMask.drawing.strokes = []
+		drawingMaskView.drawing.strokes = []
+		setImageForDisplay()
+	}
+	
+	func applyRefractedText() {
+		let sourceImage = historyManager.lastImage
+		let filter = RefractedText()
+		let font = UIFont(descriptor: editingState.control.textStampFont.descriptor,
+						  size: editingState.control.textStampFont.fontSize)
+		filter.setValue(sourceImage, forKey: kCIInputImageKey)
+		filter.setValue(editingState.control.textStampControl.radius, forKey: kCIInputRadiusKey)
+		filter.setValue(editingState.control.textStampControl.lensScale, forKey: kCIInputScaleKey)
+		filter.setValue(font, forKey: RefractedText.fontKey)
+		filter.setValue(editingState.control.textStampContent, forKey: RefractedText.inputTextKey)
+		filter.setValue(editingState.control.textStampAlignment, forKey: RefractedText.alignmentKey)
+		if let filteredImage = filter.outputImage {
+			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: filteredImage)
+		}
+		
 		setImageForDisplay()
 	}
 	
@@ -157,7 +178,7 @@ class ImageEditor: NSObject, ObservableObject {
 	func saveImage() {
 		guard uiImage != nil else {
 			savingCompletion(UIImage(),
-							 didFinishSavingWithError: ProcessError.convertingError, contextInfo: nil)
+							 didFinishSavingWithError: ProcessError.savingError, contextInfo: nil)
 			return
 		}
 		UIImageWriteToSavedPhotosAlbum(uiImage!, self,
@@ -166,12 +187,12 @@ class ImageEditor: NSObject, ObservableObject {
 	
 	
 	@objc fileprivate func savingCompletion(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer?) {
-		delegate?.savingCompletion(error: error)
+		savingDelegate?.savingCompletion(error: error)
 	}
 	
 	// MARK: - Analize image
 	
-	private func setAverageLuminance() {
+	private func calcAverageLuminance() {
 		DispatchQueue.global(qos: .userInitiated).async { [weak self] in
 			guard let strongSelf = self,
 				  let cgImage = strongSelf.editingState.originalCgImage,
@@ -180,7 +201,7 @@ class ImageEditor: NSObject, ObservableObject {
 		}
 	}
 	
-	private func setFaceRegions(for orientation: CGImagePropertyOrientation) {
+	private func calcFaceRegions(for orientation: CGImagePropertyOrientation) {
 		DispatchQueue.global(qos: .userInitiated).async {
 			self.analyst.requestFaceDetection(self.editingState.originalCgImage!, orientation: orientation)
 				.observe { [weak weakSelf = self] result in
@@ -195,6 +216,7 @@ class ImageEditor: NSObject, ObservableObject {
 	}
 	
 	// MARK: - Display
+	
 	private func setImageForDisplay() {
 		DispatchQueue.global(qos:.userInteractive).sync { [self] in
 			let ciImage = historyManager.lastImage
@@ -216,18 +238,25 @@ class ImageEditor: NSObject, ObservableObject {
 	}
 	
 	enum ProcessError: Error {
-		case convertingError
+		case savingError
 	}
 	
 	override init() {
-		blurMask = PKCanvasView()
+		drawingMaskView = PKCanvasView()
 		analyst = ImageAnalyst()
 		historyManager = HistoryManager()
 		editingState = EditingState()
 		super.init()
-		blurMask.delegate = self
+		drawingMaskView.delegate = self
 	}
 	
+	#if DEBUG
+	static var forPreview: ImageEditor {
+		let editor = ImageEditor()
+		editor.setNewImage(UIImage(named: "selfie_dummy")!)
+		return editor
+	}
+	#endif
 }
 
 
@@ -255,30 +284,30 @@ extension ImageEditor {
 					  let intensity = state[kCIInputIntensityKey] as? CGFloat else {
 					return
 				}
-				editingState.bilateralControl = (radius, intensity)
+				editingState.control.bilateralControl = (radius, intensity)
 			case .SelectiveBrightness:
 				guard let red = state["red"] as? SelectiveBrightness.selectableValues,
 					  let blue = state["blue"] as? SelectiveBrightness.selectableValues,
 					  let green = state["green"] as? SelectiveBrightness.selectableValues else {
 					return
 				}
-				editingState.selectiveControl[.red] = red
-				editingState.selectiveControl[.blue] = blue
-				editingState.selectiveControl[.green] = green
+				editingState.control.selectiveControl[.red] = red
+				editingState.control.selectiveControl[.blue] = blue
+				editingState.control.selectiveControl[.green] = green
 			case .brightness, .saturation, .contrast:
-				guard let brightness = state[kCIInputBrightnessKey] as? Double,
-					  let saturation = state[kCIInputSaturationKey] as? Double,
-					  let contrast = state[kCIInputContrastKey] as? Double else {
+				guard let brightness = state[kCIInputBrightnessKey] as? CGFloat,
+					  let saturation = state[kCIInputSaturationKey] as? CGFloat,
+					  let contrast = state[kCIInputContrastKey] as? CGFloat else {
 					return
 				}
-				editingState.colorControl[.brightness] = brightness
-				editingState.colorControl[.saturation] = saturation
-				editingState.colorControl[.contrast] = contrast
+				editingState.control.colorControl[.brightness] = brightness
+				editingState.control.colorControl[.saturation] = saturation
+				editingState.control.colorControl[.contrast] = contrast
 			case .LUTCube:
 				if let lutName = state[kCIInputMaskImageKey] as? String {
-					editingState.selectedLUTName = lutName
+					editingState.control.selectedLUTName = lutName
 				}else {
-					editingState.selectedLUTName = nil
+					editingState.control.selectedLUTName = nil
 				}
 			case .SobelEdgeDetection3x3:
 				guard let bias = state[kCIInputBiasKey] as? CGFloat,
@@ -286,23 +315,28 @@ extension ImageEditor {
 					return
 				}
 				
-				editingState.filters[String(describing: SobelEdgeDetection3x3.self)]?.setValue(bias, forKey: kCIInputBiasKey)
-				editingState.filters[String(describing: SobelEdgeDetection3x3.self)]?.setValue(weight, forKey: kCIInputWeightsKey)
-				editingState.outlineControl = (max(bias, 0.1), max(weight, 0.1))
+				editingState.applyingFilters[String(describing: SobelEdgeDetection3x3.self)]?.setValue(bias, forKey: kCIInputBiasKey)
+				editingState.applyingFilters[String(describing: SobelEdgeDetection3x3.self)]?.setValue(weight, forKey: kCIInputWeightsKey)
+				editingState.control.outlineControl = (max(bias, 0.1), max(weight, 0.1))
 			case .Vignette:
 				guard let edgeBrightness = state[kCIInputBrightnessKey] as? CGFloat,
 					  let intensity = state[kCIInputIntensityKey] as? CGFloat,
 					  let radius = state[kCIInputRadiusKey] as? CGFloat else {
 					return
 				}
-				editingState.vignetteControl = (radius: radius, intensity: intensity, edgeBrightness: edgeBrightness)
+				editingState.control.vignetteControl = (radius: radius, intensity: intensity, edgeBrightness: edgeBrightness)
 			case .Glitter:
 				guard let threshold = state[kCIInputBrightnessKey] as? CGFloat,
 					  let anglesAndRadius = state[kCIInputAngleKey] as? [CGFloat: CGFloat] else {
 					return
 				}
-				editingState.thresholdBrightness = threshold
-				editingState.glitterAnglesAndRadius = anglesAndRadius
+				editingState.control.thresholdBrightness = threshold
+				editingState.control.glitterAnglesAndRadius = anglesAndRadius
+			case .Kuwahara, .KuwaharaMetal:
+				guard let radius = state[kCIInputRadiusKey] as? CGFloat else {
+					return
+				}
+				editingState.control.painterRadius = radius
 			case .unManaged:
 				break
 			
@@ -315,7 +349,7 @@ extension ImageEditor: PKCanvasViewDelegate {
 		guard !canvasView.drawing.strokes.isEmpty else {
 			return
 		}
-		self.setMaskBlur()
+		self.applyMaskBlur()
 	}
 }
 

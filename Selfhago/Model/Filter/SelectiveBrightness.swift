@@ -12,7 +12,7 @@ class SelectiveBrightness: CIFilter {
 	typealias selectableValues = [CGFloat]
 	static let emptyValues: selectableValues = [0, 0, 0, 0]
 	
-	private lazy var kernel: CIKernel = findKernel(by: "selectiveBrightness")
+	private lazy var kernel: CIKernel = findKernel(by: "selectiveBrightness", from: "SelectiveBrightness")
 	
 	private var inputImage: CIImage?
 	private(set) var red = emptyValues

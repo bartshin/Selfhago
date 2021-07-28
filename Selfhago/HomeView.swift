@@ -7,14 +7,15 @@ struct HomeView: View {
 	@State private var navigationDestination: String?
 	
     var body: some View {
-		VStack {
-			BottomNavigationBar(navigationTag: $navigationDestination)
-				.padding(.top, Constant.verticalMargin)
+		Group {
+			VStack {
+				HomeMenu(navigationTag: $navigationDestination)
+					.padding(.top, Constant.verticalMargin)
+			}
 		}
 		.padding(.vertical, Constant.verticalMargin)
 		.navigationBarTitle("Home")
     }
-	
 	
 	struct Constant {
 		static let verticalMargin: CGFloat = 50

@@ -15,7 +15,7 @@ struct FilterControlView: View {
 	
 	var body: some View {
 		
-		if let colorControl = currentCategory.control as? CIColorFilterControl {
+		if let colorControl = currentCategory.control as? SingleSliderFilterControl {
 			drawSlider(for: colorControl)
 		}else if currentCategory.control is DrawableFilterControl{
 			blurmaskControlSlider
@@ -28,36 +28,68 @@ struct FilterControlView: View {
 		}
 	}
 	
-	private func drawSlider(for colorControl: CIColorFilterControl) -> some View {
+	private func drawSlider(for control: SingleSliderFilterControl) -> some View {
 		VStack {
-			Slider(value: binding(to: colorControl, with: colorControl.rawValue), in: -0.5...0.5,
+			Slider(value: binding(to: control, with: control.rawValue),
+				   in: control.getRange(),
 				   step: 0.01)
-			if colorControl == .brightness {
-				drawVerticalSliders(for: .rgb)
-					.layoutPriority(1)
-			}
+			drawDetailConfigPanel(for: control)
+				.layoutPriority(1)
 		}
-		.padding(.top, colorControl != .brightness ? Constant.verticalPadding: 0)
+		.padding(.top, control.hasAdditionalControl ? 0: Constant.verticalPadding)
 	}
 	
-	private func binding(to colorControl: CIColorFilterControl, with key: String) -> Binding<Double> {
-		Binding<Double> {
-			editingState.colorControl[colorControl]! - colorControl.defaultValue
-		} set: {
-			editingState.colorControl[colorControl] = $0 + colorControl.defaultValue
-			editor.setCIColorControl(with: key)
+	private func drawDetailConfigPanel(for control: SingleSliderFilterControl) -> some View {
+		Group {
+			if control == .brightness {
+				drawVerticalSliders(for: .rgb)
+			}
 		}
+	}
+
+	
+	private var selectedFont: Font {
+		Font(UIFont(descriptor: editingState.control.textStampFont.descriptor,
+					size: editingState.control.textStampFont.fontSize) as CTFont)
+	}
+	
+	private func binding(to control: SingleSliderFilterControl, with key: String) -> Binding<CGFloat>{
+		switch control {
+			case .brightness, .saturation, .contrast:
+				return Binding<CGFloat>  {
+					editingState.control.colorControl[control]! - control.defaultValue
+				} set: {
+					editingState.control.colorControl[control] = $0 + control.defaultValue
+					editor.setCIColorControl(with: key)
+				}
+			case .painter:
+				return Binding<CGFloat> {
+					editingState.control.painterRadius
+				} set: {
+					editingState.control.painterRadius = $0
+					editor.setPainter()
+				}
+		}
+		
 	}
 	
 	private var blurmaskControlSlider: some View {
 		VStack {
 			HStack {
 				Text("강도")
-				Slider(value: $editingState.blurIntensity, in: 0...20, step: 1)
+				Slider(value: Binding<CGFloat> {
+					editingState.control.blurIntensity
+				} set: {
+					editingState.control.blurIntensity = $0
+				}, in: 0...20, step: 1)
 			}
 			HStack {
 				Text("범위")
-				Slider(value: $editingState.blurMarkerWidth, in: 10...60, step: 5)
+				Slider(value:Binding<CGFloat> {
+					editingState.control.blurMaskWidth
+				} set: {
+					editingState.control.blurMaskWidth = $0
+				}, in: 10...60, step: 5)
 			}
 		}
 		.padding(.top, Constant.verticalPadding)
@@ -75,6 +107,10 @@ struct FilterControlView: View {
 								.init(width: geometry.size.width * 0.25,
 									  height: geometry.size.height ))
 				}
+				if filter == .textStamp {
+					TextConfigPanel()
+						.layoutPriority(1)
+				}
 			}
 			.frame(width: geometry.size.width, height: geometry.size.height)
 		}
@@ -86,64 +122,78 @@ struct FilterControlView: View {
 				return Binding<CGFloat> {
 					var value: CGFloat = 0
 					SelectiveBrightness.FilterParameter.RGBColor.allCases.forEach {
-						value += editingState.selectiveControl[$0]![index]
+						value += editingState.control.selectiveControl[$0]![index]
 					}
 					return value/3 // Average of rgb
 				} set: { value in
 					SelectiveBrightness.FilterParameter.RGBColor.allCases.forEach { component in
-						editingState.selectiveControl[component]![index] = value
+						editingState.control.selectiveControl[component]![index] = value
 					}
 					editor.setSelectiveBrightness()
 				}
 			case .bilateral:
 				return Binding<CGFloat> {
-					index == 0 ? editingState.bilateralControl.radius:
-						editingState.bilateralControl.intensity
+					index == 0 ? editingState.control.bilateralControl.radius:
+						editingState.control.bilateralControl.intensity
 				}set: {
 					if index == 0 {
-						editingState.bilateralControl.radius = $0
+						editingState.control.bilateralControl.radius = $0
 					}else {
-						editingState.bilateralControl.intensity = $0
+						editingState.control.bilateralControl.intensity = $0
 					}
 					editor.setBilateral()
 				}
 			case .vignette:
 				return Binding<CGFloat> {
 					if index == 0 {
-						return editingState.vignetteControl.radius
+						return editingState.control.vignetteControl.radius
 					}
 					else if index == 1 {
-						return editingState.vignetteControl.intensity
+						return editingState.control.vignetteControl.intensity
 					}
 					else {
-						return editingState.vignetteControl.edgeBrightness
+						return editingState.control.vignetteControl.edgeBrightness
 					}
 				}set: {
 					if index == 0 {
-						editingState.vignetteControl.radius = $0
+						editingState.control.vignetteControl.radius = $0
 					}
 					else if index == 1 {
-						editingState.vignetteControl.intensity = $0
+						editingState.control.vignetteControl.intensity = $0
 					}
 					else {
-						editingState.vignetteControl.edgeBrightness = $0
+						editingState.control.vignetteControl.edgeBrightness = $0
 					}
 					editor.setVignette()
 				}
 			case .outline:
 				return Binding<CGFloat> {
 					if index == 0 {
-						return editingState.outlineControl.bias
+						return editingState.control.outlineControl.bias
 					}else {
-						return editingState.outlineControl.weight
+						return editingState.control.outlineControl.weight
 					}
 				} set: {
 					if index == 0 {
-						editingState.outlineControl.bias = $0
+						editingState.control.outlineControl.bias = $0
 					}else {
-						editingState.outlineControl.weight = $0
+						editingState.control.outlineControl.weight = $0
 					}
 					editor.setOutline()
+				}
+			case .textStamp:
+				return Binding<CGFloat> {
+					if index == 0 {
+						return editingState.control.textStampControl.radius
+					}else {
+						return editingState.control.textStampControl.lensScale
+					}
+				}set: {
+					if index == 0 {
+						editingState.control.textStampControl.radius = $0
+					}else {
+						editingState.control.textStampControl.lensScale = $0
+					}
 				}
 		}
 	}
@@ -172,7 +222,7 @@ struct FilterControlView: View {
 											  height: geometry.size.height * 0.8 ))
 				}
 				CircularSlider(
-					anglesAndRadius: $editingState.glitterAnglesAndRadius,
+					anglesAndRadius: $editingState.control.glitterAnglesAndRadius,
 					handleValueChanged: editor.setGlitter,
 					displayCallback: { pair in
 						[]
@@ -194,9 +244,9 @@ struct FilterControlView: View {
 		switch filter {
 			case .glitter:
 				return Binding<CGFloat> {
-					1 - editingState.thresholdBrightness
+					1 - editingState.control.thresholdBrightness
 				} set: {
-					editingState.thresholdBrightness =  1 - $0
+					editingState.control.thresholdBrightness =  1 - $0
 					editor.setGlitter()
 				}
 		}

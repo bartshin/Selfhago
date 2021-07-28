@@ -9,9 +9,6 @@
 #include "shader_helper.h"
 using namespace metal;
 
-//half gauss(half x, half sigma) {
-//	return 1 / sqrt(2 * M_PI_H * sigma * sigma) * exp(-x * x / (2 * sigma * sigma));
-//};
 
 float gauss(float x, float sigma)
 {

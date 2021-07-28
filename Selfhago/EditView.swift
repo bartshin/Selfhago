@@ -12,7 +12,7 @@ struct EditView: View, EditorDelegation {
 	@EnvironmentObject var editor: ImageEditor
 	@State private var isShowingPicker = false
 	@State private var feedBackImage: Image?
-	@State private var currentCategory = FilterCategory<Any>(rawValue: CIColorFilterControl.brightness.rawValue)!
+	@State private var currentCategory = FilterCategory<Any>(rawValue: SingleSliderFilterControl.brightness.rawValue)!
 	
     var body: some View {
 		GeometryReader { geometry in
@@ -93,10 +93,10 @@ struct EditView: View, EditorDelegation {
 	}
 	
 	private func showPickerIfNeeded() {
-		guard editor.delegate == nil else {
+		guard editor.savingDelegate == nil else {
 			return 
 		}
-		editor.delegate = self
+		editor.savingDelegate = self
 		if editor.uiImage == nil {
 			DispatchQueue.main.async {
 				isShowingPicker = true

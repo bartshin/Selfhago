@@ -9,24 +9,26 @@ import CoreImage
 
 extension CIFilter {
 	
-	static var metalLibData: Data {
-		guard let url = Bundle.main.url(forResource: "default", withExtension: "metallib") else {
-			assertionFailure("Fail to find metal library url")
-			return Data()
-		}
-		if let data = try? Data(contentsOf: url) {
+	static func getMetalLibData(from fileName: String) -> Data {
+		if let url = getMetalLibUrl(for: fileName),
+			let data = try? Data(contentsOf: url) {
 			return data
 		}else {
 			assertionFailure("Fail to read data from metal lib")
 			return Data()
 		}
 	}
-	
+	static func getMetalLibUrl(for fileName: String) -> URL? {
+		guard let url = Bundle.main.url(forResource: fileName, withExtension: "ci.metallib") else {
+			fatalError("Fail to find url for \(fileName)")
+		}
+		return url
+	}
 }
 
 extension CIFilter {
-	func findKernel(by kernelName: String) -> CIKernel {
-		let data = CIFilter.metalLibData
+	func findKernel(by kernelName: String, from fileName: String) -> CIKernel {
+		let data = CIFilter.getMetalLibData(from: fileName)
 		if let kernel = try? CIKernel(functionName: kernelName, fromMetalLibraryData: data) {
 			return kernel
 		}else {
@@ -34,4 +36,5 @@ extension CIFilter {
 			return CIKernel()
 		}
 	}
+	
 }

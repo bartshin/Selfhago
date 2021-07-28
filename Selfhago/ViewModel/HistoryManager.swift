@@ -10,9 +10,9 @@ import UIKit
 class HistoryManager {
 	
 	private(set) var imageHistory: [CIImage]
-	/// Result images by not tunable filters
+	/// Original Image and results  by not tunable filters
 	private var sourceImages: [CIImage]
-	/// Suquence of used filter name with state
+	/// Suquence of used filters
 	private(set) var filterHistory: [FilterState]
 	/// Filter index for undo or redo
 	private(set) var nextFilterIndex: Int
@@ -21,7 +21,6 @@ class HistoryManager {
 	}
 	private(set) var undoAble: Bool
 	private(set) var redoAble: Bool
-	
 	
 	var sourceImage: CIImage {
 		sourceImages.last!
@@ -124,6 +123,7 @@ class HistoryManager {
 		enum Filter: String {
 			case SelectiveBrightness
 			case Bilateral
+			case Kuwahara
 			case LUTCube
 			case SobelEdgeDetection3x3
 			case Vignette
@@ -131,7 +131,8 @@ class HistoryManager {
 			case brightness
 			case saturation
 			case contrast
-			
+			case KuwaharaMetal
+		
 			case unManaged
 			
 			static func ==(lhs: Filter, rhs: Filter) -> Bool {
@@ -170,6 +171,8 @@ class HistoryManager {
 					kCIInputBrightnessKey]
 				case .Glitter:
 					keys = [ kCIInputBrightnessKey, kCIInputAngleKey ]
+				case .Kuwahara, .KuwaharaMetal:
+					keys = [ kCIInputRadiusKey ]
 				case .unManaged:
 					return [:]
 			}
@@ -190,6 +193,7 @@ class HistoryManager {
 				return nil
 			}
 		}
+		
 		init?(by key: String) {
 			if let filter = Filter(rawValue: key){
 				self.filter = filter

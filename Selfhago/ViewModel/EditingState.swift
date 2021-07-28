@@ -16,28 +16,9 @@ class EditingState: ObservableObject {
 	var averageLuminace: CGFloat
 	var faceRegions: [CGRect]
 	
-	// MARK: Filter
 	/// [ Filter name : CI Filter] key = String(describing: FilterType.self)
-	private(set) var filters: [String: CIFilter]
-	
-	// Blur
-	@Published var blurMarkerWidth: CGFloat
-	var blurIntensity: Double
-	// Bilateral
-	var bilateralControl: (radius: CGFloat, intensity: CGFloat)
-	// Outline
-	var outlineControl: (bias: CGFloat, weight: CGFloat)
-	// CIColor
-	var colorControl: [CIColorFilterControl: Double]
-	// SeletivBrightness
-	var selectiveControl: [SelectiveBrightness.FilterParameter.RGBColor: SelectiveBrightness.selectableValues]
-	// Vignette
-	var vignetteControl: (radius: CGFloat, intensity: CGFloat, edgeBrightness: CGFloat)
-	// Glitter
-	var thresholdBrightness: CGFloat
-	var glitterAnglesAndRadius: [CGFloat: CGFloat]
-	// LUT
-	var selectedLUTName: String?
+	private(set) var applyingFilters: [String: CIFilter]
+	@Published var control = ControlValue()
 	
 	func setNewImageData(_ image: UIImage) -> CIImage {
 		originalCgImage = image.cgImage
@@ -55,54 +36,67 @@ class EditingState: ObservableObject {
 	
 	func getFilter<T>(_ filterType: T.Type, name: String? = nil) -> T where T: CIFilter {
 		let key = name ?? String(describing: T.self)
-		if filters[key] == nil {
-			filters[key] = name != nil ? CIFilter(name: name!): T()
+		
+		if applyingFilters[key] == nil {
+			applyingFilters[key] = name != nil ? CIFilter(name: name!): T()
 		}
-		return filters[key] as! T
+		return applyingFilters[key] as! T
 	}
 	
-	func resetControls() {
-		colorControl = CIColorFilterControl.defaults
-		blurIntensity = DefaultValues.blurIntensity
-		blurMarkerWidth = DefaultValues.blurMaskWidth
-		averageLuminace = DefaultValues.averageLuminance
-		bilateralControl = DefaultValues.bilateralControl
-		outlineControl = DefaultValues.outlineControl
-		vignetteControl = DefaultValues.vignetteControl
-		thresholdBrightness = DefaultValues.thresholdBrightness
-		selectiveControl.keys.forEach { rgbComponent in
-			selectiveControl[rgbComponent] = SelectiveBrightness.emptyValues
+	func getMetalFilter<T>(initClosure: @escaping () -> T, ciContext: CIContext) -> T where T: MetalFilter {
+		let key = String(describing: T.self)
+		if applyingFilters[key] == nil {
+			let filter = initClosure()
+			filter.ciContext = ciContext
+			applyingFilters[key] = filter
 		}
-		glitterAnglesAndRadius.removeAll()
+		return applyingFilters[key] as! T
+	}
+	
+	func reset() {
+		control = ControlValue()
+		averageLuminace = 0.5
 		faceRegions.removeAll()
-		filters.removeAll()
+		applyingFilters.removeAll()
+	}
+	
+	func clearTextIfDefault() {
+		if control.textStampContent == EditingState.ControlValue.defaultText {
+			control.textStampContent = ""
+		}
 	}
 	
 	init() {
-		colorControl = CIColorFilterControl.defaults
-		blurIntensity = DefaultValues.blurIntensity
-		blurMarkerWidth = DefaultValues.blurMaskWidth
-		averageLuminace = DefaultValues.averageLuminance
-		bilateralControl = DefaultValues.bilateralControl
-		outlineControl = DefaultValues.outlineControl
-		vignetteControl = DefaultValues.vignetteControl
-		thresholdBrightness = DefaultValues.thresholdBrightness
-		glitterAnglesAndRadius = .init()
+		control = ControlValue()
+		averageLuminace = 0.5
 		faceRegions = .init()
-		filters = .init()
-		selectiveControl = SelectiveBrightness.FilterParameter.RGBColor.allCases.reduce(
+		applyingFilters = .init()
+	}
+	
+	struct ControlValue {
+		static let defaultText = "기본 텍스트"
+		var blurIntensity: CGFloat = 10
+		var blurMaskWidth: CGFloat = 30
+		var averageLuminance: CGFloat = 0.5
+		var outlineControl: (bias: CGFloat, weight: CGFloat) = (0.1, 0.1)
+		var bilateralControl: (radius: CGFloat, intensity: CGFloat) = (0.1, 0.1)
+		var vignetteControl: (radius: CGFloat, intensity: CGFloat, edgeBrightness: CGFloat) = (1, 2, -0.3)
+		var textStampFont: (fontSize: CGFloat, descriptor: UIFontDescriptor) = (30, .init())
+		var textStampControl: (radius: CGFloat, lensScale: CGFloat) = (10, 50)
+		var textStampContent = Self.defaultText
+		var textStampAlignment: TextMask.Alignment = .center
+		var thresholdBrightness: CGFloat = 1.0
+		var painterRadius: CGFloat = 0
+		var selectedLUTName: String?
+		var glitterAnglesAndRadius: [CGFloat: CGFloat] = [:]
+		
+		var colorControl: [SingleSliderFilterControl: CGFloat] = [.brightness, .contrast, .saturation].reduce(into: [:]) {
+			dict, control in
+			dict[control] = control.defaultValue
+		}
+		var selectiveControl: [SelectiveBrightness.FilterParameter.RGBColor: SelectiveBrightness.selectableValues] = SelectiveBrightness.FilterParameter.RGBColor.allCases.reduce(
 			into: .init()) { dict , rgbComponent in
 			dict[rgbComponent] = SelectiveBrightness.emptyValues
 		}
-	}
-	
-	struct DefaultValues {
-		static let blurIntensity: Double = 10
-		static let blurMaskWidth: CGFloat = 30
-		static let averageLuminance: CGFloat = 0.5
-		static let outlineControl: (CGFloat, CGFloat) = (0.1, 0.1)
-		static let bilateralControl: (CGFloat, CGFloat) = (0.1, 0.1)
-		static let vignetteControl: (CGFloat, CGFloat, CGFloat) = (1, 2, -0.3)
-		static let thresholdBrightness: CGFloat = 1.0
 	}
 }

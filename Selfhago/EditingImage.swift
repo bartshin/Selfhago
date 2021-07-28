@@ -44,7 +44,7 @@ struct EditingImage: View {
 			.aspectRatio(contentMode: .fit)
 			.onAppear {
 				fixedZoomScale = getScaleToFit(in: size)
-				editingState.blurMarkerWidth = min(60 / fixedZoomScale, 60)
+				editingState.control.blurMaskWidth = min(60 / fixedZoomScale, 60)
 			}
 			.onChange(of: editingState.originalCgImage) {
 				if $0 != nil{
@@ -61,10 +61,18 @@ struct EditingImage: View {
 		let colorScheme = UIApplication.shared.windows.first?.traitCollection.userInterfaceStyle
 		return Group {
 			if colorScheme == .dark {
-				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editingState.blurMarkerWidth)
+				BlurMaskView(canvas: $editor.drawingMaskView, markerWidth: Binding<CGFloat> {
+					editingState.control.blurMaskWidth
+				} set: {
+					editingState.control.blurMaskWidth = $0
+				})
 			}else {
-				BlurMaskView(canvas: $editor.blurMask, markerWidth: $editingState.blurMarkerWidth) 
-					.colorInvert()
+				BlurMaskView(canvas: $editor.drawingMaskView, markerWidth: Binding<CGFloat> {
+					editingState.control.blurMaskWidth
+				} set: {
+					editingState.control.blurMaskWidth = $0
+				})
+				.colorInvert()
 			}
 		}
 	}
@@ -190,7 +198,7 @@ struct EditingImage: View {
 
 struct EditingImage_Previews: PreviewProvider {
 	static var previews: some View {
-		EditingImage(category: .constant(FilterCategory(rawValue: CIColorFilterControl.brightness.rawValue)!))
+		EditingImage(category: .constant(FilterCategory(rawValue: SingleSliderFilterControl.brightness.rawValue)!))
 			.environmentObject(ImageEditor.forPreview)
 	}
 }

@@ -7,8 +7,8 @@
 
 #ifndef shader_helper
 #define shader_helper
-constant float3 luminanceVector(0.2125, 0.7154, 0.0721);
-constant half3 luminanceVectorHalf(0.2125, 0.7154, 0.0721);
+constant float3 LUMINANCE_VECTOR(0.2125, 0.7154, 0.0721);
+constant half3 LUMINACE_VECTOR_HALF(0.2125, 0.7154, 0.0721);
 
 // fyi: 1/sqrt(2*pi) = 0.3989422803
 constant float GAUSS_MULTIPLIER (0.3989422803);

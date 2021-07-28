@@ -1,5 +1,5 @@
 //
-//  BottomNavigationBar.swift
+//  HomeMenu.swift
 //  moody
 //
 //  Created by bart Shin on 21/06/2021.
@@ -7,13 +7,21 @@
 
 import SwiftUI
 
-struct BottomNavigationBar: View {
+struct HomeMenu: View {
 	
 	@Binding var navigationTag: String?
+	private let editor = ImageEditor()
+	private let recorder = CameraRecorder()
 	
 	var body: some View {
 		HStack {
-			createNavigationLink(for: EditView(), image: Image(systemName: "slider.horizontal.below.rectangle"))
+			createNavigationLink(for: EditView()
+								 	.environmentObject(editor)
+									.environmentObject(editor.editingState),
+								 image: Image(systemName: "slider.horizontal.below.rectangle"))
+			createNavigationLink(for: CameraView(recorder: recorder),
+								 image: Image(systemName: "camera"))
+				.environmentObject(editor)
 			
 		}
 	}

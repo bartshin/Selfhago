@@ -21,7 +21,7 @@ extern "C" {
 								   const float4 ranges)
 								    {
 			
-			const float luminance = dot(s.rgb, luminanceVector);
+			const float luminance = dot(s.rgb, LUMINANCE_VECTOR);
 			const float supplementDark = pow(2 - luminance, 3);
 			float pfDark = pow(1 - abs(luminance - ranges.x), 3) * supplementDark;
 			float pfShadow = pow( 1 - abs(luminance - ranges.y), 3) * supplementDark;

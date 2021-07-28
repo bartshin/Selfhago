@@ -16,7 +16,7 @@ class Bilateral: CIFilter {
 	private var luminaceSigma: CGFloat = 0.1
 	private var minimumDistance: CGFloat = 1.0
 	
-	private lazy var kernel: CIKernel = findKernel(by: "bilateral")
+	private lazy var kernel: CIKernel = findKernel(by: "bilateral", from: "Bilateral")
 	
 	
 	private var inputImage: CIImage?

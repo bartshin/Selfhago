@@ -44,10 +44,11 @@ struct TuningPanel: View {
 	
 	init(category: Binding<FilterCategory<Any>>) {
 		self._currentCategory = category
-		let filters = CIColorFilterControl.allCases.compactMap{ $0.rawValue } +
+		let filters = SingleSliderFilterControl.allCases.compactMap{ $0.rawValue } +
 			[
 			MultiSliderFilterControl.bilateral.rawValue, MultiSliderFilterControl.vignette.rawValue,
 				MultiSliderFilterControl.outline.rawValue,
+				MultiSliderFilterControl.textStamp.rawValue,
 				DrawableFilterControl.mask.rawValue, AngleAndSliderFilterControl.glitter.rawValue
 			] +
 			LUTFilterControl.allCases.compactMap { $0.rawValue }

@@ -47,7 +47,7 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 			labelImage = presetFilter.label
 			subCategory = presetFilter.rawValue
 		}
-		else if let colorControl = CIColorFilterControl(rawValue: rawValue) {
+		else if let colorControl = SingleSliderFilterControl(rawValue: rawValue) {
 			control = colorControl as! FT
 			labelImage = colorControl.label
 			subCategory = colorControl.rawValue
@@ -74,6 +74,7 @@ enum MultiSliderFilterControl: String {
 	case bilateral
 	case vignette
 	case outline
+	case textStamp
 	
 	var label: Image{
 		switch self {
@@ -85,6 +86,8 @@ enum MultiSliderFilterControl: String {
 				return Image(systemName: "v.circle.fill")
 			case .outline:
 				return Image(systemName: "pencil.and.outline")
+			case .textStamp:
+				return Image(systemName: "textbox")
 		}
 	}
 	
@@ -97,6 +100,8 @@ enum MultiSliderFilterControl: String {
 			case .vignette:
 				return 3
 			case .outline:
+				return 2
+			case .textStamp:
 				return 2
 		}
 	}
@@ -122,6 +127,13 @@ enum MultiSliderFilterControl: String {
 					return 0.1...2
 				}else {
 					return 0.1...4
+				}
+
+			case .textStamp:
+				if index == 0 {
+					return 0...20
+				}else {
+					return 10...100
 				}
 		}
 	}
@@ -184,26 +196,41 @@ enum LUTFilterControl: String, CaseIterable {
 	}
 }
 
-enum CIColorFilterControl: String, CaseIterable {
+enum SingleSliderFilterControl: String, CaseIterable {
 	
 	case brightness
 	case saturation
 	case contrast
+	case painter
 	
-	var defaultValue: Double {
+	var defaultValue: CGFloat {
 		switch self {
 			case .brightness:
 				return 0
 			case .saturation, .contrast:
 				return 1
+			case .painter:
+				return 0
+		}
+	}
+	func getRange<T>() -> ClosedRange<T> where T: BinaryFloatingPoint {
+		switch self {
+			case .brightness, .saturation, .contrast:
+				return -0.5...0.5
+			case .painter:
+				return 0...20
 		}
 	}
 	
-	static var defaults: [Self: Double] {
-		Self.allCases.reduce(into: [Self: Double]()) {
-			$0[$1] = $1.defaultValue
+	var hasAdditionalControl: Bool {
+		switch self {
+			case .contrast, .saturation, .painter:
+				return false
+			case .brightness:
+				return true
 		}
 	}
+	
 	
 	var label: Image {
 		switch self {
@@ -213,6 +240,8 @@ enum CIColorFilterControl: String, CaseIterable {
 				return Image(systemName: "drop.fill")
 			case .contrast:
 				return Image(systemName: "circle.lefthalf.fill")
+			case .painter:
+				return Image(systemName: "paintbrush.pointed.fill")
 		}
 	}
 	

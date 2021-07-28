@@ -20,7 +20,7 @@ extern "C" {
 		float4 threshold(sampler image,
 						 float criterion) {
 			float4 pixel = image.sample(image.coord());
-			float luma = dot(luminanceVector, pixel.rgb);
+			float luma = dot(LUMINANCE_VECTOR, pixel.rgb);
 			return float4(step(criterion, luma));
 		}
 	}
