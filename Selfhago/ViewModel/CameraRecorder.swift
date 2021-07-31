@@ -13,27 +13,25 @@ class CameraRecorder: NSObject, ObservableObject {
 	private var device: AVCaptureDevice!
 	private(set) var captureSession: AVCaptureSession!
 	private var stillImageOutput: AVCapturePhotoOutput!
+	private var videoOutput: AVCaptureVideoDataOutput!
 	private var videoPreviewLayer: AVCaptureVideoPreviewLayer!
 	private(set) var position: AVCaptureDevice.Position!
 	private var settings: AVCapturePhotoSettings!
-	private var processor: CaptureProcessor!
-	private let queue: DispatchQueue
-	var passImage: (CGImage) -> Void =  { image in
-		print("Photo captured \(image.bitmapInfo)")
-	}
-	
-	@Published private(set) var status: Status
+	private let captureQueue: DispatchQueue
+	private let videoOutputQueue: DispatchQueue
+	var videoOutputDelegate: AVCaptureVideoDataOutputSampleBufferDelegate!
 	
 	private var authorization: Authorization
 	
-	func setupCamera(position: AVCaptureDevice.Position) {
+	func setupCamera(position: AVCaptureDevice.Position, cameraType: AVCaptureDevice.DeviceType = .builtInWideAngleCamera) {
 		if self.position != nil, self.position == position {
 			return
 		}
 		self.position = position
-		device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position == .front ? .front: .back)
+		let discoverySession = AVCaptureDevice.DiscoverySession(deviceTypes: [cameraType], mediaType: .video, position: position)
+		device = discoverySession.devices.first
 		if device == nil {
-			assertionFailure("No camera is available for video")
+			assertionFailure("No camera is available for video \(cameraType), \(position)")
 		}
 		initInputAndOutput()
 	}
@@ -55,28 +53,14 @@ class CameraRecorder: NSObject, ObservableObject {
 	}
 	
 	func startRecording() {
-		status = .recording
-		queue.async {
+		captureQueue.sync {
 			self.captureSession.startRunning()
 		}
 	}
 	
 	func stopRecording() {
-		queue.async {
+		captureQueue.async {
 			self.captureSession.stopRunning()
-			DispatchQueue.main.async {
-				self.status = .notRecording
-			}
-		}
-	}
-	
-	func capturePhoto() {
-		guard status == .recording else {
-			return
-		}
-		status = .processing
-		queue.async { [self] in
-			stillImageOutput.capturePhoto(with: settings, delegate: processor)
 		}
 	}
 	
@@ -90,49 +74,58 @@ class CameraRecorder: NSObject, ObservableObject {
 		}
 		do {
 			let input = try AVCaptureDeviceInput(device: device)
-			stillImageOutput = AVCapturePhotoOutput()
-			if captureSession.canAddInput(input) && captureSession.canAddOutput(stillImageOutput) {
+			if captureSession.canSetSessionPreset(.photo) {
+				captureSession.sessionPreset = .photo
+			}else if captureSession.canSetSessionPreset(.high) {
+				captureSession.sessionPreset = .high
+			}
+			videoOutput = AVCaptureVideoDataOutput()
+			videoOutput.videoSettings = [(kCVPixelBufferPixelFormatTypeKey as String): NSNumber(value: kCVPixelFormatType_32BGRA)]
+			videoOutput.alwaysDiscardsLateVideoFrames = true
+			setMaxFramerate(for: device)
+			videoOutput.setSampleBufferDelegate(videoOutputDelegate, queue: videoOutputQueue)
+			if captureSession.canAddInput(input), captureSession.canAddOutput(videoOutput) {
 				captureSession.addInput(input)
-				captureSession.addOutput(stillImageOutput)
-				stillImageOutput.isHighResolutionCaptureEnabled = true
-				stillImageOutput.maxPhotoQualityPrioritization = .quality
+				captureSession.addOutput(videoOutput)
 			}
-			if let connection = stillImageOutput.connection(with: .video) {
-				connection.videoOrientation = .portrait
-			}
-			if stillImageOutput.availablePhotoCodecTypes.contains(.hevc) {
-				settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.hevc])
-			}else {
-				settings = AVCapturePhotoSettings()
-			}
-			settings.isHighResolutionPhotoEnabled = true
-			// Sets the preview thumbnail pixel format
-			if !settings.__availablePreviewPhotoPixelFormatTypes.isEmpty {
-				settings.previewPhotoFormat = [kCVPixelBufferPixelFormatTypeKey as String: settings.__availablePreviewPhotoPixelFormatTypes.first!]
-			}
-			settings.photoQualityPrioritization = .quality
-			processor = CaptureProcessor(with: settings, passImage: passImage)
 		}
 		catch {
 			assertionFailure("Fail to set input by \(device!)")
 		}
 	}
-	
+	private func setMaxFramerate(for camera: AVCaptureDevice) {
+		for vFormat in camera.formats {
+			//see available types
+			
+			let ranges = vFormat.videoSupportedFrameRateRanges as [AVFrameRateRange]
+			guard let frameRates = ranges.sorted(by: { lhs, rhs in
+				lhs.maxFrameRate > rhs.maxFrameRate
+			}).first else {
+				return
+			}
+			
+			do {
+				
+				try camera.lockForConfiguration()
+				camera.activeFormat = vFormat as AVCaptureDevice.Format
+				//for custom framerate set min max activeVideoFrameDuration to whatever you like, e.g. 1 and 180
+				camera.activeVideoMinFrameDuration = frameRates.minFrameDuration
+				camera.activeVideoMaxFrameDuration = frameRates.maxFrameDuration
+				
+			}
+			catch {
+				print("Could not set active format")
+				print(error)
+			}
+		}
+	}
 	override init() {
 		authorization = Authorization()
 		captureSession = AVCaptureSession()
 		captureSession.sessionPreset = .photo
-		status = .preparing
-		queue = DispatchQueue(label: String(describing: Self.self))
-		
+		captureQueue = DispatchQueue(label: "capture queue")
+		videoOutputQueue = DispatchQueue(label: "video output queue")
 		super.init()
-	}
-	
-	enum Status {
-		case recording
-		case processing
-		case preparing
-		case notRecording
 	}
 	
 	private struct Authorization {

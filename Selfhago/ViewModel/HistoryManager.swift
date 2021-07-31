@@ -30,12 +30,17 @@ class HistoryManager {
 		imageHistory[currentImageIndex]
 	}
 	
-	func clearHistory(with image: CIImage) {
+	func clearHistory() {
 		filterHistory = []
-		imageHistory = [image]
-		sourceImages = [image]
+		imageHistory = []
+		sourceImages = []
 		nextFilterIndex = 0
 		setRedoAndUndo()
+	}
+	
+	func setImage(_ image: CIImage) {
+		sourceImages = [image]
+		imageHistory = [image]
 	}
 	
 	func undo() -> FilterState {
@@ -121,7 +126,7 @@ class HistoryManager {
 		static let unManagedFilter = FilterState()
 		
 		enum Filter: String {
-			case SelectiveBrightness
+			case ColorChannel
 			case Bilateral
 			case Kuwahara
 			case LUTCube
@@ -132,7 +137,8 @@ class HistoryManager {
 			case saturation
 			case contrast
 			case KuwaharaMetal
-		
+			case BackgroundToneRetouch
+			
 			case unManaged
 			
 			static func ==(lhs: Filter, rhs: Filter) -> Bool {
@@ -160,7 +166,7 @@ class HistoryManager {
 					keys = [kCIInputBrightnessKey, kCIInputContrastKey, kCIInputSaturationKey]
 				case .Bilateral:
 					keys = [kCIInputRadiusKey, kCIInputIntensityKey]
-				case .SelectiveBrightness:
+				case .ColorChannel:
 					keys = ["red", "blue", "green", "averageLumiance"]
 				case .LUTCube:
 					keys = [kCIInputMaskImageKey]
@@ -173,6 +179,8 @@ class HistoryManager {
 					keys = [ kCIInputBrightnessKey, kCIInputAngleKey ]
 				case .Kuwahara, .KuwaharaMetal:
 					keys = [ kCIInputRadiusKey ]
+				case .BackgroundToneRetouch:
+					keys = [ kCIInputIntensityKey ]
 				case .unManaged:
 					return [:]
 			}

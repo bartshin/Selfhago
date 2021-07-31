@@ -16,19 +16,19 @@ using namespace metal;
 
 extern "C" {
 	
-	float kernel_factor(float center_luminance,
-					   float surrounding_luminance,
-					   float spacialSigma,
-					   float luminanceSigma,
-					   int2 normalized_position) {
-		float luminance_gauss = gauss(center_luminance - surrounding_luminance, luminanceSigma);
-		float space_gauss = gauss(normalized_position.x, spacialSigma) * gauss(normalized_position.y, spacialSigma);
-		
-		return space_gauss * luminance_gauss;
-	}
+	
 	
 	namespace coreimage {
 		
+		float gauss(float x, float sigma)
+		{
+			return GAUSS_MULTIPLIER * exp(-(pow(x, 2.0)) / (2.0 * pow(sigma, 2.0))) / sigma;
+		}
+		
+		float gauss3(float3 x, float sigma)
+		{
+			return GAUSS_MULTIPLIER * exp(-(dot(x, x)) / (2.0 * pow(sigma, 2.0))) / sigma;
+		}
 		float4 bilateral(sampler image,
 						 const float4 face,
 						 const float sigma_R,

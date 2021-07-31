@@ -9,9 +9,9 @@ import CoreImage
 
 class Vignette: CIFilter {
 	
-	private var inputRadius: CGFloat = 1
-	private var inputIntensity: CGFloat = 2
-	private var inputEdgeBrightness: CGFloat = -0.3
+	private var inputRadius: CGFloat = 0
+	private var inputIntensity: CGFloat = 0
+	private var inputEdgeBrightness: CGFloat = 0
 	private var inputImage: CIImage?
 	
 	override func setValue(_ value: Any?, forKey key: String) {
@@ -74,6 +74,9 @@ class Vignette: CIFilter {
 	override var outputImage: CIImage? {
 		guard inputImage != nil else {
 			return nil
+		}
+		if inputRadius == 0 || inputIntensity == 0 {
+			return inputImage!
 		}
 		return inputImage!.applyingFilter(
 			"CIBlendWithMask",

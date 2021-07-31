@@ -4,18 +4,20 @@ import SwiftUI
 import PhotosUI
 
 struct ImagePicker: UIViewControllerRepresentable {
-    
+	@Binding var isPresenting: Bool
+	private let passImageData: (Data) -> Void
+	
     func makeCoordinator() -> Coordinator {
-        return ImagePicker.Coordinator(parent: self)
+        Coordinator(parent: self)
     }
-    
-    
-    @Binding var picker: Bool
-    @Binding var imageData: Data
-	let passImage: ((UIImage) -> Void)?
-    
+
     func makeUIViewController(context: Context) -> PHPickerViewController {
-        let picker = PHPickerViewController(configuration: PHPickerConfiguration())
+		var configuration = PHPickerConfiguration()
+		configuration.filter = .images
+		configuration.selectionLimit = 1
+
+		configuration.preferredAssetRepresentationMode = .current
+        let picker = PHPickerViewController(configuration: configuration)
         picker.delegate = context.coordinator
         
         return picker
@@ -35,34 +37,30 @@ struct ImagePicker: UIViewControllerRepresentable {
 		}
 		
 		func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-			// checking image is selected or cacelled
-			
-			if !results.isEmpty {
-				// checking image can be loaded
-				if results.first!.itemProvider.canLoadObject(ofClass: UIImage.self){
-					results.first!.itemProvider.loadObject(ofClass: UIImage.self) { [self]
-						(image, error) in
-						if error == nil,
-						   let uiImage = image as? UIImage {
-							parent.passImage?(uiImage)
-							
-						}
-						DispatchQueue.main.async {
-							self.parent.imageData = (image as! UIImage).pngData()!
-							self.parent.picker.toggle()
-						}
+			DispatchQueue.main.async {
+				self.parent.isPresenting = false
+			}
+			if let selected = results.first {
+				selected.itemProvider.loadFileRepresentation(forTypeIdentifier:  UTType.image.identifier) { [self] url, error in
+					guard let url = url,
+						  error == nil else {
+						assertionFailure("Fail to get image file url from \(selected)")
+						return
+					}
+					if let data = try? Data(contentsOf: url) {
+						parent.passImageData(data)
+					}
+					else {
+						assertionFailure("Fail to get image data from \(url)")
 					}
 				}
-			}else {
-				self.parent.picker.toggle()
 			}
-        }
+		}
     }
 	
-	init(picker: Binding<Bool>, imageData: Binding<Data>, passImage: ((UIImage) -> Void)? = nil ) {
-		self._picker = picker
-		self._imageData = imageData
-		self.passImage = passImage
+	init(isPresenting: Binding<Bool>, passImageData: @escaping (Data) -> Void) {
+		self._isPresenting = isPresenting
+		self.passImageData = passImageData
 	}
 }
 

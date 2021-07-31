@@ -11,7 +11,11 @@ struct HomeMenu: View {
 	
 	@Binding var navigationTag: String?
 	private let editor = ImageEditor()
-	private let recorder = CameraRecorder()
+	private var recorder: CameraRecorder {
+		let recorder = CameraRecorder()
+		recorder.videoOutputDelegate = editor
+		return recorder
+	}
 	
 	var body: some View {
 		HStack {
@@ -19,10 +23,10 @@ struct HomeMenu: View {
 								 	.environmentObject(editor)
 									.environmentObject(editor.editingState),
 								 image: Image(systemName: "slider.horizontal.below.rectangle"))
-			createNavigationLink(for: CameraView(recorder: recorder),
+			createNavigationLink(for: CameraView(recorder: recorder)
+									.environmentObject(editor)
+									.environmentObject(editor.editingState),
 								 image: Image(systemName: "camera"))
-				.environmentObject(editor)
-			
 		}
 	}
 	

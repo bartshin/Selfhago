@@ -26,11 +26,11 @@ class Bilateral: CIFilter {
 			inputImage = value as? CIImage
 		}
 		else if key == kCIInputRadiusKey,
-		   let value = value as? CGFloat{
+				let value = value as? CGFloat{
 			spacialSigma = value
 		}
 		else if key == kCIInputIntensityKey ,
-		   let value = value as? CGFloat{
+				let value = value as? CGFloat{
 			luminaceSigma = value
 		}
 		else if key == kCIInputExtentKey ,
@@ -44,9 +44,9 @@ class Bilateral: CIFilter {
 				lhs.width * lhs.height > rhs.width * rhs.height
 			}).first {
 				faceRegion = CIVector(x: firstRegion.minX,
-									   y: firstRegion.maxX,
-									   z: firstRegion.minY,
-									   w: firstRegion.maxY)
+									  y: firstRegion.maxX,
+									  z: firstRegion.minY,
+									  w: firstRegion.maxY)
 			}
 			else {
 				faceRegion = CIVector(x: 0, y: 0, z: 0, w: 0)

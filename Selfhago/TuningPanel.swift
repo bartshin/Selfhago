@@ -12,6 +12,8 @@ struct TuningPanel: View {
 	@EnvironmentObject var editor: ImageEditor
 	@EnvironmentObject var editingState: EditingState
 	@Binding var currentCategory: FilterCategory<Any>
+	@State private var isShowingPicker = false
+	
 	private let allCategories: [FilterCategory<Any>]
 
 	var body: some View {
@@ -23,7 +25,12 @@ struct TuningPanel: View {
 					}
 				}
 			}
-			FilterControlView(currentCategory: $currentCategory)
+			HStack {
+				if currentCategory.isNeedPreviewImage {
+					previewImage
+				}
+				FilterControlView(currentCategory: $currentCategory)
+			}
 		}
 		.padding(.horizontal, Constant.horizontalPadding)
 	}
@@ -42,31 +49,56 @@ struct TuningPanel: View {
 		.padding(.horizontal)
 	}
 	
-	init(category: Binding<FilterCategory<Any>>) {
-		self._currentCategory = category
-		let filters = SingleSliderFilterControl.allCases.compactMap{ $0.rawValue } +
-			[
-			MultiSliderFilterControl.bilateral.rawValue, MultiSliderFilterControl.vignette.rawValue,
-				MultiSliderFilterControl.outline.rawValue,
-				MultiSliderFilterControl.textStamp.rawValue,
-				DrawableFilterControl.mask.rawValue, AngleAndSliderFilterControl.glitter.rawValue
-			] +
-			LUTFilterControl.allCases.compactMap { $0.rawValue }
-		allCategories = filters.map {
-			FilterCategory(rawValue: $0)!
+	private var previewImage: some View {
+		Group {
+			if editor.materialImage == nil {
+				Button(action: showPreviewPicker) {
+					Image(systemName: "photo")
+				}
+			}else {
+				Image(uiImage: editor.materialImage!)
+					.resizable()
+					.frame(width: Constant.previewImageSize.width,
+						   height: Constant.previewImageSize.height)
+					.onTapGesture(perform: showPreviewPicker)
+			}
 		}
+		.padding(.horizontal)
+		.sheet(isPresented: $isShowingPicker, content: createImagePicker)
+		.onDisappear {
+			editor.clearMaterialImage()
+		}
+	}
+	private func showPreviewPicker() {
+		withAnimation {
+			isShowingPicker = true
+		}
+	}
+	private func createImagePicker () -> ImagePicker {
+		ImagePicker(
+			isPresenting: $isShowingPicker,
+			passImageData: editor.setMaterialImage)
+	}
+	
+	init(selected category: Binding<FilterCategory<Any>>, in categories: [FilterCategory<Any>]) {
+		_currentCategory = category
+		allCategories = categories
 	}
 	
 	struct Constant {
 		static let horizontalPadding: CGFloat = 50
+		static let previewImageSize = CGSize(width: 50, height: 50)
 	}
 }
-
+#if DEBUG
 struct ImageTuningPanel_Previews: PreviewProvider {
+	
     static var previews: some View {
-		TuningPanel(category:
-						.constant(.init(rawValue: MultiSliderFilterControl.rgb.rawValue)!))
+		TuningPanel(selected:
+						.constant(.init(rawValue: MultiSliderFilterControl.rgb.rawValue)!),
+					in: FilterCategory.allCategories)
 			.environmentObject(ImageEditor.forPreview)
 			.preferredColorScheme(.dark)
     }
 }
+#endif

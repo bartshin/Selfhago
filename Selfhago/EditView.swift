@@ -18,9 +18,9 @@ struct EditView: View, EditorDelegation {
 		GeometryReader { geometry in
 			ZStack {
 				VStack(spacing: 0) {
-					EditingImage(category: $currentCategory)
+					ImagePreview(category: $currentCategory)
 						.contentShape(Rectangle())
-					TuningPanel(category: $currentCategory)
+					TuningPanel(selected: $currentCategory, in: FilterCategory.allCategories)
 						.onChange(of: isShowingPicker, perform: resetTunner(_:))
 						.disabled(editor.uiImage == nil)
 						.frame(maxHeight: geometry.size.height * 0.3)
@@ -38,6 +38,9 @@ struct EditView: View, EditorDelegation {
 			}
 			.sheet(isPresented: $isShowingPicker, content: createImagePicker)
 			.onAppear (perform: showPickerIfNeeded)
+			.onDisappear {
+				editor.clearImage()
+			}
 			.navigationTitle("Edit")
 		}
     }
@@ -80,26 +83,27 @@ struct EditView: View, EditorDelegation {
 	
 	private func createImagePicker () -> ImagePicker {
 		ImagePicker(
-			picker: $isShowingPicker,
-			imageData: Binding<Data>.constant(Data()),
-			passImage: editor.setNewImage)
+			isPresenting: $isShowingPicker,
+			passImageData: editor.setNewImage)
 	}
 	
 	private func resetTunner(_ pickerPresenting: Bool) {
 		guard !isShowingPicker else { return }
 		withAnimation {
-			editor.resetControls()
+			editor.editingState.reset()
 		}
 	}
 	
 	private func showPickerIfNeeded() {
-		guard editor.savingDelegate == nil else {
-			return 
+		if editor.savingDelegate == nil {
+			editor.savingDelegate = self 
 		}
-		editor.savingDelegate = self
-		if editor.uiImage == nil {
+		if editor.uiImage == nil || editor.editingState.isRecording {
 			DispatchQueue.main.async {
 				isShowingPicker = true
+				if editor.editingState.isRecording {
+					editor.clearImage()
+				}
 			}
 		}
 	}
@@ -115,7 +119,7 @@ struct EditView: View, EditorDelegation {
 		}
 	}
 }
-
+#if DEBUG
 struct EditView_Previews: PreviewProvider {
     static var previews: some View {
         EditView()
@@ -123,3 +127,4 @@ struct EditView_Previews: PreviewProvider {
 			.environmentObject(ImageEditor.forPreview)
     }
 }
+#endif

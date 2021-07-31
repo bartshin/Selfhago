@@ -13,14 +13,18 @@ class LUTCube: CIFilter {
 	
 	private var inputImage: CIImage? = nil
 	private var lutName: String?
+	private var lutData: Data?
 	
 	override func setValue(_ value: Any?, forKey key: String) {
 		if key == kCIInputImageKey {
 			inputImage = value as? CIImage
 		}
 		else if key == kCIInputMaskImageKey,
-				let lutName = value as? String {
-			self.lutName = lutName
+				let newLutName = value as? String {
+			if newLutName != self.lutName {
+				lutData = nil
+			}
+			self.lutName = newLutName
 		}
 	}
 	
@@ -33,17 +37,24 @@ class LUTCube: CIFilter {
 	
 	override var outputImage: CIImage? {
 		guard inputImage != nil,
-			  let lutImage = UIImage(named: lutName!),
-			let data = getCubeData(
+			  let lutImage = UIImage(named: lutName!)
+			 else { return nil }
+		
+		if lutData == nil  {
+			guard let newLutData = getCubeData(
 				lutImage:  lutImage,
 				dimension: 64,
-				colorSpace: CGColorSpaceCreateDeviceRGB()) else { return nil }
+				colorSpace: CGColorSpaceCreateDeviceRGB()) else {
+				return nil
+			}
+			lutData = newLutData
+		}
 		if lutName == nil {
 			return inputImage
 		}
 		let filter = CIFilter(name: "CIColorCube", parameters: [
 			"inputCubeDimension": 64,
-			"inputCubeData": data,
+			"inputCubeData": lutData!,
 			"inputImage": inputImage!,
 		])
 		

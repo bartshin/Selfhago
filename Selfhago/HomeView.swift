@@ -21,7 +21,7 @@ struct HomeView: View {
 		static let verticalMargin: CGFloat = 50
 	}
 }
-
+#if DEBUG
 struct HomeView_Previews: PreviewProvider {
 	static var previews: some View {
 		HomeView()
@@ -29,3 +29,4 @@ struct HomeView_Previews: PreviewProvider {
 			.environmentObject(ImageEditor.forPreview)
 	}
 }
+#endif

@@ -19,8 +19,8 @@ struct FilterControlView: View {
 			drawSlider(for: colorControl)
 		}else if currentCategory.control is DrawableFilterControl{
 			blurmaskControlSlider
-		}else if let LUTFilter = currentCategory.control as? LUTFilterControl {
-			drawLUTControl(for: LUTFilter)
+		}else if let onOffFilter = currentCategory.control as? OnOffFilter {
+			drawControl(for: onOffFilter)
 		}else if let multiSliderFilter = currentCategory.control as? MultiSliderFilterControl {
 			drawVerticalSliders(for: multiSliderFilter)
 		}else if let angleAndSliderFilter = currentCategory.control as? AngleAndSliderFilterControl {
@@ -33,6 +33,7 @@ struct FilterControlView: View {
 			Slider(value: binding(to: control, with: control.rawValue),
 				   in: control.getRange(),
 				   step: 0.01)
+				.disabled(control == .backgroundTone && (!editingState.depthDataAvailable || editor.materialImage == nil))
 			drawDetailConfigPanel(for: control)
 				.layoutPriority(1)
 		}
@@ -44,9 +45,34 @@ struct FilterControlView: View {
 			if control == .brightness {
 				drawVerticalSliders(for: .rgb)
 			}
+			else if control == .saturation {
+				rgbControlPanel
+			}
 		}
 	}
-
+	
+	@State private var currentComponent: MultiSliderFilterControl = .red
+	private var rgbControlPanel: some View {
+		HStack {
+			VStack {
+				ForEach([MultiSliderFilterControl.red, .blue, .green], id: \.rawValue) {
+					drawRgbSelectButton(for: $0)
+				}
+			}
+			drawVerticalSliders(for: currentComponent)
+		}
+	}
+	
+	private func drawRgbSelectButton(for component: MultiSliderFilterControl) -> some View {
+		Button {
+			withAnimation {
+				currentComponent = component
+			}
+		} label: {
+			Text("\(component.rawValue.first!.uppercased())")
+		}
+	}
+	
 	
 	private var selectedFont: Font {
 		Font(UIFont(descriptor: editingState.control.textStampFont.descriptor,
@@ -68,6 +94,13 @@ struct FilterControlView: View {
 				} set: {
 					editingState.control.painterRadius = $0
 					editor.setPainter()
+				}
+			case .backgroundTone:
+				return Binding<CGFloat> {
+					editingState.control.depthFocus
+				} set:  {
+					editingState.control.depthFocus = $0
+					editor.setBackgroundToneRetouch()
 				}
 		}
 		
@@ -95,6 +128,62 @@ struct FilterControlView: View {
 		.padding(.top, Constant.verticalPadding)
 	}
 	
+	private func drawControl(for onOffFilter: OnOffFilter ) -> some View {
+		HStack (spacing: 30) {
+			if let luts = onOffFilter.luts?.enumerated().sorted(by: { lhs, rhs in
+				lhs.element < rhs.element
+			}) {
+				ForEach(luts, id: \.element) { lut in
+					Button("\(onOffFilter.lutCode!)\(lut.offset)") {
+						editor.setLutCube(lut.element)
+					}
+				}
+			}
+		}
+		.padding(.vertical, 20)
+	}
+	
+	private func drawControls(for filter: AngleAndSliderFilterControl) -> some View {
+		GeometryReader { geometry in
+			HStack {
+				ForEach(0..<filter.scalarFactorCount) { index in
+					VSlider(value: binding(to: filter, at: index),
+							in: filter.getRange(for: index),
+							step: 0.02,
+							sliderSize: .init(width: geometry.size.width * 0.25,
+											  height: geometry.size.height * 0.8 ))
+				}
+				CircularSlider(
+					anglesAndRadius: $editingState.control.glitterAnglesAndRadius,
+					handleValueChanged: editor.setGlitter,
+					displayCallback: { pair in
+						[]
+					}, backgroundView: Color(.lightGray)) { size in
+					Image(systemName: "plus.circle")
+						.resizable()
+						.renderingMode(.template)
+						.foregroundColor(.white)
+						.frame(width: size.width, height: size.height)
+						.background(Color.black)
+						.clipShape(Circle())
+				}
+			}
+			.frame(width: geometry.size.width, height: geometry.size.height)
+		}
+	}
+	
+	private func binding(to filter: AngleAndSliderFilterControl, at index: Int) -> Binding<CGFloat> {
+		switch filter {
+			case .glitter:
+				return Binding<CGFloat> {
+					1 - editingState.control.thresholdBrightness
+				} set: {
+					editingState.control.thresholdBrightness =  1 - $0
+					editor.setGlitter()
+				}
+		}
+	}
+	
 	private func drawVerticalSliders(for filter: MultiSliderFilterControl) -> some View {
 		GeometryReader { geometry in
 			HStack {
@@ -118,19 +207,7 @@ struct FilterControlView: View {
 	
 	private func binding(to multiSliderControl: MultiSliderFilterControl, at index: Int) -> Binding<CGFloat> {
 		switch multiSliderControl {
-			case .rgb:
-				return Binding<CGFloat> {
-					var value: CGFloat = 0
-					SelectiveBrightness.FilterParameter.RGBColor.allCases.forEach {
-						value += editingState.control.selectiveControl[$0]![index]
-					}
-					return value/3 // Average of rgb
-				} set: { value in
-					SelectiveBrightness.FilterParameter.RGBColor.allCases.forEach { component in
-						editingState.control.selectiveControl[component]![index] = value
-					}
-					editor.setSelectiveBrightness()
-				}
+			
 			case .bilateral:
 				return Binding<CGFloat> {
 					index == 0 ? editingState.control.bilateralControl.radius:
@@ -195,59 +272,39 @@ struct FilterControlView: View {
 						editingState.control.textStampControl.lensScale = $0
 					}
 				}
-		}
-	}
-	
-	private func drawLUTControl(for LUTFilter: LUTFilterControl) -> some View {
-		HStack (spacing: 30) {
-			ForEach(LUTFilter.luts.enumerated().sorted(by: { lhs, rhs in
-				lhs.element < rhs.element
-			}), id: \.element) { filter in
-				Button("\(LUTFilter.lutCode)\(filter.offset)") {
-					editor.setLutCube(filter.element)
-				}
-			}
-		}
-		.padding(.vertical, 20)
-	}
-	
-	private func drawControls(for filter: AngleAndSliderFilterControl) -> some View {
-		GeometryReader { geometry in
-			HStack {
-				ForEach(0..<filter.scalarFactorCount) { index in
-					VSlider(value: binding(to: filter, at: index),
-							in: filter.getRange(for: index),
-							step: 0.02,
-							sliderSize: .init(width: geometry.size.width * 0.25,
-											  height: geometry.size.height * 0.8 ))
-				}
-				CircularSlider(
-					anglesAndRadius: $editingState.control.glitterAnglesAndRadius,
-					handleValueChanged: editor.setGlitter,
-					displayCallback: { pair in
-						[]
-					}, backgroundView: Color(.lightGray)) { size in
-					Image(systemName: "plus.circle")
-						.resizable()
-						.renderingMode(.template)
-						.foregroundColor(.white)
-						.frame(width: size.width, height: size.height)
-						.background(Color.black)
-						.clipShape(Circle())
-				}
-			}
-			.frame(width: geometry.size.width, height: geometry.size.height)
-		}
-	}
-	
-	private func binding(to filter: AngleAndSliderFilterControl, at index: Int) -> Binding<CGFloat> {
-		switch filter {
-			case .glitter:
+			case .rgb:
 				return Binding<CGFloat> {
-					1 - editingState.control.thresholdBrightness
-				} set: {
-					editingState.control.thresholdBrightness =  1 - $0
-					editor.setGlitter()
+					var value: CGFloat = 0
+					ColorChannel.InputParameter.Component.allCases.forEach {
+						value += editingState.control.colorChannelControl[$0]![index]
+					}
+					return value/3 // Average of rgb
+				} set: { value in
+					ColorChannel.InputParameter.Component.allCases.forEach { component in
+						editingState.control.colorChannelControl[component]![index] = value
+					}
+					editor.setColorChannel()
+				}
+			case .red:
+				return Binding<CGFloat> {
+					return editingState.control.colorChannelControl[.red]![index]
+				} set: { value in
+					editingState.control.colorChannelControl[.red]![index] = value
+					editor.setColorChannel()
+				}
+			case .green:
+				return Binding<CGFloat> {
+					return editingState.control.colorChannelControl[.green]![index]
+				} set: { value in
+					editingState.control.colorChannelControl[.green]![index] = value
+					editor.setColorChannel()
+				}
+			case .blue:
+				return Binding<CGFloat> {
+					return editingState.control.colorChannelControl[.blue]![index]
+				} set: { value in
+					editingState.control.colorChannelControl[.blue]![index] = value
+					editor.setColorChannel()
 				}
 		}
 	}

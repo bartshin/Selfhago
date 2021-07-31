@@ -12,26 +12,27 @@ class EditingState: ObservableObject {
 	
 	// MARK: Image data
 	private(set) var originalCgImage: CGImage?
-	private(set) var imageExtent: CGRect?
-	var averageLuminace: CGFloat
-	var faceRegions: [CGRect]
+	private(set) var imageOrientaion: CGImagePropertyOrientation?
+	var ciImage: CIImage {
+		CIImage(
+			cgImage: originalCgImage!,
+			options: [.applyOrientationProperty: true,
+					  .properties: [kCGImagePropertyOrientation: imageOrientaion!.rawValue]])
+	}
 	
 	/// [ Filter name : CI Filter] key = String(describing: FilterType.self)
 	private(set) var applyingFilters: [String: CIFilter]
 	@Published var control = ControlValue()
+	@Published var isRecording = false
+	@Published var depthDataAvailable = false
 	
-	func setNewImageData(_ image: UIImage) -> CIImage {
+	func setNewImage(_ image: UIImage) {
 		originalCgImage = image.cgImage
 		if originalCgImage == nil {
 			assertionFailure("Missing cg image")
-			return CIImage()
+			return
 		}
-		let ciImage = CIImage(
-			cgImage: originalCgImage!,
-			options: [.applyOrientationProperty: true,
-					  .properties: [kCGImagePropertyOrientation: image.imageOrientation.cgOrientation.rawValue]])
-		imageExtent = ciImage.extent
-		return ciImage
+		imageOrientaion = image.imageOrientation.cgOrientation
 	}
 	
 	func getFilter<T>(_ filterType: T.Type, name: String? = nil) -> T where T: CIFilter {
@@ -43,11 +44,10 @@ class EditingState: ObservableObject {
 		return applyingFilters[key] as! T
 	}
 	
-	func getMetalFilter<T>(initClosure: @escaping () -> T, ciContext: CIContext) -> T where T: MetalFilter {
+	func getMetalFilter<T>(initClosure: @escaping () -> T) -> T where T: MetalFilter {
 		let key = String(describing: T.self)
 		if applyingFilters[key] == nil {
 			let filter = initClosure()
-			filter.ciContext = ciContext
 			applyingFilters[key] = filter
 		}
 		return applyingFilters[key] as! T
@@ -55,8 +55,6 @@ class EditingState: ObservableObject {
 	
 	func reset() {
 		control = ControlValue()
-		averageLuminace = 0.5
-		faceRegions.removeAll()
 		applyingFilters.removeAll()
 	}
 	
@@ -68,8 +66,6 @@ class EditingState: ObservableObject {
 	
 	init() {
 		control = ControlValue()
-		averageLuminace = 0.5
-		faceRegions = .init()
 		applyingFilters = .init()
 	}
 	
@@ -80,7 +76,7 @@ class EditingState: ObservableObject {
 		var averageLuminance: CGFloat = 0.5
 		var outlineControl: (bias: CGFloat, weight: CGFloat) = (0.1, 0.1)
 		var bilateralControl: (radius: CGFloat, intensity: CGFloat) = (0.1, 0.1)
-		var vignetteControl: (radius: CGFloat, intensity: CGFloat, edgeBrightness: CGFloat) = (1, 2, -0.3)
+		var vignetteControl: (radius: CGFloat, intensity: CGFloat, edgeBrightness: CGFloat) = (0, 0, 0)
 		var textStampFont: (fontSize: CGFloat, descriptor: UIFontDescriptor) = (30, .init())
 		var textStampControl: (radius: CGFloat, lensScale: CGFloat) = (10, 50)
 		var textStampContent = Self.defaultText
@@ -89,14 +85,15 @@ class EditingState: ObservableObject {
 		var painterRadius: CGFloat = 0
 		var selectedLUTName: String?
 		var glitterAnglesAndRadius: [CGFloat: CGFloat] = [:]
+		var depthFocus: CGFloat = 0.1
 		
 		var colorControl: [SingleSliderFilterControl: CGFloat] = [.brightness, .contrast, .saturation].reduce(into: [:]) {
 			dict, control in
 			dict[control] = control.defaultValue
 		}
-		var selectiveControl: [SelectiveBrightness.FilterParameter.RGBColor: SelectiveBrightness.selectableValues] = SelectiveBrightness.FilterParameter.RGBColor.allCases.reduce(
+		var colorChannelControl: [ColorChannel.InputParameter.Component: ColorChannel.valueForRanges] = ColorChannel.InputParameter.Component.allCases.reduce(
 			into: .init()) { dict , rgbComponent in
-			dict[rgbComponent] = SelectiveBrightness.emptyValues
+			dict[rgbComponent] = ColorChannel.emptyValues
 		}
 	}
 }
