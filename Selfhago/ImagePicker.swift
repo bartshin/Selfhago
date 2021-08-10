@@ -4,8 +4,8 @@ import SwiftUI
 import PhotosUI
 
 struct ImagePicker: UIViewControllerRepresentable {
-	@Binding var isPresenting: Bool
-	private let passImageData: (Data) -> Void
+	@Environment(\.presentationMode) var presentationMode
+	private let passImage: (UIImage) -> Void
 	
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -37,30 +37,23 @@ struct ImagePicker: UIViewControllerRepresentable {
 		}
 		
 		func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-			DispatchQueue.main.async {
-				self.parent.isPresenting = false
-			}
-			if let selected = results.first {
-				selected.itemProvider.loadFileRepresentation(forTypeIdentifier:  UTType.image.identifier) { [self] url, error in
-					guard let url = url,
-						  error == nil else {
-						assertionFailure("Fail to get image file url from \(selected)")
-						return
-					}
-					if let data = try? Data(contentsOf: url) {
-						parent.passImageData(data)
+			self.parent.presentationMode.wrappedValue.dismiss()
+			if let selected = results.first ,
+			   selected.itemProvider.canLoadObject(ofClass: UIImage.self) {
+				selected.itemProvider.loadObject(ofClass: UIImage.self) { result, error in
+					if let image = result as? UIImage {
+						self.parent.passImage(image)
 					}
 					else {
-						assertionFailure("Fail to get image data from \(url)")
+						print("Fail to load image \(error?.localizedDescription ?? "")")
 					}
 				}
 			}
 		}
     }
 	
-	init(isPresenting: Binding<Bool>, passImageData: @escaping (Data) -> Void) {
-		self._isPresenting = isPresenting
-		self.passImageData = passImageData
+	init(passImage: @escaping (UIImage) -> Void) {
+		self.passImage = passImage
 	}
 }
 

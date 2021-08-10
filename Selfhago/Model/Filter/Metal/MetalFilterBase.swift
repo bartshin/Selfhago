@@ -19,7 +19,7 @@
 
 import CoreImage
 
-#if !arch(i386) && !arch(x86_64)
+//#if !arch(i386) && !arch(x86_64)
 
 import Metal
 import MetalKit
@@ -308,13 +308,13 @@ class MetalFilter: CIFilter, MetalRenderable
 		}
 	}
 }
-
-#else
-class MetalFilter: CIFilter
-{
-}
-
-#endif
+//
+//#else
+//class MetalFilter: CIFilter
+//{
+//}
+//
+//#endif
 
 protocol MetalRenderable {
 	

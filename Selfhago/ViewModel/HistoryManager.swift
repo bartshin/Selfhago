@@ -23,7 +23,7 @@ class HistoryManager {
 	private(set) var redoAble: Bool
 	
 	var sourceImage: CIImage {
-		sourceImages.last!
+		sourceImages.last ?? CIImage()
 	}
 	
 	var lastImage: CIImage {
@@ -34,6 +34,14 @@ class HistoryManager {
 		filterHistory = []
 		imageHistory = []
 		sourceImages = []
+		nextFilterIndex = 0
+		setRedoAndUndo()
+	}
+	
+	func reset() {
+		filterHistory = []
+		imageHistory = sourceImages.first == nil ? []: [sourceImages.first!]
+		sourceImages = sourceImages.first == nil ? []: [sourceImages.first!]
 		nextFilterIndex = 0
 		setRedoAndUndo()
 	}

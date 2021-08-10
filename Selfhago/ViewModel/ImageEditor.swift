@@ -14,33 +14,49 @@ import Combine
 class ImageEditor: NSObject, ObservableObject {
 	
 	private(set) var uiImage: UIImage?
-	private(set) var materialImage: UIImage?
+	@Published private(set) var materialImage: UIImage?
 	private let analyst: ImageAnalyst
 	let historyManager: HistoryManager
 	let editingState: EditingState
 	var drawingMaskView: PKCanvasView
-	var savingDelegate: EditorDelegation?
+	var savingDelegate: SavingDelegation?
+	var textImageProvider: TextImageProvider?
 	private lazy var ciContext = CIContext(options: [.cacheIntermediates: false])
 	
 	func setNewImage(from data: Data) {
 		guard let image = UIImage(data: data) else {
 			return
 		}
-		ciContext.clearCaches()
-		editingState.setNewImage(image)
+		editingState.reset()
 		historyManager.clearHistory()
+		uiImage = image
+		publishOnMainThread()
+		editingState.setNewImage(image)
 		historyManager.setImage(editingState.ciImage)
-		setImageForDisplay()
 		analyst.reset()
 		analizeImage(from: data)
 	}
 	
-	func setMaterialImage(from data: Data) {
-		guard let image = UIImage(data: data) else {
-			return
+	func captureImage() {
+		editingState.setNewImage(uiImage!)
+		historyManager.setImage(editingState.ciImage)
+	}
+	
+	func clearAllFilter() {
+		editingState.reset()
+		historyManager.reset()
+		setImageForDisplay()
+	}
+	
+	func setMaterialImage(_ image: UIImage) {
+		if Thread.isMainThread {
+			materialImage = image
 		}
-		materialImage = image
-		publishOnMainThread()
+		else {
+			DispatchQueue.main.async {
+				self.materialImage = image
+			}
+		}
 	}
 	
 	func clearImage() {
@@ -50,7 +66,6 @@ class ImageEditor: NSObject, ObservableObject {
 	
 	func clearMaterialImage() {
 		materialImage = nil
-		publishOnMainThread()
 	}
 	
 	// MARK: - Set Tunable filter
@@ -173,6 +188,41 @@ class ImageEditor: NSObject, ObservableObject {
 		setImageForDisplay()
 	}
 	
+	func createPresetThumnails() {
+		let presetLuts = PresetFilter.allCases.reduce(into: []) { allLut, preset in
+			allLut += preset.luts
+		}
+		guard let inputImage = CIImage(image: DesignConstant.presetFilterImage) else {
+			assertionFailure("Input image is not available")
+			return
+		}
+		DispatchQueue.global(qos: .userInitiated).async { [self] in
+			let filter = LUTCube()
+			filter.setValue(inputImage, forKey: kCIInputImageKey)
+			presetLuts.forEach { lutName in
+				filter.setValue(lutName, forKey: kCIInputMaskImageKey)
+				if let outputImage = filter.outputImage,
+				   let cgImage = ciContext.createCGImage(outputImage, from: outputImage.extent){
+					editingState.presetThumnails[lutName] = UIImage(cgImage: cgImage)
+				}
+			}
+			Glitter.createPresetImages().forEach { ciImage in
+				if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) {
+					editingState.glitterPresetImages.append(UIImage(cgImage: cgImage))
+				}
+			}
+		}
+	}
+	
+	func createGlitterPreview(for angleAndRadius: [CGFloat: CGFloat], in size: CGSize) -> UIImage {
+		let ciImage = Glitter.createPresetImage(for: angleAndRadius, in: size)
+		if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) {
+			return UIImage(cgImage: cgImage)
+		}else {
+			return UIImage()
+		}
+	}
+	
 	private func setValueForFilter(_ filter: BackgroundToneRetouch) {
 		guard let materialImage = materialImage?.cgImage,
 			  let depthMask = analyst.createDepthMask(over: editingState.control.depthFocus) else {
@@ -190,7 +240,11 @@ class ImageEditor: NSObject, ObservableObject {
 		guard editingState.originalCgImage != nil, !editingState.isRecording else{
 			return
 		}
-		
+		let trigger = Date().timeIntervalSinceReferenceDate
+		editingState.lastFilterTrigger = trigger
+		if editingState.currentExcutingFilterTrigger == nil {
+			editingState.currentExcutingFilterTrigger = trigger
+		}
 		var ciImage: CIImage? = historyManager.sourceImage
 		editingState.applyingFilters.enumerated().forEach {
 			let filter = $0.element.value
@@ -213,6 +267,7 @@ class ImageEditor: NSObject, ObservableObject {
 			assertionFailure("Fail to create mask image")
 			return
 		}
+		drawingMaskView.drawing.strokes.removeAll()
 		let filter = CIFilter(name: "CIMaskedVariableBlur")!
 		filter.setValue(mask, forKey: "inputMask")
 		filter.setValue(editingState.control.blurIntensity, forKey: kCIInputRadiusKey)
@@ -224,21 +279,23 @@ class ImageEditor: NSObject, ObservableObject {
 		setImageForDisplay()
 	}
 	
-	func applyRefractedText() {
-		let sourceImage = historyManager.lastImage
-		let filter = RefractedText()
-		let font = UIFont(descriptor: editingState.control.textStampFont.descriptor,
-						  size: editingState.control.textStampFont.fontSize)
-		filter.setValue(sourceImage, forKey: kCIInputImageKey)
-		filter.setValue(editingState.control.textStampControl.radius, forKey: kCIInputRadiusKey)
-		filter.setValue(editingState.control.textStampControl.lensScale, forKey: kCIInputScaleKey)
-		filter.setValue(font, forKey: RefractedText.fontKey)
-		filter.setValue(editingState.control.textStampContent, forKey: RefractedText.inputTextKey)
-		filter.setValue(editingState.control.textStampAlignment, forKey: RefractedText.alignmentKey)
+	func applyTextStamp() {
+		guard let textImage = textImageProvider?.provideTextImage(),
+			  let ciImage = CIImage(image: textImage) else {
+			assertionFailure("Fail to get text image")
+			return
+		}
+		let scaleTransform = CGAffineTransform(scaleX: 1/textImage.scale, y: 1/textImage.scale)
+		let scaleCorrectedImage = ciImage.transformed(by: scaleTransform)
+
+		let filter = CIFilter(name: "CISourceAtopCompositing")!
+		filter.setValue(scaleCorrectedImage, forKey: kCIInputImageKey)
+		filter.setValue(historyManager.lastImage, forKey: kCIInputBackgroundImageKey)
 		if let filteredImage = filter.outputImage {
 			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: filteredImage)
+		}else {
+			print("Oooops no output")
 		}
-		
 		setImageForDisplay()
 	}
 	
@@ -261,7 +318,7 @@ class ImageEditor: NSObject, ObservableObject {
 	// MARK: - Analize image
 	
 	private func analizeImage(from data: Data) {
-		DispatchQueue.global(qos: .userInitiated).async { [self] in
+		DispatchQueue.global(qos: .utility).async { [self] in
 			guard let cgImage = editingState.originalCgImage,
 				  let orientation = editingState.imageOrientaion else {
 				return
@@ -284,17 +341,21 @@ class ImageEditor: NSObject, ObservableObject {
 	// MARK: - Display
 	
 	private func setImageForDisplay() {
-		guard !editingState.isRecording else {
+		if editingState.isRecording ||
+			(editingState.currentExcutingFilterTrigger != nil &&
+		   editingState.currentExcutingFilterTrigger! < editingState.lastFilterTrigger!){
 			return
 		}
-		DispatchQueue.global(qos:.userInteractive).sync { [self] in
+		DispatchQueue.global(qos: .userInteractive).async { [self] in
 			let ciImage = historyManager.lastImage
 			if let cgImage = ciContext.createCGImage(ciImage, from: editingState.ciImage.extent){
-				uiImage = UIImage(cgImage: cgImage)
-				publishOnMainThread()
+				self.uiImage = UIImage(cgImage: cgImage)
+				self.publishOnMainThread()
 			}
+			editingState.currentExcutingFilterTrigger = nil
 		}
 	}
+	
 	
 	private func publishOnMainThread() {
 		if Thread.isMainThread {
@@ -317,13 +378,17 @@ class ImageEditor: NSObject, ObservableObject {
 		let state = EditingState()
 		editingState = state
 		super.init()
-		drawingMaskView.delegate = self
+		createPresetThumnails()
 	}
 	
 	#if DEBUG
 	static var forPreview: ImageEditor {
 		let editor = ImageEditor()
-		editor.uiImage = UIImage(named: "selfie_dummy")!
+		let image = UIImage(named: "selfie_dummy")!
+		editor.uiImage = image
+		editor.editingState.setNewImage(image)
+		editor.historyManager.setImage(editor.editingState.ciImage)
+		editor.setImageForDisplay()
 		return editor
 	}
 	#endif
@@ -334,12 +399,18 @@ class ImageEditor: NSObject, ObservableObject {
 extension ImageEditor {
 	
 	func undo() {
+		guard historyManager.undoAble else {
+			return
+		}
 		let toLoad = historyManager.undo()
 		loadState(filter: toLoad.filter, state: toLoad.beforeState)
 		setImageForDisplay()
 	}
 	
 	func redo() {
+		guard historyManager.redoAble else {
+			return
+		}
 		let toLoad = historyManager.redo()
 		loadState(filter: toLoad.filter, state: toLoad.afterState)
 		setImageForDisplay()
@@ -446,15 +517,15 @@ extension ImageEditor: AVCaptureVideoDataOutputSampleBufferDelegate {
 		guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
 			return
 		}
-		
 		guard let filteredImage = applyFilterToVideo(input: CIImage(cvImageBuffer: buffer)),
 			let cgImage = ciContext.createCGImage(filteredImage, from: filteredImage.extent) else {
 			assertionFailure("Fail to create cg image from video output")
 			return
 		}
+		
 		let previousSize = uiImage?.size
 		uiImage = UIImage(cgImage: cgImage)
-		if !editingState.isRecording || previousSize != uiImage?.size {
+		if previousSize != uiImage?.size {
 			DispatchQueue.main.async {
 				self.editingState.isRecording = true
 			}
@@ -464,17 +535,11 @@ extension ImageEditor: AVCaptureVideoDataOutputSampleBufferDelegate {
 		}
 	}
 }
-extension ImageEditor: PKCanvasViewDelegate {
-	func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
-		guard !canvasView.drawing.strokes.isEmpty else {
-			return
-		}
-		self.applyMaskBlur()
-	}
-}
 
-protocol EditorDelegation {
+protocol SavingDelegation {
 	func savingCompletion(error: Error?) -> Void
 }
 
-
+protocol TextImageProvider {
+	func provideTextImage() -> UIImage
+}

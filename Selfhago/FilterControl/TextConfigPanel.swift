@@ -14,29 +14,18 @@ struct TextConfigPanel: View {
 	@State private var isShowingFontPicker = false
 	
 	var body: some View {
-		VStack {
-			alignmentPicker
-			Text(editingState.control.textStampContent)
-				.font(fontWithoutSize)
-			HStack{
-				showingSheetButton
-					.sheet(isPresented: $isShowingFontPicker) {
-						editTextSheet
-					}
-				confirmButton
-			}
-		}
-	}
-	
-	private var alignmentPicker: some View {
-		HStack{
-			Picker(selection: $editingState.control.textStampAlignment,
-				   label: Text("Text alignment")) {
-				ForEach(TextMask.Alignment.allCases, id: \.self) {
-					getImage(for: $0)
+		VStack{
+			showingSheetButton
+				.sheet(isPresented: $isShowingFontPicker) {
+					editTextSheet
 				}
+			GeometryReader { geometry in
+				ColorPickerWheel(color: $editingState.control.textStampColor,
+								 frame: geometry.frame(in: .local),
+								 strokeWidth: 25)
 			}
-			.pickerStyle(SegmentedPickerStyle())
+			.frame(width: Constant.colorPickerSize.width,
+				   height: Constant.colorPickerSize.height)
 		}
 	}
 	
@@ -46,30 +35,18 @@ struct TextConfigPanel: View {
 				self.isShowingFontPicker = true
 			}
 		} label: {
-			Image(systemName: "textformat.alt")
-		}
-	}
-	
-	private var confirmButton: some View {
-		Button {
-			editor.applyRefractedText()
-		} label: {
-			Image(systemName: "checkmark.seal.fill")
+			Text("Change Text")
 		}
 	}
 	
     private var editTextSheet: some View {
-		
-		GeometryReader { geometry in
-			Form {
-				drawTextview(in: geometry.size)
-				fontSizeSlider
-				fontPicker
-			}
+		Form {
+			textView
+			fontPicker
 		}
     }
 	
-	private func drawTextview(in size: CGSize) -> some View {
+	private var textView: some View {
 		Section (header:
 					HStack {
 						Text("Content")
@@ -80,7 +57,8 @@ struct TextConfigPanel: View {
 		) {
 			TextEditor(text: $editingState.control.textStampContent)
 				.font(fontWithSize)
-				.frame(height: size.height * 0.3)
+				.frame(height: Constant.textViewHeight)
+				.foregroundColor(Color(editingState.control.textStampColor))
 				.onTapGesture {
 					editingState.clearTextIfDefault()
 				}
@@ -129,10 +107,6 @@ struct TextConfigPanel: View {
 					size: editingState.control.textStampFont.fontSize) as CTFont)
 	}
 	
-	private var fontWithoutSize: Font {
-		Font(UIFont(descriptor: editingState.control.textStampFont.descriptor, size: 20))
-	}
-
 	private func getImage(for alignment: TextMask.Alignment) -> Image {
 		switch alignment {
 			case .topLeft:
@@ -147,21 +121,12 @@ struct TextConfigPanel: View {
 				return Image(systemName: "dot.squareshape.split.2x2")
 		}
 	}
+	
+	private struct Constant {
+		static let textViewHeight: CGFloat = 200
+		static let colorPickerSize = CGSize(width: 100, height: 100)
+	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 struct TextConfigPanel_Previews: PreviewProvider {

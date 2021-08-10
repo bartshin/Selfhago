@@ -15,8 +15,21 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 				MultiSliderFilterControl.bilateral.rawValue, MultiSliderFilterControl.vignette.rawValue,
 				MultiSliderFilterControl.outline.rawValue,
 				MultiSliderFilterControl.textStamp.rawValue,
-				DrawableFilterControl.mask.rawValue, AngleAndSliderFilterControl.glitter.rawValue
+				DrawableFilterControl.mask.rawValue
 			] +
+			OnOffFilter.allCases.compactMap { $0.rawValue }
+		return filters.map {
+			FilterCategory(rawValue: $0)!
+		}
+	}
+	
+	static var categiresForRecording: [Self<Any>] {
+		let filters = [SingleSliderFilterControl.brightness,
+					   .saturation,
+					   .contrast].compactMap{ $0.rawValue } + [
+						MultiSliderFilterControl.vignette.rawValue,
+						MultiSliderFilterControl.outline.rawValue,
+					] +
 			OnOffFilter.allCases.compactMap { $0.rawValue }
 		return filters.map {
 			FilterCategory(rawValue: $0)!
@@ -25,7 +38,9 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 	
 	private(set) var control: FT
 	let subCategory: String
-	private(set) var labelImage: Image?
+	private(set) var labelImage: UIImage
+	private(set) var labelStrings: [String]
+	var hasSourceImage: Bool
 	
 	var id: String {
 		subCategory
@@ -39,36 +54,34 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 		hasher.combine(id)
 	}
 	
-	var isNeedPreviewImage: Bool
 	
 	init?(rawValue: String) {
-		isNeedPreviewImage = false
+		hasSourceImage = false
 		if let drawbleFilter = DrawableFilterControl(rawValue: rawValue) {
 			control = drawbleFilter as! FT
 			labelImage = drawbleFilter.label
 			subCategory = drawbleFilter.rawValue
+			labelStrings = drawbleFilter.labelStrings
 		}
 		else if let multiSliderFilter = MultiSliderFilterControl(rawValue: rawValue) {
 			control = multiSliderFilter as! FT
 			labelImage = multiSliderFilter.label
 			subCategory = multiSliderFilter.rawValue
-		}
-		else if let angleAndSliderFilter = AngleAndSliderFilterControl(rawValue: rawValue) {
-			control = angleAndSliderFilter as! FT
-			labelImage = angleAndSliderFilter.label
-			subCategory = angleAndSliderFilter.rawValue
+			labelStrings = multiSliderFilter.labelStrings
 		}
 		else if let onOffFilter = OnOffFilter(rawValue: rawValue) {
 			control = onOffFilter as! FT
 			labelImage = onOffFilter.label
 			subCategory = onOffFilter.rawValue
+			labelStrings = onOffFilter.labelStrings
 		}
 		else if let sliderControl = SingleSliderFilterControl(rawValue: rawValue) {
 			control = sliderControl as! FT
 			labelImage = sliderControl.label
 			subCategory = sliderControl.rawValue
+			labelStrings = sliderControl.labelStrings
 			if sliderControl == .backgroundTone {
-				isNeedPreviewImage = true
+				hasSourceImage = true
 			}
 		}
 		else {
@@ -80,10 +93,17 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 enum DrawableFilterControl: String {
 	case mask
 	
-	var label: Image {
+	var label: UIImage {
 		switch self {
 			case .mask:
-				return Image(systemName: "eye.slash")
+				return UIImage(named: "waterdrop")!
+		}
+	}
+	
+	var labelStrings: [String] {
+		switch self {
+			case .mask:
+				return ["Blur", "블러"]
 		}
 	}
 }
@@ -98,18 +118,24 @@ enum MultiSliderFilterControl: String {
 	case blue
 	case green
 	
-	var label: Image?{
+	var label: UIImage {
 		switch self {
-			case .rgb, .red, .blue, .green:
-				return nil
+			case .rgb:
+				return UIImage(named: "rgb_circles")!
+			case .red:
+				return UIImage(systemName: "r.circle")!
+			case .green:
+				return UIImage(systemName: "g.circle")!
+			case .blue:
+				return UIImage(systemName: "b.circle")!
 			case .bilateral:
-				return Image(systemName: "wand.and.stars")
+				return UIImage(named: "magic_wand")!
 			case .vignette:
-				return Image(systemName: "v.circle.fill")
+				return UIImage(named: "vignette")!
 			case .outline:
-				return Image(systemName: "pencil.and.outline")
+				return UIImage(named: "pencil")!
 			case .textStamp:
-				return Image(systemName: "textbox")
+				return UIImage(named: "textbox")!
 		}
 	}
 	
@@ -124,7 +150,7 @@ enum MultiSliderFilterControl: String {
 			case .outline:
 				return 2
 			case .textStamp:
-				return 2
+				return 3
 		}
 	}
 	
@@ -155,43 +181,59 @@ enum MultiSliderFilterControl: String {
 
 			case .textStamp:
 				if index == 0 {
-					return 0...20
+					return 10...50
+				}else if index == 1 {
+					return 0...1
 				}else {
-					return 10...100
+					return 0...(2 * .pi)
 				}
 			
 		}
 	}
-}
-
-enum AngleAndSliderFilterControl: String, CaseIterable {
-	case glitter
+	var labelStrings: [String] {
 	
-	var label: Image{
 		switch self {
-			case .glitter:
-				return Image(systemName: "sparkles")
-		}
-	}
-	var scalarFactorCount: Int {
-		switch self {
-			case .glitter:
-				return 1
-		}
-	}
-	func getRange<T>(for index: Int) -> ClosedRange<T> where T: BinaryFloatingPoint {
-		switch self {
-			case .glitter:
-				return 0...0.2
+			case .bilateral:
+				return ["Denoise", "잡티 제거"]
+			case .outline:
+				return ["Sketch", "스케치"]
+			case .textStamp:
+				return ["Text", "문구"]
+			case .vignette:
+				return ["Vignette", "비네트"]
+			case .rgb:
+				return ["Brightness(Advanced)", "밝기 세부 조정"]
+			case .red:
+				return ["Color(Red)", "색상 (빨강)"]
+			case .blue:
+				return ["Color(Blue)", "색상 (파랑)"]
+			case .green:
+				return ["Color(Green)", "색상 (초록)"]
 		}
 	}
 }
 
 enum OnOffFilter: String, CaseIterable {
+	case presetFiter
+	
+	var label: UIImage{
+		switch self {
+			case .presetFiter:
+				return UIImage(named: "rgb_circles_invert")!
+		}
+	}
+	var labelStrings: [String] {
+		switch self {
+			case .presetFiter:
+				return ["Preset", "프리셋"]
+		}
+	}
+}
+enum PresetFilter: CaseIterable {
 	case portraitLut
 	case landscapeLut
 	
-	var lutCode: String? {
+	var lutCode: String {
 		switch self {
 			case .portraitLut:
 				return "P"
@@ -200,23 +242,23 @@ enum OnOffFilter: String, CaseIterable {
 		}
 	}
 	
-	var label: Image {
+	var label: UIImage {
 		switch self {
 			case .portraitLut:
-				return Image(systemName: "p.square")
+				return UIImage(systemName: "p.square")!
 			case .landscapeLut:
-				return Image(systemName: "l.square")
+				return UIImage(systemName: "l.square")!
 		}
 	}
 	
 	
-	var luts: [String]? {
+	var luts: [String] {
 		switch self {
 			case .portraitLut:
 				return ["LochNess", "Oslo", "Pocatello", "Reykjavik", "Seattle", "Tahoe"]
 			case .landscapeLut:
 				return ["Boulder", "Everest", "Oaxaca",
-				"Prague", "Travelgram"]
+						"Prague", "Travelgram"]
 		}
 	}
 }
@@ -228,6 +270,7 @@ enum SingleSliderFilterControl: String, CaseIterable {
 	case contrast
 	case painter
 	case backgroundTone
+	case glitter
 	
 	var defaultValue: CGFloat {
 		switch self {
@@ -239,16 +282,22 @@ enum SingleSliderFilterControl: String, CaseIterable {
 				return 0
 			case .backgroundTone:
 				return 0.5
+			case .glitter:
+				return 0
 		}
 	}
 	func getRange<T>() -> ClosedRange<T> where T: BinaryFloatingPoint {
 		switch self {
-			case .brightness, .saturation, .contrast:
+			case .brightness:
 				return -0.5...0.5
+			case .saturation, .contrast:
+				return 0.5...1.5
 			case .painter:
 				return 0...20
 			case .backgroundTone:
 				return 0...0.7
+			case .glitter:
+				return 0...0.2
 		}
 	}
 	
@@ -256,24 +305,41 @@ enum SingleSliderFilterControl: String, CaseIterable {
 		switch self {
 			case .contrast, .painter:
 				return false
-			case .brightness, .saturation, .backgroundTone:
+			case .brightness, .saturation, .backgroundTone, .glitter:
 				return true
 		}
 	}
 	
-	var label: Image {
+	var label: UIImage {
 		switch self {
 			case .brightness:
-				return Image(systemName: "sun.max")
+				return UIImage(named: "brightness")!
 			case .saturation:
-				return Image(systemName: "dial.min")
+				return UIImage(named: "rgb_circles")!
 			case .contrast:
-				return Image(systemName: "circle.lefthalf.fill")
+				return UIImage(named: "contrast")!
 			case .painter:
-				return Image(systemName: "paintbrush.pointed.fill")
+				return UIImage(named: "brush")!
 			case .backgroundTone:
-				return Image(systemName: "cloud.moon")
+				return UIImage(systemName: "cloud.moon")!
+			case .glitter:
+				return UIImage(named: "diamond")!
 		}
 	}
-	
+	var labelStrings: [String] {
+		switch self {
+			case .brightness:
+				return ["Brightness", "밝기"]
+			case .saturation:
+				return ["Saturation", "채도"]
+			case .contrast:
+				return ["Contrast", "대비"]
+			case .painter:
+				return ["Painter", "수채화"]
+			case .backgroundTone:
+				return ["Tone copy", "배경 톤"]
+			case .glitter:
+				return ["Glitter", "반짝임"]
+		}
+	}
 }

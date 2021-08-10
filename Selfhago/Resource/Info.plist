@@ -15,15 +15,19 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>사용자의 카메라로 사진을 촬영해 이미지를 사용합니다. 사진 촬영을 위해 권한을 허용해주세요</string>
+	<string>To take a photo by device camera, Please allow permission</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>완성된 사진을 저장합니다 사용자의 앨범에 추가하기 위해서는 권한을 허용해주세요</string>
+	<string>For saving edited photo in user's library , Please allow permission </string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>To get the source image to edit , Please allow permission</string>
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>NotoSansCJKkr-Medium.otf</string>
@@ -43,8 +47,12 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<false/>
 	<key>UIStatusBarHidden</key>
 	<true/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDefault</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -56,5 +64,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>

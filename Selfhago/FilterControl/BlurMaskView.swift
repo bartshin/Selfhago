@@ -10,8 +10,9 @@ import PencilKit
 
 struct BlurMaskView: UIViewRepresentable {
 	
-	@Binding var canvas: PKCanvasView
+	private let canvas: PKCanvasView
 	@Binding var markerWidth: CGFloat
+	private let gestureDelegate: GestureDelegate
 	
 	private var tool: PKInkingTool {
 		let colorScheme = UIApplication.shared.windows.first?.traitCollection.userInterfaceStyle
@@ -25,6 +26,9 @@ struct BlurMaskView: UIViewRepresentable {
 		canvas.drawingPolicy = .anyInput
 		canvas.tool = tool
 		canvas.backgroundColor = .clear
+		canvas.addGestureRecognizer(gestureDelegate.pinchGestureRecognizer)
+		canvas.addGestureRecognizer(gestureDelegate.panGestureRecognizer)
+		canvas.addGestureRecognizer(gestureDelegate.doubleTapGestureRecognizer)
 		return canvas
 	}
 	
@@ -32,8 +36,9 @@ struct BlurMaskView: UIViewRepresentable {
 		canvas.tool = tool
 	}
 	
-	init(canvas: Binding<PKCanvasView>, markerWidth: Binding<CGFloat>) {
-		_canvas = canvas
+	init(canvas: PKCanvasView, markerWidth: Binding<CGFloat>, gestureDelegate: GestureDelegate) {
+		self.canvas = canvas
 		_markerWidth = markerWidth
+		self.gestureDelegate = gestureDelegate
 	}
 }

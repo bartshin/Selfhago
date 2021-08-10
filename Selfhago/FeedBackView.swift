@@ -24,7 +24,6 @@ struct FeedBackView: View {
 				.padding(size * 0.3)
 				.overlay(Circle()
 							.stroke(lineWidth: 5))
-				.foregroundColor(.white)
 				.onAppear(perform: hideFeedback)
 		}
 	}

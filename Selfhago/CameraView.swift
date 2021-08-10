@@ -7,41 +7,30 @@
 
 import SwiftUI
 
-struct CameraView: View, EditorDelegation {
+struct CameraView: View {
 	
-	@EnvironmentObject var editor: ImageEditor
+	@EnvironmentObject var imageEditor: ImageEditor
 	@ObservedObject var recorder: CameraRecorder
+	@Binding var navigationTag: String?
 	@State private var isShowingAlert = false
-	@State private var currentCategory = FilterCategory<Any>(rawValue: SingleSliderFilterControl.brightness.rawValue)!
-	@State private var feedBackImage: Image?
+	@State private var currentCategory: FilterCategory<Any>? = nil
 	
     var body: some View {
 		GeometryReader { geometry in
-			VStack {
-				ZStack {
-					ImagePreview(category: $currentCategory)
-						.ignoresSafeArea()
-					FeedBackView(feedBackImage: $feedBackImage)
-				}
-				.layoutPriority(1)
-				ZStack(alignment: .topLeading) {
-					TuningPanel(selected: $currentCategory, in: availableFilters)
-						.frame(height: Constant.tuningPanelHeight)
-					shutterButton
-						.frame(width: Constant.shutterButtonSize.width, height: Constant.shutterButtonSize.height)
-						.offset(x: (geometry.size.width - Constant.shutterButtonSize.width)/2, y: -Constant.shutterButtonSize.height)
-				}
+			ZStack (alignment: .bottom) {
+				EditView(navigationTag: $navigationTag)
+					.environmentObject(recorder)
 			}
 			.alert(isPresented: $isShowingAlert, content: showPermissionAlert)
 		}
 		.onDisappear {
 			recorder.stopRecording()
-			editor.clearImage()
-			editor.editingState.isRecording = false
+			imageEditor.clearImage()
+			imageEditor.editingState.isRecording = false
 		}
 		.onAppear{
-			editor.editingState.reset()
-			editor.savingDelegate = self
+			imageEditor.editingState.isRecording = true
+			imageEditor.editingState.reset()
 			recorder.checkAuthorization {
 				recorder.setupCamera(position: .back)
 				recorder.startRecording()
@@ -51,35 +40,13 @@ struct CameraView: View, EditorDelegation {
 				}
 			}
 		}
-		
     }
-	
-	private var shutterButton: some View {
-		Button {
-			editor.saveImage()
-		}label: {
-			Circle()
-				.size(Constant.shutterButtonSize)
-				.fill(Color.blue)
-		}
-	}
-	
-	func savingCompletion(error: Error?) {
-		if error != nil {
-			print("Fail to save image \(error!.localizedDescription)")
-		}else {
-			withAnimation {
-				feedBackImage = Image(systemName: "checkmark")
-			}
-		}
-	}
 	
 	private var availableFilters: [FilterCategory<Any>] {
 		let filters = [SingleSliderFilterControl.brightness, .saturation, .contrast].compactMap{ $0.rawValue } +
 			[
 				MultiSliderFilterControl.vignette.rawValue,
 				MultiSliderFilterControl.outline.rawValue,
-				AngleAndSliderFilterControl.glitter.rawValue
 			] +
 			OnOffFilter.allCases.compactMap { $0.rawValue }
 		return filters.map {
@@ -95,14 +62,12 @@ struct CameraView: View, EditorDelegation {
 			  },
 			  secondaryButton: .cancel())
 	}
-	private struct Constant {
-		static let shutterButtonSize = CGSize(width: 50, height: 50)
-		static let tuningPanelHeight: CGFloat = 200
-	}
 }
 
+#if DEBUG
 struct CameraView_Previews: PreviewProvider {
     static var previews: some View {
-		CameraView(recorder: CameraRecorder())
+		CameraView(recorder: CameraRecorder(), navigationTag: .constant(nil))
     }
 }
+#endif

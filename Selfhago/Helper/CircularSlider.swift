@@ -15,18 +15,22 @@ struct CircularSlider<BgV, BtnV>: View where BgV: View, BtnV: View {
 	private let backgroundView: BgV
 	@Binding var anglesAndRadius : [CGFloat: CGFloat]
 	@State private var points: [Point]
-	private let displayBindingForEachAngle: (AngleAndRadiusPair) -> [AngleAndRadiusPair]
 	private let drawButton:(_ size: CGSize) -> BtnV
 	private var initialPair: AngleAndRadiusPair = ( -.pi/2, 0.5)
 	var handleValueChanged: () -> Void
 	
 	var body: some View {
 		GeometryReader { geometry in
-			let outmostRadius = min(geometry.size.width, geometry.size.height) / 2
-			let center = CGPoint(x: geometry.size.width/2,
-								 y: geometry.size.height/2)
-			ZStack {
-				background
+			let frame = geometry.frame(in: .local)
+			let outmostRadius = min(geometry.size.width, geometry.size.height) * 0.5
+			let center = CGPoint(x: frame.midX,
+								 y: frame.midY)
+			ZStack{
+				backgroundView
+					.position(center)
+					.clipShape(Circle()
+								.size(geometry.size))
+				
 				ForEach(points) { point in
 					drawPoint(point,
 							  center: center,
@@ -35,16 +39,14 @@ struct CircularSlider<BgV, BtnV>: View where BgV: View, BtnV: View {
 				.onReceive(Just(anglesAndRadius)) { newValue in
 					updatePoints(from: newValue)
 				}
-				drawButton(CGSize(width: outmostRadius / 2, height: outmostRadius / 2))
+				drawButton(CGSize(width: outmostRadius * 0.4, height: outmostRadius * 0.4))
 					.onTapGesture(perform: tapbutton)
 			}
+			.frame(width: geometry.size.width,
+				   height: geometry.size.height)
 			.coordinateSpace(name: String(describing: Self.self))
+			
 		}
-	}
-	
-	private var background: some View {
-		backgroundView
-			.clipShape(Circle())
 	}
 	
 	private func tapbutton() {
@@ -123,6 +125,7 @@ struct CircularSlider<BgV, BtnV>: View where BgV: View, BtnV: View {
 		let radius = sqrt(location.x * location.x + location.y * location.y) / outmostRadius;
 		let angle = atan(location.y / location.x)
 		return (angle, radius)
+		
 	}
 	
 	private func updateBindingValues() {
@@ -150,13 +153,11 @@ struct CircularSlider<BgV, BtnV>: View where BgV: View, BtnV: View {
 	
 	init(anglesAndRadius: Binding<[CGFloat: CGFloat]>,
 		 handleValueChanged: @escaping () -> Void = {},
-		 displayCallback: @escaping (AngleAndRadiusPair) -> [AngleAndRadiusPair] = { _ in []},
 		 backgroundView: BgV,
 		 drawButton: @escaping (CGSize) -> BtnV) {
 		self.backgroundView = backgroundView
 		self._anglesAndRadius = anglesAndRadius
 		self.drawButton = drawButton
-		displayBindingForEachAngle = displayCallback
 		self.handleValueChanged = handleValueChanged
 		_points = State(initialValue: Self.createPoints(from: anglesAndRadius.wrappedValue))
 	}

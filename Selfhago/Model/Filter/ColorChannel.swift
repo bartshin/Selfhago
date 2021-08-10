@@ -6,6 +6,7 @@
 //
 
 import CoreImage
+import UIKit
 
 class ColorChannel: CIFilter {
 	
@@ -39,6 +40,8 @@ class ColorChannel: CIFilter {
 				green = selectedValues
 			case .blue:
 				blue = selectedValues
+			default:
+				break
 		}
 	}
 	
@@ -102,10 +105,24 @@ class ColorChannel: CIFilter {
 			case white = 1.0
 		}
 		
-		enum Component: Int, CaseIterable {
+		enum Component: String, CaseIterable {
+			case all
 			case red
 			case green
 			case blue
+			
+			var representingColor: UIColor {
+				switch self {
+					case .red:
+						return .red
+					case .blue:
+						return .blue
+					case .green:
+						return .green
+					case .all:
+						return .clear
+				}
+			}
 		}
 	}
 }

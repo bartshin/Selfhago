@@ -13,6 +13,8 @@ class EditingState: ObservableObject {
 	// MARK: Image data
 	private(set) var originalCgImage: CGImage?
 	private(set) var imageOrientaion: CGImagePropertyOrientation?
+	var lastFilterTrigger: TimeInterval?
+	var currentExcutingFilterTrigger: TimeInterval?
 	var ciImage: CIImage {
 		CIImage(
 			cgImage: originalCgImage!,
@@ -25,6 +27,8 @@ class EditingState: ObservableObject {
 	@Published var control = ControlValue()
 	@Published var isRecording = false
 	@Published var depthDataAvailable = false
+	var presetThumnails: [String: UIImage] = [:]
+	var glitterPresetImages = [UIImage]()
 	
 	func setNewImage(_ image: UIImage) {
 		originalCgImage = image.cgImage
@@ -54,8 +58,10 @@ class EditingState: ObservableObject {
 	}
 	
 	func reset() {
-		control = ControlValue()
-		applyingFilters.removeAll()
+		DispatchQueue.main.async { [self] in
+			control = ControlValue()
+			applyingFilters.removeAll()
+		}
 	}
 	
 	func clearTextIfDefault() {
@@ -78,9 +84,9 @@ class EditingState: ObservableObject {
 		var bilateralControl: (radius: CGFloat, intensity: CGFloat) = (0.1, 0.1)
 		var vignetteControl: (radius: CGFloat, intensity: CGFloat, edgeBrightness: CGFloat) = (0, 0, 0)
 		var textStampFont: (fontSize: CGFloat, descriptor: UIFontDescriptor) = (30, .init())
-		var textStampControl: (radius: CGFloat, lensScale: CGFloat) = (10, 50)
+		var textStampControl: (opacity: CGFloat, rotation: CGFloat) = (1, 0)
 		var textStampContent = Self.defaultText
-		var textStampAlignment: TextMask.Alignment = .center
+		var textStampColor: UIColor = .black
 		var thresholdBrightness: CGFloat = 1.0
 		var painterRadius: CGFloat = 0
 		var selectedLUTName: String?
@@ -91,8 +97,8 @@ class EditingState: ObservableObject {
 			dict, control in
 			dict[control] = control.defaultValue
 		}
-		var colorChannelControl: [ColorChannel.InputParameter.Component: ColorChannel.valueForRanges] = ColorChannel.InputParameter.Component.allCases.reduce(
-			into: .init()) { dict , rgbComponent in
+		var colorChannelControl = [ColorChannel.InputParameter.Component.red, .green, .blue].reduce(
+			into: [:]) { dict , rgbComponent in
 			dict[rgbComponent] = ColorChannel.emptyValues
 		}
 	}
