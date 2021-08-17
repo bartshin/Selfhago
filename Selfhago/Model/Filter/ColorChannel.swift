@@ -1,6 +1,6 @@
 //
 //  ColorChannel.swift
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 30/06/2021.
 //
@@ -14,7 +14,7 @@ class ColorChannel: CIFilter {
 	static let emptyValues: valueForRanges = [0, 0, 0, 0]
 	private let brightnessRange: (dark: CGFloat, shadow: CGFloat, highlight: CGFloat, white: CGFloat) = (0.0, 0.4, 0.7, 1.0)
 	
-	private lazy var kernel: CIKernel = findKernel(by: "colorChannel", from: "ColorChannel")
+	private lazy var kernel: CIKernel = findKernel("colorChannel")
 	
 	private var inputImage: CIImage?
 	private(set) var red = emptyValues

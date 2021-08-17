@@ -10,7 +10,7 @@ import PhotosUI
 
 class Album {
 	
-	static let thumnailImageSize = CGSize(width: 120, height: 120)
+	static let thumnailImageSize = CGSize(width: 180, height: 180)
 	let name: String
 	let photoCount: Int
 	var assets: [PHAsset]

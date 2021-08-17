@@ -45,17 +45,25 @@ struct ImagePickerView: View {
 		GeometryReader { geometry in
 			VStack(spacing: 0) {
 				topbar
-					.padding(.bottom, Constant.topbarBottmMargin)
+					.frame(width: geometry.size.width,
+						   height: topbarHeight)
+					.background(Constant.backgroundColor
+									.frame(height: topbarHeight * 1.8))
+					.offset(y: topbarHeight * 0.4 )
+					.ignoresSafeArea(.container, edges: .top)
+					.zIndex(1)
 				ZStack {
 					PhotoGridPickerView(images: currentAlbumThumnails,
 										tapImage: tapImage(_:),
 										tapCamera: tapCamera)
 						.environmentObject(imageEditor)
+					blurView
 					drawAlbumList(in: geometry.size)
 					if isShowingLimitedPicker {
 						limtedImagePicker
 					}
 				}
+				.zIndex(0)
 			}
 			.onAppear {
 				imageEditor.editingState.isRecording = false
@@ -75,6 +83,7 @@ struct ImagePickerView: View {
 				imageEditor.setNewImage(from: data)
 			}
 		}
+		
 		navigationTag = String(describing: EditView.self)
 	}
 	private func tapCamera() {
@@ -99,6 +108,15 @@ struct ImagePickerView: View {
 			{ EmptyView()}
 	}
 	
+	private var blurView: some View {
+		Color.black.opacity(isShowingAlbum ? 0.5: 0)
+			.offset(y: topbarHeight)
+			.onTapGesture {
+				withAnimation {
+					isShowingAlbum = false
+				}
+			}
+	}
 	
 	private func drawAlbumList(in size: CGSize) -> some View {
 		ScrollView {
@@ -114,9 +132,9 @@ struct ImagePickerView: View {
 		.background(Color(UIColor.systemBackground))
 		.allowsHitTesting(isShowingAlbum)
 		.opacity(isShowingAlbum ? 1: 0)
-		.offset(y: isShowingAlbum ? 0: -size.height * 0.5)
+		.offset(y: -size.height * (isShowingAlbum ? 0.05: 0.5))
 		.transition(.move(edge: .bottom))
-		.frame(height: size.height)
+		.frame(height: size.height * 0.8)
 	}
 	
 	private func drawAlbumRow(for album: Album) -> some View {
@@ -143,7 +161,6 @@ struct ImagePickerView: View {
 		}
 	}
 	
-	
 	private var topbar: some View {
 		Group {
 			if albumHandler.authorizaionStatus == .authorized{
@@ -158,8 +175,12 @@ struct ImagePickerView: View {
 			else {
 				openSettingBar
 			}
-			
 		}
+		.padding(.top, topbarHeight * 0.5)
+	}
+	
+	private var topbarHeight: CGFloat {
+		(UIApplication.shared.windows.first?.safeAreaInsets.top ?? 50) + 20
 	}
 	
 	private var albumToggleBar: some View {
@@ -223,6 +244,7 @@ struct ImagePickerView: View {
 		static let albumRowSubTitleFont: Font = DesignConstant.getFont(.init(family: .NotoSansCJKkr, style: .Regular), size: 14)
 		static let topbarBottmMargin: CGFloat = 14
 		static let albumRowSubTitleColor: Color = .gray
+		static let backgroundColor = DesignConstant.getColor(for: .background)
 	}
 }
 

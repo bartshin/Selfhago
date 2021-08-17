@@ -1,13 +1,12 @@
 //
 //  ImageEditor.swift
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 21/06/2021.
 //
 
 import CoreImage
 import SwiftUI
-import PencilKit
 import AVFoundation
 import Combine
 
@@ -18,10 +17,17 @@ class ImageEditor: NSObject, ObservableObject {
 	private let analyst: ImageAnalyst
 	let historyManager: HistoryManager
 	let editingState: EditingState
-	var drawingMaskView: PKCanvasView
 	var savingDelegate: SavingDelegation?
 	var textImageProvider: TextImageProvider?
 	private lazy var ciContext = CIContext(options: [.cacheIntermediates: false])
+	var previousImage: UIImage? {
+		if let ciImage = historyManager.previousImage,
+		   let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent){
+			return UIImage(cgImage: cgImage)
+		}else {
+			return nil
+		}
+	}
 	
 	func setNewImage(from data: Data) {
 		guard let image = UIImage(data: data) else {
@@ -68,6 +74,54 @@ class ImageEditor: NSObject, ObservableObject {
 		materialImage = nil
 	}
 	
+	// MARK: - Set Distortion Filter
+	
+	func applyCrop() {
+		let filter = CIFilter(name: "CICrop")!
+		filter.setValue(historyManager.currentImage, forKey: kCIInputImageKey)
+		let cropRect = editingState.control.viewFinderRect
+		let originalRect = historyManager.currentImage.extent
+		filter.setValue(CIVector(x: originalRect.minX + cropRect.minX, y: originalRect.minY + originalRect.height - cropRect.maxY,
+								 z: cropRect.width, w: cropRect.height), forKey: "inputRectangle")
+		if let output = filter.outputImage {
+			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: output)
+			editingState.setViewFinderRatio(nil)
+			setImageForDisplay()
+		}
+	}
+	
+	func applyRotation() {
+		let filter = CIFilter(name: "CIAffineTransform")!
+		let angle = -editingState.control.rotation * .pi / 180
+		let transform = CGAffineTransform(rotationAngle: angle)
+		filter.setValue(historyManager.currentImage, forKey: kCIInputImageKey)
+		filter.setValue(transform, forKey: kCIInputTransformKey)
+		if let output = filter.outputImage {
+			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: output)
+			editingState.control.rotation = 0
+			editingState.control.viewFinderRect = CGRect(origin: .zero, size: output.extent.size)
+			setImageForDisplay()
+		}
+	}
+	
+	func applyFlip(horizontal: Bool) {
+		let filter = CIFilter(name: "CIAffineTransform")!
+		let transform: CGAffineTransform = horizontal ? .init(scaleX: -1, y: 1): .init(scaleX: 1, y: -1)
+		filter.setValue(historyManager.currentImage, forKey: kCIInputImageKey)
+		filter.setValue(transform, forKey: kCIInputTransformKey)
+		if let output = filter.outputImage{
+			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: output)
+			editingState.imageFlipped = (horizontal: horizontal, vertical: !horizontal)
+			DispatchQueue.global(qos: .userInitiated).async { [self] in
+				if let cgImage = ciContext.createCGImage(output, from: output.extent) {
+					uiImage = UIImage(cgImage: cgImage)
+					Thread.sleep(forTimeInterval: 0.5)
+					publishOnMainThread()
+				}
+			}
+		}
+	}
+	
 	// MARK: - Set Tunable filter
 	
 	func setCIColorControl(with key: String){
@@ -79,9 +133,9 @@ class ImageEditor: NSObject, ObservableObject {
 	}
 	
 	private func setValueForColorControl(_ filter: CIFilter) {
-		filter.setValue(editingState.control.colorControl[.brightness], forKey: kCIInputBrightnessKey)
-		filter.setValue(editingState.control.colorControl[.contrast], forKey: kCIInputContrastKey)
-		filter.setValue(editingState.control.colorControl[.saturation], forKey: kCIInputSaturationKey)
+		filter.setValue(editingState.control.basicColorControl[.brightness], forKey: kCIInputBrightnessKey)
+		filter.setValue(editingState.control.basicColorControl[.contrast], forKey: kCIInputContrastKey)
+		filter.setValue(editingState.control.basicColorControl[.saturation], forKey: kCIInputSaturationKey)
 	}
 	
 	func setColorChannel() {
@@ -259,23 +313,38 @@ class ImageEditor: NSObject, ObservableObject {
 	}
 	
 	func applyMaskBlur() {
-		let sourceImage = historyManager.lastImage
+		let sourceImage = historyManager.currentImage
 		guard let mask = CIImage(
-			image: drawingMaskView.drawing.image(
+			image: editingState.drawingMaskView.drawing.image(
 				from: sourceImage.extent, scale: 1)
 		) else {
 			assertionFailure("Fail to create mask image")
 			return
 		}
-		drawingMaskView.drawing.strokes.removeAll()
 		let filter = CIFilter(name: "CIMaskedVariableBlur")!
 		filter.setValue(mask, forKey: "inputMask")
 		filter.setValue(editingState.control.blurIntensity, forKey: kCIInputRadiusKey)
-		filter.setValue(historyManager.lastImage, forKey: kCIInputImageKey)
+		filter.setValue(historyManager.currentImage, forKey: kCIInputImageKey)
 		if let filteredImage = filter.outputImage?.cropped(to: sourceImage.extent) {
 			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: filteredImage)
 		}
-		drawingMaskView.drawing.strokes = []
+		setImageForDisplay()
+	}
+	
+	func addDrawing() {
+		let sourceImage = historyManager.currentImage
+		guard let drawing = CIImage(
+			image: editingState.drawingMaskView.drawing.image(
+				from: sourceImage.extent, scale: 1)) else {
+					assertionFailure("Fail to get drawing image")
+					return
+				}
+		let filter = CIFilter(name: "CISourceAtopCompositing")!
+		filter.setValue(drawing, forKey: kCIInputImageKey)
+		filter.setValue(sourceImage, forKey: kCIInputBackgroundImageKey)
+		if let filteredImage = filter.outputImage {
+			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: filteredImage)
+		}
 		setImageForDisplay()
 	}
 	
@@ -290,7 +359,7 @@ class ImageEditor: NSObject, ObservableObject {
 
 		let filter = CIFilter(name: "CISourceAtopCompositing")!
 		filter.setValue(scaleCorrectedImage, forKey: kCIInputImageKey)
-		filter.setValue(historyManager.lastImage, forKey: kCIInputBackgroundImageKey)
+		filter.setValue(historyManager.currentImage, forKey: kCIInputBackgroundImageKey)
 		if let filteredImage = filter.outputImage {
 			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: filteredImage)
 		}else {
@@ -309,7 +378,6 @@ class ImageEditor: NSObject, ObservableObject {
 		UIImageWriteToSavedPhotosAlbum(uiImage!, self,
 									   #selector(savingCompletion(_:didFinishSavingWithError:contextInfo:)), nil)
 	}
-	
 	
 	@objc fileprivate func savingCompletion(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer?) {
 		savingDelegate?.savingCompletion(error: error)
@@ -337,7 +405,6 @@ class ImageEditor: NSObject, ObservableObject {
 		}
 	}
 	
-	
 	// MARK: - Display
 	
 	private func setImageForDisplay() {
@@ -347,15 +414,17 @@ class ImageEditor: NSObject, ObservableObject {
 			return
 		}
 		DispatchQueue.global(qos: .userInteractive).async { [self] in
-			let ciImage = historyManager.lastImage
-			if let cgImage = ciContext.createCGImage(ciImage, from: editingState.ciImage.extent){
+			let ciImage = historyManager.currentImage
+			if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent){
 				self.uiImage = UIImage(cgImage: cgImage)
-				self.publishOnMainThread()
+			}
+			DispatchQueue.main.async {
+				editingState.setImageSize(uiImage!.size)
+				objectWillChange.send()
 			}
 			editingState.currentExcutingFilterTrigger = nil
 		}
 	}
-	
 	
 	private func publishOnMainThread() {
 		if Thread.isMainThread {
@@ -372,11 +441,9 @@ class ImageEditor: NSObject, ObservableObject {
 	}
 	
 	override init() {
-		drawingMaskView = PKCanvasView()
 		analyst = ImageAnalyst()
 		historyManager = HistoryManager()
-		let state = EditingState()
-		editingState = state
+		editingState = EditingState()
 		super.init()
 		createPresetThumnails()
 	}
@@ -442,9 +509,9 @@ extension ImageEditor {
 					  let contrast = state[kCIInputContrastKey] as? CGFloat else {
 					return
 				}
-				editingState.control.colorControl[.brightness] = brightness
-				editingState.control.colorControl[.saturation] = saturation
-				editingState.control.colorControl[.contrast] = contrast
+				editingState.control.basicColorControl[.brightness] = brightness
+				editingState.control.basicColorControl[.saturation] = saturation
+				editingState.control.basicColorControl[.contrast] = contrast
 				setValueForColorControl(editingState.getFilter(CIFilter.self, name: "CIColorControls"))
 			case .LUTCube:
 				if let lutName = state[kCIInputMaskImageKey] as? String {

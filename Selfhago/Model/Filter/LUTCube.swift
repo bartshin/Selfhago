@@ -1,6 +1,6 @@
 //
 //  LUTCube.swift
-//  moody
+//  Selfhago
 //
 // code: https://eunjin3786.tistory.com/192 ,https://github.com/muukii/ColorCube
 // LUT

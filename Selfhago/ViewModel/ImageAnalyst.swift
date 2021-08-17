@@ -1,6 +1,6 @@
 //
 //  ImageAnalyst.swift
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 14/07/2021.
 //

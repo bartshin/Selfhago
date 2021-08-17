@@ -1,6 +1,6 @@
 //
 //  FeedBackView.swift
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 24/06/2021.
 //
@@ -20,6 +20,7 @@ struct FeedBackView: View {
 			feedBackImage!
 				.resizable()
 				.scaledToFit()
+				.foregroundColor(.white)
 				.frame(width: size, height: size)
 				.padding(size * 0.3)
 				.overlay(Circle()

@@ -11,7 +11,7 @@ class Kuwahara: CIFilter {
 	
 	private var inputImage: CIImage?
 	private var radius: CGFloat = 0
-	private lazy var kernel = findKernel(by: "kuwahara", from: "Kuwahara")
+	private lazy var kernel = findKernel("kuwahara")
 		
 	override func setValue(_ value: Any?, forKey key: String) {
 		if key == kCIInputImageKey{

@@ -1,6 +1,6 @@
 //
 //  UIImageAlpha.swift
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 02/07/2021.
 //

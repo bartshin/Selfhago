@@ -26,8 +26,8 @@ class SobelEdgeDetection3x3: SobelOutline
 		{
 			return nil
 		}
-		if inputBias == 0,
-		   inputWeight == 0 {
+		guard inputBias > 0.1,
+		   inputWeight > 0.1 else {
 			return inputImage
 		}
 		
@@ -89,7 +89,7 @@ class SobelEdgeDetection5x5: SobelOutline
 
 class SobelOutline: CIFilter
 {
-	lazy var makeOpaqueKernel = findKernel(by: "makeOpaque", from: "UtilityFilter")
+	lazy var makeOpaqueKernel = findKernel("makeOpaque")
 	
 	func sobel(sourceImage: CIImage, filterName: String, horizontalWeights: CIVector, verticalWeights: CIVector) -> CIImage
 	{

@@ -68,16 +68,6 @@ class HistogramSpecification: CIFilter, VImageFilter
 			return nil
 		}
 		
-		defer {
-			free(imageBuffer.data)
-			free(histogramSourceBuffer.data)
-			free(pixelBuffer)
-			free(alpha)
-			free(green)
-			free(blue)
-			free(red)
-		}
-		
 		let alpha: UnsafeMutablePointer<UInt>? = .allocate(capacity: 256)
 		alpha?.initialize(repeating: 0, count: 256)
 		let red: UnsafeMutablePointer<UInt>? = .allocate(capacity: 256)
@@ -113,6 +103,15 @@ class HistogramSpecification: CIFilter, VImageFilter
 		
 		vImageHistogramSpecification_ARGB8888(&imageBuffer, &outBuffer, &rgbaPointers, UInt32(kvImageNoFlags))
 		
+		defer {
+			free(imageBuffer.data)
+			free(histogramSourceBuffer.data)
+			free(pixelBuffer)
+			free(alpha)
+			free(green)
+			free(blue)
+			free(red)
+		}
 		return CIImage(fromvImageBuffer: outBuffer)
 	}
 }

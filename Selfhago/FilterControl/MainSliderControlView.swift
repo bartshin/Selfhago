@@ -121,12 +121,17 @@ struct MainSliderControlView: View {
 							self.currentColorControl = inputComponent
 						}
 					} label: {
-						Image(uiImage: component.label)
-							.resizable()
-							.renderingMode(.template)
+						Circle()
+							.fill(Color(inputComponent.representingColor))
 							.frame(width: Constant.subCategoryButtonSize.width,
 								   height: Constant.subCategoryButtonSize.height)
-							.foregroundColor(Color(inputComponent.representingColor).opacity(currentColorControl == inputComponent ? 1: 0.3))
+							.overlay(Circle()
+										.size(width: Constant.subCategoryButtonSize.width - 4,
+											  height: Constant.subCategoryButtonSize.height - 4)
+										.fill(inputComponent == currentColorControl ? .clear: DesignConstant.getColor(for: .background))
+										.offset(x: 2, y: 2)
+							)
+							
 					}
 				}
 			}
@@ -188,9 +193,9 @@ struct MainSliderControlView: View {
 		switch control {
 			case .brightness, .contrast, .saturation:
 				return .init {
-					editingState.control.colorControl[control]!
+					editingState.control.basicColorControl[control]!
 				} set: {
-					editingState.control.colorControl[control] = $0
+					editingState.control.basicColorControl[control] = $0
 				}
 			case .painter:
 				return $editingState.control.painterRadius

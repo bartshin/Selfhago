@@ -9,7 +9,6 @@ import SwiftUI
 
 struct EditView: View, SavingDelegation  {
 	
-	
 	@EnvironmentObject var imageEditor: ImageEditor
 	@EnvironmentObject var recorder: CameraRecorder
 	@State private var currentCategory: FilterCategory<Any>?
@@ -119,7 +118,7 @@ struct EditView: View, SavingDelegation  {
 				.contentShape(Rectangle())
 			if imageEditor.editingState.isRecording  {
 				shutterButton
-					.padding(.bottom, currentCategory != nil ? 10: 0)
+					.padding(.bottom, currentCategory != nil ? 20: 70)
 			}
 		}
 	}
@@ -133,7 +132,13 @@ struct EditView: View, SavingDelegation  {
 		}label: {
 			Circle()
 				.size(Constant.overlayButtonSize)
-				.fill(Color.blue)
+				.fill(Constant.overlayButtonColor)
+				.background(Circle()
+							.size(width: Constant.overlayButtonSize.width + 10,
+								  height: Constant.overlayButtonSize.height + 10)
+								.stroke(Constant.overlayButtonColor, lineWidth: 3)
+								.offset(x: -5, y: -5))
+				
 		}
 		.frame(width: Constant.overlayButtonSize.width, height: Constant.overlayButtonSize.height)
 	}
@@ -159,23 +164,63 @@ struct EditView: View, SavingDelegation  {
 		.padding(.bottom, 30)
 		.layoutPriority(1)
 	}
+	
+	@State private var activatedMenuTitles = [String]()
+	private func drawMenuScrollView(in size: CGSize) -> some View {
+		MenuScrollView(menus: menus, tapMenu: tapMenu(_:), activeMenuTitles: $activatedMenuTitles)
+			.frame(height: size.height * Constant.menuViewHeight)
+			.onReceive(imageEditor.editingState.$control) { newControl in
+				activatedMenuTitles = getActivatedMenuTitles(from: newControl)
+			}
+	}
+	
 	private var menus: [MenuScrollView.Menu] {
-		let language = LocaleManager.currentLanguageCode
+		let languageCode = LocaleManager.currentLanguageCode.rawValue
 		if imageEditor.editingState.isRecording {
 			return FilterCategory<Any>.categiresForRecording.map { category in
-				MenuScrollView.Menu(title: category.labelStrings[language.rawValue], iconImage: category.labelImage)
+				MenuScrollView.Menu(title: category.labelStrings[languageCode], iconImage: category.labelImage)
 			}
 		}
 		else {
 			return FilterCategory<Any>.allCategories.map { category in
-				MenuScrollView.Menu(title: category.labelStrings[language.rawValue], iconImage: category.labelImage)
+				MenuScrollView.Menu(title: category.labelStrings[languageCode], iconImage: category.labelImage)
 			}
 		}
 	}
 	
-	private func drawMenuScrollView(in size: CGSize) -> some View {
-		MenuScrollView(menus: menus, tapMenu: tapMenu(_:))
-			.frame(height: size.height * Constant.menuViewHeight)
+	private func getActivatedMenuTitles(from newControl: EditingState.ControlValue) -> [String] {
+		let languageCode = LocaleManager.currentLanguageCode.rawValue
+		var activatedMenu = [String]()
+		
+		if newControl.isBrightnessChanged {
+			activatedMenu.append(SingleSliderFilterControl.brightness.labelStrings[languageCode])
+		}
+		if newControl.isSaturationChanged {
+			activatedMenu.append(SingleSliderFilterControl.saturation.labelStrings[languageCode])
+		}
+		if newControl.isContrastChanged {
+			activatedMenu.append(SingleSliderFilterControl.contrast.labelStrings[languageCode])
+		}
+		if newControl.isPainterChanged {
+			activatedMenu.append(SingleSliderFilterControl.painter.labelStrings[languageCode])
+		}
+		if newControl.isToneCopyChanged {
+			activatedMenu.append(SingleSliderFilterControl.backgroundTone.labelStrings[languageCode])
+		}
+		if newControl.isGlitterChanged {
+			activatedMenu.append(SingleSliderFilterControl.glitter.labelStrings[languageCode])
+		}
+		if newControl.isBilateralChanged {
+			activatedMenu.append(MultiSliderFilterControl.bilateral.labelStrings[languageCode])
+		}
+		if newControl.isVignetteChanged {
+			activatedMenu.append(MultiSliderFilterControl.vignette.labelStrings[languageCode])
+		}
+		if newControl.isOutlineChanged {
+			activatedMenu.append(MultiSliderFilterControl.outline.labelStrings[languageCode])
+		}
+		
+		return activatedMenu
 	}
 	
 	// MARK: - Saving delegation
@@ -194,6 +239,7 @@ struct EditView: View, SavingDelegation  {
 		static let topbarHeight: CGFloat = 30/referenceHeight
 		static let imageViewHeight: CGFloat = 563/referenceHeight
 		static let menuViewHeight: CGFloat = 80/referenceHeight
+		static let overlayButtonColor = DesignConstant.getColor(for: .onPrimary)
 		static let overlayButtonSize = CGSize(width: 50, height: 50)
 		static let navigationButtonSize = CGSize(width: 18, height: 18)
 	}
@@ -202,7 +248,7 @@ struct EditView: View, SavingDelegation  {
 
 
 #if DEBUG
-struct NewEditView_Previews: PreviewProvider {
+struct EditView_Previews: PreviewProvider {
     static var previews: some View {
 		EditView(navigationTag: Binding<String?>.constant(String(describing: EditView.self)))
 			.environmentObject(ImageEditor.forPreview)

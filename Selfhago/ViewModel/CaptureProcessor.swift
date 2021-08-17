@@ -40,7 +40,7 @@ extension CaptureProcessor: AVCapturePhotoCaptureDelegate {
 			return
 		}
 		
-		guard let cgImage = photo.cgImageRepresentation()?.takeRetainedValue() else {
+		guard let cgImage = photo.cgImageRepresentation() else {
 			print("Fail to get cg image from \(photo.metadata)")
 			return
 		}

@@ -1,6 +1,6 @@
 //
 //  HistoryManager.swift
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 16/07/2021.
 //
@@ -26,8 +26,12 @@ class HistoryManager {
 		sourceImages.last ?? CIImage()
 	}
 	
-	var lastImage: CIImage {
+	var currentImage: CIImage {
 		imageHistory[currentImageIndex]
+	}
+	
+	var previousImage: CIImage? {
+		currentImageIndex > 0 ? imageHistory[currentImageIndex - 1]: nil
 	}
 	
 	func clearHistory() {
@@ -55,7 +59,7 @@ class HistoryManager {
 		nextFilterIndex -= 1
 		let state = filterHistory[nextFilterIndex]
 		if state.filter.isUnmanaged {
-			sourceImages.append(lastImage)
+			sourceImages.append(currentImage)
 		}
 		setRedoAndUndo()
 		return state
@@ -65,7 +69,7 @@ class HistoryManager {
 		nextFilterIndex += 1
 		let state = filterHistory[nextFilterIndex - 1]
 		if state.filter.isUnmanaged {
-			sourceImages.append(lastImage)
+			sourceImages.append(currentImage)
 		}
 		setRedoAndUndo()
 		return state

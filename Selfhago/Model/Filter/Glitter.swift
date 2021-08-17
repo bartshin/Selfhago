@@ -1,6 +1,6 @@
 //
 //  Glitter.swift
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 19/07/2021.
 //
@@ -13,7 +13,7 @@ class Glitter: CIFilter {
 	private var inputImage: CIImage?
 	private var anglesAndRadius = [CGFloat: CGFloat]()
 	private var threshold: CGFloat = 1
-	private lazy var thresholdKernel = findKernel(by: "threshold", from: "UtilityFilter")
+	private lazy var thresholdKernel = findKernel("threshold")
 	
 	override func setValue(_ value: Any?, forKey key: String) {
 		if key == kCIInputImageKey{

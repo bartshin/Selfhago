@@ -29,7 +29,7 @@ class RefractedText: CIFilter {
 	private var lensBlur: CGFloat = 0
 	private var lightingAmount: CGFloat = 1.5
 	private var backgroundBlur: CGFloat = 2
-	private lazy var kernel: CIKernel = findKernel(by: "refract", from: "Refract")
+	private lazy var kernel: CIKernel = findKernel("refract")
 	
 	
 	override func setValue(_ value: Any?, forKey key: String) {

@@ -1,6 +1,6 @@
 //
 //  Bilateral.swift
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 04/07/2021.
 //
@@ -16,7 +16,7 @@ class Bilateral: CIFilter {
 	private var luminaceSigma: CGFloat = 0.1
 	private var minimumDistance: CGFloat = 1.0
 	
-	private lazy var kernel: CIKernel = findKernel(by: "bilateral", from: "Bilateral")
+	private lazy var kernel: CIKernel = findKernel("bilateral")
 	
 	
 	private var inputImage: CIImage?
@@ -70,6 +70,10 @@ class Bilateral: CIFilter {
 			assertionFailure("Input image is missing")
 			return nil
 		}
+		guard spacialSigma > 0.1,
+			  luminaceSigma > 0.1 else {
+				  return input
+			  }
 		
 		return kernel.apply(
 			extent: input.extent,

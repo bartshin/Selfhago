@@ -1,12 +1,12 @@
 //
 //  shader_helper.metal
-//  moody
+//  Selfhago
 //
 //  Created by bart Shin on 05/07/2021.
 //
 
 #include <metal_stdlib>
-#include "shader_helper.h"
+#include "Header/shader_helper.h"
 using namespace metal;
 
 
