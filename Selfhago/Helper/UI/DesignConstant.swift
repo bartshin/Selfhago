@@ -49,7 +49,7 @@ class DesignConstant {
 	}
 	
 	static func chooseColor(in colors: (light: UInt64, dark: UInt64)) -> Color {
-		DesignConstant.shared.colorScheme == .light ? Color(hex: colors.light): Color(hex: colors.dark)
+		DesignConstant.shared.colorScheme == .dark ? Color(hex: colors.dark): Color(hex: colors.light)
 	}
 	
 	

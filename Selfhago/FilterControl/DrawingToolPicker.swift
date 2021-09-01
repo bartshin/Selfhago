@@ -18,7 +18,7 @@ struct DrawingToolPicker: UIViewRepresentable {
 		let placeHolderView = UIView()
 		picker.setVisible(isPresenting, forFirstResponder: canvas)
 		picker.addObserver(canvas)
-		picker.colorUserInterfaceStyle = DesignConstant.isDarkMode ? .dark: .light
+		picker.colorUserInterfaceStyle = .light
 		DispatchQueue.main.async {
 			canvas.becomeFirstResponder()
 		}

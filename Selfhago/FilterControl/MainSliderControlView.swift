@@ -6,11 +6,14 @@
 //
 
 import SwiftUI
+import SwiftUICharts
 
 struct MainSliderControlView: View {
 	
 	@EnvironmentObject var imageEditor: ImageEditor
 	@EnvironmentObject var editingState: EditingState
+	@State private var charts: ChartState?
+	
 	let size: CGSize
 	let control: SingleSliderFilterControl
 	var title: String {
@@ -22,11 +25,14 @@ struct MainSliderControlView: View {
 	
 	var body: some View {
 		VStack (spacing: 20) {
-			HorizontalSliderView(title: title, value: bindingSliderValue(for: control), in: range) {
-				onValueChange(for: control)
+			HorizontalSliderView(title: title, value: bindingSingleValue, in: range) {
+				onMainValueChange()
 			}
-			if control == .brightness || control == .saturation {
-				advancedControls
+			if control == .brightness{
+				gammaControls
+			}
+			else if control == .saturation {
+				colorChannelControls
 			}
 			else if control == .backgroundTone {
 				imageSelectView
@@ -38,19 +44,95 @@ struct MainSliderControlView: View {
 		.padding(.bottom, 10)
 	}
 	
-	private var advancedControls: some View {
+	@State private var selectedIndex = 1
+	private var isControlLinear: Bool {
+		selectedIndex == 0
+	}
+	
+	private var gammaControls: some View {
+		ZStack {
+			let bindingValues = bindingValues
+			let ranges: [ClosedRange<CGFloat>] = (0..<bindingValues.count).map { index in
+				MultiSliderFilterControl.gamma.getRange(for: isControlLinear ? index + 4: index)
+			}
+			chartsGraph
+			VerticalSliderView(title: MultiSliderFilterControl.gamma.labelStrings[LocaleManager.currentLanguageCode.rawValue],
+							   values: bindingValues,
+							   ranges: ranges,
+							   drawGraph: false)
+			MovingSegmentButton(isHorizontal: true,
+								buttonPosition: segmentPosition,
+								buttons: [
+									getSegmentButton(for: 0),
+									getSegmentButton(for: 1)
+								],
+								selectedIndexBinding: $selectedIndex)
+		}
+		.frame(height: size.height * Constant.verticalSlidersHeight)
+		.onAppear {
+			charts = ChartState(values: imageEditor.setGamma())
+		}
+	}
+	
+	private var chartsGraph: some View {
+		Group {
+			if charts != nil {
+				let chartsHeight = size.height * Constant.verticalSlidersHeight * 0.8
+				LineChart()
+					.data(charts!.values)
+					.chartStyle(charts!.style)
+					.allowsHitTesting(false)
+					.frame(height: chartsHeight)
+					.offset(y: chartsHeight * min(max(-charts!.minValue + 0.2, -0.5), 0.3))
+			}
+		}
+	}
+	
+	private var segmentPosition: Binding<CGPoint> {
+		.init{
+			CGPoint(x: Double(editingState.control.gammaParameter.linearBoundary),
+					y: 0.1)
+		} set: {
+			editingState.control.gammaParameter.linearBoundary = Float($0.x)
+			onGammaChange()
+		}
+	}
+	
+	private func getSegmentButton(for index: Int) -> some View {
+		let languageCode = LocaleManager.currentLanguageCode
+		return Group {
+			ZStack {
+				RoundedRectangle(cornerRadius: 20)
+					.fill(DesignConstant.getColor(for: .background))
+				HStack {
+					if index == 0 {
+						Image(systemName: "chevron.left")
+							.renderingMode(.template)
+						Text(LocaleManager.currentLanguageCode == .en ? "Linear": "선형")
+							.font(.caption)
+					}else {
+						Text(languageCode == .en ? "Exponential": "지수형")
+							.font(.caption)
+						Image(systemName: "chevron.right")
+							.renderingMode(.template)
+					}
+				}
+				.foregroundColor(DesignConstant.getColor(for: .primary, isDimmed: index != selectedIndex))
+			}
+		}
+	}
+	
+	private var colorChannelControls: some View {
 		Group {
 			Divider()
 				.frame(height: 1)
 				.background(Color.black)
 			HStack {
-				if control == .saturation {
-					rgbSelectButtons
-				}
-				drawAdditionalSliders(for: control)
+				rgbSelectButtons
+				colorChannelSliders
 					.frame(height: size.height * Constant.verticalSlidersHeight)
 			}
-			drawGradientBar(for: control)
+			gradientBar
 				.frame(width: size.width * 0.9,
 					   height: size.height * Constant.gradientBarHeight)
 		}
@@ -60,14 +142,19 @@ struct MainSliderControlView: View {
 	@State private var isShowingImagePicker = false
 	private var imageSelectView: some View {
 		Group {
-			if editingState.depthDataAvailable {
-				MenuScrollView(menus: toneImageMenus, tapMenu: tapToneMenu(_:))
-					.sheet(isPresented: $isShowingImagePicker) {
-						ImagePicker(passImage: imageEditor.setMaterialImage(_:))
-					}
-			}
-			else {
-				Text("Need depth data Please pick potrait photo")
+			if let depthDataAvailable = editingState.depthDataAvailable {
+				if depthDataAvailable {
+					MenuScrollView(menus: toneImageMenus, tapMenu: tapToneMenu(_:))
+						.sheet(isPresented: $isShowingImagePicker) {
+							ImagePicker(passImage: imageEditor.setMaterialImage(_:))
+						}
+				}
+				else {
+					Text("Need depth data Please pick potrait photo")
+						.font(.subheadline)
+				}
+			}else {
+				Text("Loading...")
 					.font(.subheadline)
 			}
 		}
@@ -97,7 +184,7 @@ struct MainSliderControlView: View {
 		}
 	}
 	
-	private func onValueChange(for control: SingleSliderFilterControl) {
+	private func onMainValueChange() {
 		switch control {
 			case .brightness, .contrast, .saturation:
 				imageEditor.setCIColorControl(with: control.rawValue)
@@ -136,20 +223,13 @@ struct MainSliderControlView: View {
 				}
 			}
 	}
-	private func drawAdditionalSliders(for control: SingleSliderFilterControl) -> some View {
+	private var colorChannelSliders: some View {
 		let language = LocaleManager.currentLanguageCode
-		var title: String
-		if control == .brightness {
-			title =  MultiSliderFilterControl.rgb.labelStrings[language.rawValue]
-		}
-		else {
-			let colorControl = MultiSliderFilterControl(rawValue: currentColorControl.rawValue)!
-			title = colorControl.labelStrings[language.rawValue]
-		}
-		let bindingValues = bindingMultipleValues(for: control)
+		let colorControl = MultiSliderFilterControl(rawValue: currentColorControl.rawValue)!
+		let title = colorControl.labelStrings[language.rawValue]
+		let bindingValues = bindingValues
 		let ranges: [ClosedRange<CGFloat>] = (0..<bindingValues.count).map { index in
-			control == .brightness ? MultiSliderFilterControl.rgb.getRange(for: 0):
-				MultiSliderFilterControl.red.getRange(for: 0)
+			MultiSliderFilterControl.red.getRange(for: 0)
 		}
 		return
 			VerticalSliderView(title: title,
@@ -161,41 +241,64 @@ struct MainSliderControlView: View {
 			)
 	}
 	
-	private func bindingMultipleValues(for control: SingleSliderFilterControl) ->  [Binding<CGFloat>] {
-		var bindingValues = [Binding<CGFloat>]()
-		
-		(0..<4).forEach { index in
-			bindingValues.append(
-				Binding<CGFloat> {
-					if control == .brightness {
-						let sum = editingState.control.colorChannelControl.values.reduce(0) { $0 + $1[index] }
-						return sum/3
-					}else {
-						return editingState.control.colorChannelControl[currentColorControl]![index]
-					}
-				} set: { value in
-					if control == .brightness {
-						[ColorChannel.InputParameter.Component.red, .green, .blue].forEach { key in
-							editingState.control.colorChannelControl[key]![index] = value
-						}
-					} else {
+	private var bindingValues: [Binding<CGFloat>] {
+		if control == .brightness {
+			if isControlLinear {
+				return (0...editingState.control.gammaParameter.linearCoefficients.count-1).compactMap {
+					convertBindingToCGFloat($editingState.control.gammaParameter.linearCoefficients[$0],
+											onChange: onGammaChange)
+				}
+			} else {
+				return [
+					convertBindingToCGFloat($editingState.control.gammaParameter.inputGamma, onChange: onGammaChange)
+				] +
+				(0...editingState.control.gammaParameter.exponentialCoefficients.count-1).compactMap{
+					convertBindingToCGFloat($editingState.control.gammaParameter.exponentialCoefficients[$0],
+											onChange: onGammaChange)
+				}
+			}
+		}
+		else if control == .saturation {
+			var bindingValues = [Binding<CGFloat>]()
+			(0..<4).forEach { index in
+				bindingValues.append(
+					Binding<CGFloat> {
+						editingState.control.colorChannelControl[currentColorControl]![index]
+					} set: { value in
 						editingState.control.colorChannelControl[currentColorControl]![index] = value
 					}
-				}
-			)
+				)
+			}
+			return bindingValues
+		}else {
+			fatalError()
 		}
-		return bindingValues
+		
+	}
+	
+	private func onGammaChange() {
+		charts = ChartState(values: imageEditor.setGamma())
+	}
+	
+	private func convertBindingToCGFloat<T>(_ binding: Binding<T>, onChange: @escaping () -> Void = {}) -> Binding<CGFloat> where T: BinaryFloatingPoint {
+		Binding<CGFloat> {
+			CGFloat(binding.wrappedValue)
+		} set: {
+			binding.wrappedValue = T($0)
+			onChange()
+		}
+
 	}
 	
 	
-	private func bindingSliderValue(for control: SingleSliderFilterControl) -> Binding<CGFloat> {
+	private var bindingSingleValue: Binding<CGFloat> {
 		
 		switch control {
 			case .brightness, .contrast, .saturation:
 				return .init {
-					editingState.control.basicColorControl[control]!
+					editingState.control.ciColorControl[control]!
 				} set: {
-					editingState.control.basicColorControl[control] = $0
+					editingState.control.ciColorControl[control] = $0
 				}
 			case .painter:
 				return $editingState.control.painterRadius
@@ -211,21 +314,15 @@ struct MainSliderControlView: View {
 		}
 	}
 	
-	private func drawGradientBar(for control: SingleSliderFilterControl) -> some View {
+	private var gradientBar: some View {
 		let colors: [Color]
-		if control == .brightness {
-			colors = [.black, .white]
-		}else {
-			switch currentColorControl {
-				case . red:
-					colors = [.init(red: Double(64/255), green: 0, blue: 0), .init(red: 1, green: 0, blue: 0)]
-				case .blue:
-					colors = [.init(red: 0, green: 0, blue: Double(64/255)), .init(red: 0, green: 0, blue: 1)]
-				case .green:
-					colors = [.init(red: 0, green: Double(64/255), blue: 0), .init(red: 0, green: 1, blue: 0)]
-				default:
-					colors = []
-			}
+		switch currentColorControl {
+			case . red:
+				colors = [.init(red: Double(64/255), green: 0, blue: 0), .init(red: 1, green: 0, blue: 0)]
+			case .blue:
+				colors = [.init(red: 0, green: 0, blue: Double(64/255)), .init(red: 0, green: 0, blue: 1)]
+			case .green:
+				colors = [.init(red: 0, green: Double(64/255), blue: 0), .init(red: 0, green: 1, blue: 0)]
 		}
 		return LinearGradientBar(cornerRadius: 30, colors: colors)
 			.padding(.top, -5)
@@ -318,6 +415,7 @@ struct MainSliderControlView: View {
 		static let gradientBarHeight: CGFloat = 21/referenceHeight
 		static let subCategoryButtonSize = CGSize(width: 30, height: 30)
 		static let customGlitterControlSize: CGFloat = 0.2
+		static let graphHeight: CGFloat = 50/referenceHeight
 	}
 	
 }

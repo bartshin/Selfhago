@@ -24,9 +24,12 @@ import Accelerate
 
 class HistogramSpecification: CIFilter, VImageFilter
 {
-	var inputImage: CIImage?
-	var inputHistogramSource: CIImage?
+	
+	var inputImage: CGImage?
 	var ciContext: CIContext!
+	var sourceBuffer: vImage_Buffer?
+	var outputCGImage: CGImage? 
+	private var inputHistogramSource: CGImage?
 	
 	override var attributes: [String : Any]
 	{
@@ -44,27 +47,29 @@ class HistogramSpecification: CIFilter, VImageFilter
 	}
 	
 	override func setValue(_ value: Any?, forKey key: String) {
-		if key == kCIInputImageKey,
-		   let image = value as? CIImage {
-			inputImage = image
+		if key == kCIInputImageKey {
+		   let newImage = (value as! CGImage)
+			if inputImage != newImage {
+				createSourceBufferFromCGImage(newImage, format: vImage.cgImageFormat8888)
+			}
+			inputImage = newImage
 		}
-		else if key == kCIInputTargetImageKey,
-				let image = value as? CIImage {
-			inputHistogramSource = image
+		else if key == kCIInputTargetImageKey {
+			inputHistogramSource = (value as! CGImage)
 		}
 	}
 	
 	
 	override var outputImage: CIImage?
 	{
-		guard let inputImage = inputImage,
-			  let inputHistogramSource = inputHistogramSource,
-			  let imageRef = ciContext.createCGImage(
-				inputImage,
-				from: inputImage.extent),
-			  var imageBuffer = vImageBufferFromCIImage(ciImage: inputImage, ciContext: ciContext),
-			  var histogramSourceBuffer = vImageBufferFromCIImage(ciImage: inputHistogramSource, ciContext: ciContext) else
+		guard inputImage != nil,
+			  inputHistogramSource != nil,
+			  sourceBuffer != nil,
+			  var histogramSourceBuffer = try? vImage_Buffer(cgImage: inputHistogramSource!,
+														format: vImage.cgImageFormat8888,
+														flags: .noFlags) else
 		{
+			assertionFailure("Fail to set buffer")
 			return nil
 		}
 		
@@ -85,14 +90,15 @@ class HistogramSpecification: CIFilter, VImageFilter
 		var rgbaMutablePointers = [redMutablePointer, greenMutablePointer, blueMutablePointer, alphaMutablePointer]
 		
 		vImageHistogramCalculation_ARGB8888(&histogramSourceBuffer, &rgbaMutablePointers, UInt32(kvImageNoFlags))
-		
-		let pixelBuffer = malloc(imageRef.bytesPerRow * imageRef.height)
+		let width = sourceBuffer!.width
+		let height = sourceBuffer!.height
+		let pixelBuffer = malloc( sourceBuffer!.rowBytes * Int(height) )
 		
 		var outBuffer = vImage_Buffer(
 			data: pixelBuffer,
-			height: UInt(imageRef.height),
-			width: UInt(imageRef.width),
-			rowBytes: imageRef.bytesPerRow)
+			height: height,
+			width: width,
+			rowBytes: sourceBuffer!.rowBytes)
 		
 		let alphaPointer: UnsafePointer<vImagePixelCount>? = .init(alpha)
 		let redPointer: UnsafePointer<vImagePixelCount>? = .init(red)
@@ -101,10 +107,9 @@ class HistogramSpecification: CIFilter, VImageFilter
 		
 		var rgbaPointers = [redPointer, greenPointer, bluePointer, alphaPointer]
 		
-		vImageHistogramSpecification_ARGB8888(&imageBuffer, &outBuffer, &rgbaPointers, UInt32(kvImageNoFlags))
+		vImageHistogramSpecification_ARGB8888(&sourceBuffer!, &outBuffer, &rgbaPointers, UInt32(kvImageNoFlags))
 		
 		defer {
-			free(imageBuffer.data)
 			free(histogramSourceBuffer.data)
 			free(pixelBuffer)
 			free(alpha)
@@ -113,5 +118,9 @@ class HistogramSpecification: CIFilter, VImageFilter
 			free(red)
 		}
 		return CIImage(fromvImageBuffer: outBuffer)
+	}
+	
+	deinit {
+		sourceBuffer?.free()
 	}
 }

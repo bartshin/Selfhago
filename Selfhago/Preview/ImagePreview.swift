@@ -171,8 +171,7 @@ struct ImagePreview: View, TextImageProvider {
 	
 	private var blurmaskView: some View {
 		Group {
-			if DesignConstant.isDarkMode,
-			   currentCategory?.subCategory == DrawableFilterControl.maskBlur.rawValue{
+			if currentCategory?.subCategory == DrawableFilterControl.maskBlur.rawValue{
 				DrawingMaskView(canvas: editingState.drawingMaskView,
 								drawingTool: editingState.control.drawingTool,
 								isDrawing: editingState.control.isDrawing,
@@ -192,7 +191,7 @@ struct ImagePreview: View, TextImageProvider {
 		   category.control is DistortionFilterControl {
 			return Color(.darkGray)
 		}else {
-			return .white
+			return DesignConstant.getColor(for: .background)
 		}
 	}
 	

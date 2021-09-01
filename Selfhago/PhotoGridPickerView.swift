@@ -18,18 +18,24 @@ struct PhotoGridPickerView: View {
     var body: some View {
 		Group {
 			GeometryReader { geometry in
-				ScrollView {
-					LazyVGrid(columns: createColumns(in: geometry.size),
-							  alignment: .center,
-							  spacing: Constant.imageMargin ,
-							  pinnedViews: []) {
-						cameraButton
-							.frame(width: geometry.size.width * Constant.imageSize,
-								   height: geometry.size.width * Constant.imageSize)
-						ForEach(0..<images.count, id: \.self) { index in
-							drawImage(at: index, in: geometry.size)
+				if !images.isEmpty {
+					ScrollView {
+						LazyVGrid(columns: createColumns(in: geometry.size),
+								  alignment: .center,
+								  spacing: Constant.imageMargin/2,
+								  pinnedViews: []) {
+							cameraButton
+								.frame(width: geometry.size.width * Constant.imageSize,
+									   height: geometry.size.width * Constant.imageSize)
+							ForEach(0..<images.count, id: \.self) { index in
+								drawImage(at: index, in: geometry.size)
+							}
 						}
 					}
+				}else {
+					cameraButton
+						.frame(width: geometry.size.width * Constant.imageSize,
+							   height: geometry.size.width * Constant.imageSize)
 				}
 			}
 			.ignoresSafeArea()
@@ -80,9 +86,9 @@ struct PhotoGridPickerView: View {
 	private struct Constant {
 		static let imageSize: CGFloat = 1 / numberOfColums
 		static let numberOfColums: CGFloat = 3
-		static let imageMargin: CGFloat = 2
-		static let cameraButtonColor: Color = .white
-		static let cameraButtonBackgroundColor: Color = Color(.darkGray)
+		static let imageMargin: CGFloat = 4
+		static var cameraButtonColor: Color = .white
+		static var cameraButtonBackgroundColor: Color = Color(.darkGray)
 		static let cameraButtonSize = CGSize(width: 54, height: 54)
 	}
 	

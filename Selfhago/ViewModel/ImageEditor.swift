@@ -74,6 +74,17 @@ class ImageEditor: NSObject, ObservableObject {
 		materialImage = nil
 	}
 	
+	func storeCurrentState() {
+		guard var state = historyManager.detachCurrentState(),
+			  let lastFilter = historyManager.lastFilter else {
+				  return
+			  }
+		state.afterState = state.captureState(from: lastFilter)
+		if let editingImage = editingState.detachEditingImage() {
+			historyManager.writeHistory(filter: lastFilter, state: state, image: editingImage)
+		}
+	}
+	
 	// MARK: - Set Distortion Filter
 	
 	func applyCrop() {
@@ -87,6 +98,8 @@ class ImageEditor: NSObject, ObservableObject {
 			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: output)
 			editingState.setViewFinderRatio(nil)
 			setImageForDisplay()
+			editingState.setImageSize(uiImage!.size)
+			editingState.resetViewFinder()
 		}
 	}
 	
@@ -99,8 +112,9 @@ class ImageEditor: NSObject, ObservableObject {
 		if let output = filter.outputImage {
 			historyManager.writeHistory(filter: filter, state: .unManagedFilter, image: output)
 			editingState.control.rotation = 0
-			editingState.control.viewFinderRect = CGRect(origin: .zero, size: output.extent.size)
 			setImageForDisplay()
+			editingState.setImageSize(uiImage!.size)
+			editingState.resetViewFinder()
 		}
 	}
 	
@@ -115,35 +129,42 @@ class ImageEditor: NSObject, ObservableObject {
 			DispatchQueue.global(qos: .userInitiated).async { [self] in
 				if let cgImage = ciContext.createCGImage(output, from: output.extent) {
 					uiImage = UIImage(cgImage: cgImage)
-					Thread.sleep(forTimeInterval: 0.5)
+					Thread.sleep(forTimeInterval: 0.5) // Sync with animation
 					publishOnMainThread()
 				}
 			}
 		}
 	}
 	
-	// MARK: - Set Tunable filter
+	// MARK: - Set modifiable filter
 	
 	func setCIColorControl(with key: String){
-		let filter = editingState.getFilter(CIFilter.self, name: "CIColorControls")
-		let filterState = historyManager.createState(for: filter, specificKey: key)
-		setValueForColorControl(filter)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		let colorControlFilter = editingState.getFilter(CIFilter.self, name: "CIColorControls")
+		let colorChannelFilter = editingState.getFilter(ColorChannel.self)
+		processFilter(colorControlFilter, with: key, associatedFilters: [colorChannelFilter])
 	}
 	
 	private func setValueForColorControl(_ filter: CIFilter) {
-		filter.setValue(editingState.control.basicColorControl[.brightness], forKey: kCIInputBrightnessKey)
-		filter.setValue(editingState.control.basicColorControl[.contrast], forKey: kCIInputContrastKey)
-		filter.setValue(editingState.control.basicColorControl[.saturation], forKey: kCIInputSaturationKey)
+		filter.setValue(editingState.control.ciColorControl[.brightness], forKey: kCIInputBrightnessKey)
+		filter.setValue(editingState.control.ciColorControl[.contrast], forKey: kCIInputContrastKey)
+		filter.setValue(editingState.control.ciColorControl[.saturation], forKey: kCIInputSaturationKey)
+	}
+	
+	func setGamma() -> [Double] {
+		let filter = editingState.getFilter(GammaAdjustment.self)
+		processFilter(filter)
+		return filter.valuesForCharts
+	}
+	
+	private func setValueForFilter(_ filter: GammaAdjustment) {
+		filter.setValue(editingState.control.gammaParameter,
+						forKey: kCIInputIntensityKey)
 	}
 	
 	func setColorChannel() {
-		let filter = editingState.getFilter(ColorChannel.self)
-		let filterState = historyManager.createState(for: filter)
-		setValueForFilter(filter)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		let colorChannelFilter = editingState.getFilter(ColorChannel.self)
+		let colorControlFilter = editingState.getFilter(CIFilter.self, name: "CIColorControls")
+		processFilter(colorChannelFilter, associatedFilters: [colorControlFilter])
 	}
 	
 	private func setValueForFilter(_ filter: ColorChannel) {
@@ -160,46 +181,52 @@ class ImageEditor: NSObject, ObservableObject {
 	
 	func setBilateral() {
 		let filter = editingState.getFilter(Bilateral.self)
-		let filterState = historyManager.createState(for: filter)
-		setValueForFilter(filter)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		processFilter(filter)
 	}
 	
 	private func setValueForFilter(_ filter: Bilateral) {
 		filter.setValue(editingState.control.bilateralControl.radius, forKey: kCIInputRadiusKey)
 		filter.setValue(editingState.control.bilateralControl.intensity, forKey: kCIInputIntensityKey)
-		filter.setValue(editingState.ciImage.extent, forKey: kCIInputExtentKey)
+		filter.setValue(historyManager.currentImage.extent, forKey: kCIInputExtentKey)
 		filter.setValue(analyst.faceRegions, forKey: Bilateral.faceRegionsKey)
 	}
 	
-	func setLutCube(_ lutName: String) {
+	func setLutCube() {
 		let filter = editingState.getFilter(LUTCube.self)
-		let filterState = historyManager.createState(for: filter)
-		filter.setValue(lutName, forKey: kCIInputMaskImageKey)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		processFilter(filter)
 	}
 	
 	func setOutline() {
-		let filter = editingState.getFilter(SobelEdgeDetection3x3.self)
-		let filterState = historyManager.createState(for: filter)
-		setValueForFilter(filter)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		let filter: CIFilter
+		switch editingState.control.selectedOutlineFilter {
+			case .grayscale:
+				filter = editingState.getFilter(Sketch.self)
+				editingState.removeFilter(SobelEdgeDetection3x3.self)
+			case .color:
+				filter = editingState.getFilter(SobelEdgeDetection3x3.self)
+				editingState.removeFilter(Sketch.self)
+		}
+		
+		processFilter(filter)
+	}
+	
+	private func setValueForFilter(_ filter: Sketch) {
+		let backgroundImage = CIImage(color: CIColor(color: editingState.control.outlineBackgroundColor)).cropped(to: CGRect(origin: .zero, size: editingState.imageSize!))
+		filter.setValue(backgroundImage, forKey: kCIInputBackgroundImageKey)
+		filter.setValue(editingState.control.outlineSketchColor, forKey: kCIInputColorKey)
+		filter.setValue(editingState.control.outlineControl[0], forKey: "inputThreshold")
+		filter.setValue(editingState.control.outlineControl[1], forKey: "inputNRNoiseLevel")
+		filter.setValue(editingState.control.outlineControl[2], forKey: "inputEdgeIntensity")
 	}
 	
 	private func setValueForFilter(_ filter: SobelEdgeDetection3x3) {
-		filter.setValue(editingState.control.outlineControl.bias, forKey: kCIInputBiasKey)
-		filter.setValue(editingState.control.outlineControl.weight, forKey: kCIInputWeightsKey)
+		filter.setValue(editingState.control.outlineControl[0], forKey: kCIInputBiasKey)
+		filter.setValue(editingState.control.outlineControl[1], forKey: kCIInputWeightsKey)
 	}
 	
 	func setVignette() {
 		let filter = editingState.getFilter(Vignette.self)
-		let filterState = historyManager.createState(for: filter)
-		setValueForFilter(filter)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		processFilter(filter)
 	}
 	
 	private func setValueForFilter(_ filter: Vignette) {
@@ -210,24 +237,17 @@ class ImageEditor: NSObject, ObservableObject {
 	
 	func setGlitter() {
 		let filter = editingState.getFilter(Glitter.self)
-		let filterState = historyManager.createState(for: filter)
-		setValueForFilter(filter)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		processFilter(filter)
 	}
 	
 	private func setValueForFilter(_ filter: Glitter) {
-		let gilterControl: [CGFloat: CGFloat] = editingState.control.glitterAnglesAndRadius
 		filter.setValue(editingState.control.thresholdBrightness, forKey: kCIInputBrightnessKey)
-		filter.setValue(gilterControl, forKey: kCIInputAngleKey)
+		filter.setValue(editingState.control.glitterAnglesAndRadius, forKey: kCIInputAngleKey)
 	}
 	
 	func setPainter() {
 		let filter = editingState.getFilter(Kuwahara.self)
-		let filterState = historyManager.createState(for: filter)
-		setValueForFilter(filter)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		processFilter(filter)
 	}
 	
 	private func setValueForFilter(_ filter: Kuwahara) {
@@ -236,10 +256,26 @@ class ImageEditor: NSObject, ObservableObject {
 	
 	func setBackgroundToneRetouch() {
 		let filter = editingState.getFilter(BackgroundToneRetouch.self)
-		let filterState = historyManager.createState(for: filter)
-		setValueForFilter(filter)
-		applyFilter(filter, with: filterState)
-		setImageForDisplay()
+		processFilter(filter)
+	}
+	
+	func setPerspective() {
+		let filter = editingState.getFilter(CIFilter.self, name: "CIPerspectiveTransform")
+		processFilter(filter, with: "perspective")
+		editingState.setImageSize(uiImage!.size)
+		editingState.resetViewFinder()
+	}
+	
+	func setValueForPerspective(_ filter: CIFilter) {
+		let size = historyManager.sourceImage.extent.size
+		let topLeft = editingState.control.perspectiveControl[0]
+		let topRight = editingState.control.perspectiveControl[1]
+		let bottomLeft = editingState.control.perspectiveControl[2]
+		let bottomRight = editingState.control.perspectiveControl[3]
+		filter.setValue(CIVector(x: topLeft.x * size.width, y: (1 - topLeft.y) * size.height), forKey: "inputTopLeft")
+		filter.setValue(CIVector(x: topRight.x * size.width, y: (1 - topRight.y) * size.height), forKey: "inputTopRight")
+		filter.setValue(CIVector(x: bottomLeft.x * size.width, y: (1 - bottomLeft.y) * size.height), forKey: "inputBottomLeft")
+		filter.setValue(CIVector(x: bottomRight.x * size.width, y: (1 - bottomRight.y) * size.height), forKey: "inputBottomRight")
 	}
 	
 	func createPresetThumnails() {
@@ -282,34 +318,151 @@ class ImageEditor: NSObject, ObservableObject {
 			  let depthMask = analyst.createDepthMask(over: editingState.control.depthFocus) else {
 			return
 		}
-		let targetImage = CIImage(cgImage: materialImage)
+		
 		filter.ciContext = ciContext
-		filter.setValue(targetImage, forKey: kCIInputBackgroundImageKey)
+		filter.setValue(materialImage, forKey: kCIInputBackgroundImageKey)
 		filter.setValue(depthMask, forKey: kCIInputMaskImageKey)
 		filter.setValue(editingState.control.depthFocus, forKey: kCIInputIntensityKey)
 	}
 	
-	/// Apply all  filters and write history for given filter
-	private func applyFilter(_ filter: CIFilter, with state: HistoryManager.FilterState){
-		guard editingState.originalCgImage != nil, !editingState.isRecording else{
+	private func processFilter<T>(_ filter: T, with key: String? = nil, associatedFilters: [CIFilter] = []) where T: CIFilter {
+		guard !editingState.isRecording else {
+			setValueForFilter(filter)
 			return
 		}
+		markTrigger()
+		setValueForFilter(filter)
+		if !historyManager.isCurrentEditingFilter(filter) {
+			historyManager.changeCurrentState(for: filter, specificKey: key)
+			historyManager.imageWithoutCurrentFilter = iterateFilters(except: [filter] + associatedFilters)
+		}
+		if filter is VImageFilter {
+			applyVImageFilter(filter as! VImageFilter)
+		}else {
+			applyFilters([filter] + associatedFilters)
+			setImageForDisplay()
+		}
+	}
+	
+	private func setValueForFilter<T>(_ filter: T) where T: CIFilter {
+		if filter.name == "CIColorControls"{
+			setValueForColorControl(filter)
+		}
+		else if filter.name == "CIPerspectiveTransform" {
+			setValueForPerspective(filter)
+		}
+		else if filter is ColorChannel {
+			setValueForFilter(filter as! ColorChannel)
+		}
+		else if filter is Bilateral {
+			setValueForFilter(filter as! Bilateral)
+		}
+		else if filter is LUTCube {
+			filter.setValue(editingState.control.selectedLutName!, forKey: kCIInputMaskImageKey)
+		}
+		else if filter is SobelEdgeDetection3x3 {
+			setValueForFilter(filter as! SobelEdgeDetection3x3)
+		}
+		else if filter is Sketch {
+			setValueForFilter(filter as! Sketch)
+		}
+		else if filter is Vignette {
+			setValueForFilter(filter as! Vignette)
+		}
+		else if filter is Glitter {
+			setValueForFilter(filter as! Glitter)
+		}
+		else if filter is Kuwahara {
+			setValueForFilter(filter as! Kuwahara)
+		}
+		else if filter is BackgroundToneRetouch {
+			setValueForFilter(filter as! BackgroundToneRetouch)
+		}
+		else if filter is GammaAdjustment {
+			setValueForFilter(filter as! GammaAdjustment)
+		}
+		else {
+			assertionFailure("Fail to set value for \(filter)")
+		}
+	}
+	
+	/// Apply all  filters and write history for given filter
+	private func iterateFilters(except filters: [CIFilter]) -> CIImage{
+		guard editingState.originalCgImage != nil else{
+			return historyManager.currentImage
+		}
+		var ciImage: CIImage? = historyManager.sourceImage
+		editingState.applyingCIFilters.forEach {
+			guard !filters.contains($0.value) else {
+				return
+			}
+			let filter = $0.value
+			filter.setValue(ciImage, forKey: kCIInputImageKey)
+			ciImage = filter.outputImage
+		}
+	
+		guard let finalImage = ciImage else {
+			assertionFailure("Fail to iterate except \(filters)")
+			return historyManager.currentImage
+		}
+		if !editingState.applyingVImageFilters.isEmpty {
+			var cgImage = ciContext.createCGImage(finalImage, from: finalImage.extent)
+			editingState.applyingVImageFilters.forEach {
+				guard !filters.contains($0.value) else {
+					return
+				}
+				let filter = $0.value
+				filter.setValue(cgImage, forKey: kCIInputImageKey)
+				cgImage = filter.outputCGImage
+			}
+			guard cgImage != nil else {
+				fatalError("Output cg image is nil")
+			}
+			return CIImage(cgImage: cgImage!)
+		}
+		return finalImage
+	}
+	
+	private func applyFilters(_ filters: [CIFilter]) {
+		var ciImage = historyManager.imageWithoutCurrentFilter
+		filters.forEach { filter in
+			filter.setValue(ciImage, forKey: kCIInputImageKey)
+			ciImage = filter.outputImage
+		}
+		
+		if ciImage != nil {
+			editingState.changeCurrentEditingImage(ciImage)
+		}else {
+			assertionFailure("No output image from \(filters)")
+		}
+	}
+	
+	private func applyVImageFilter(_ filter: VImageFilter) {
+		if editingState.isRecording || isContinuouCall(){
+			return
+		}
+		DispatchQueue.global(qos: .userInitiated).async { [self] in
+			guard let ciImage = historyManager.imageWithoutCurrentFilter,
+				  let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else {
+					  fatalError("Fail to create input cg image")
+				  }
+			filter.setValue(cgImage, forKey: kCIInputImageKey)
+			guard let cgImage = filter.outputCGImage else {
+				fatalError("Fail to get output cg image")
+			}
+			uiImage = UIImage(cgImage: cgImage)
+			publishOnMainThread()
+			editingState.currentExcutingFilterTrigger = nil
+		}
+		
+	}
+	
+	private func markTrigger() {
 		let trigger = Date().timeIntervalSinceReferenceDate
 		editingState.lastFilterTrigger = trigger
 		if editingState.currentExcutingFilterTrigger == nil {
 			editingState.currentExcutingFilterTrigger = trigger
 		}
-		var ciImage: CIImage? = historyManager.sourceImage
-		editingState.applyingFilters.enumerated().forEach {
-			let filter = $0.element.value
-			filter.setValue(ciImage, forKey: kCIInputImageKey)
-			ciImage = filter.outputImage
-		}
-		guard let finalImage = ciImage else {
-			assertionFailure("Fail to apply \(filter)")
-			return
-		}
-		historyManager.writeHistory(filter: filter, state: state, image: finalImage)
 	}
 	
 	func applyMaskBlur() {
@@ -333,9 +486,14 @@ class ImageEditor: NSObject, ObservableObject {
 	
 	func addDrawing() {
 		let sourceImage = historyManager.currentImage
-		guard let drawing = CIImage(
-			image: editingState.drawingMaskView.drawing.image(
-				from: sourceImage.extent, scale: 1)) else {
+		var canvasImage: UIImage?
+		UITraitCollection(userInterfaceStyle: .light).performAsCurrent {
+			canvasImage = editingState.drawingMaskView.drawing.image(
+				from: CGRect(origin: .zero, size: editingState.imageSize!), scale: 1)
+		}
+		guard canvasImage != nil,
+			let drawing = CIImage(
+			image: canvasImage!) else {
 					assertionFailure("Fail to get drawing image")
 					return
 				}
@@ -408,22 +566,22 @@ class ImageEditor: NSObject, ObservableObject {
 	// MARK: - Display
 	
 	private func setImageForDisplay() {
-		if editingState.isRecording ||
-			(editingState.currentExcutingFilterTrigger != nil &&
-		   editingState.currentExcutingFilterTrigger! < editingState.lastFilterTrigger!){
+		if editingState.isRecording || isContinuouCall(){
 			return
 		}
-		DispatchQueue.global(qos: .userInteractive).async { [self] in
-			let ciImage = historyManager.currentImage
+		DispatchQueue.global(qos: .userInitiated).async { [self] in
+			let ciImage = editingState.currentEditingImage ?? historyManager.currentImage
 			if let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent){
 				self.uiImage = UIImage(cgImage: cgImage)
 			}
-			DispatchQueue.main.async {
-				editingState.setImageSize(uiImage!.size)
-				objectWillChange.send()
-			}
+			publishOnMainThread()
 			editingState.currentExcutingFilterTrigger = nil
 		}
+	}
+	
+	private func isContinuouCall() -> Bool {
+		editingState.currentExcutingFilterTrigger != nil &&
+		editingState.currentExcutingFilterTrigger! < editingState.lastFilterTrigger!
 	}
 	
 	private func publishOnMainThread() {
@@ -509,17 +667,17 @@ extension ImageEditor {
 					  let contrast = state[kCIInputContrastKey] as? CGFloat else {
 					return
 				}
-				editingState.control.basicColorControl[.brightness] = brightness
-				editingState.control.basicColorControl[.saturation] = saturation
-				editingState.control.basicColorControl[.contrast] = contrast
+				editingState.control.ciColorControl[.brightness] = brightness
+				editingState.control.ciColorControl[.saturation] = saturation
+				editingState.control.ciColorControl[.contrast] = contrast
 				setValueForColorControl(editingState.getFilter(CIFilter.self, name: "CIColorControls"))
 			case .LUTCube:
 				if let lutName = state[kCIInputMaskImageKey] as? String {
-					editingState.control.selectedLUTName = lutName
+					editingState.control.selectedLutName = lutName
 					let filter = editingState.getFilter(LUTCube.self)
 					filter.setValue(lutName, forKey: kCIInputMaskImageKey)
 				}else {
-					editingState.control.selectedLUTName = nil
+					editingState.control.selectedLutName = nil
 				}
 			case .SobelEdgeDetection3x3:
 				guard let bias = state[kCIInputBiasKey] as? CGFloat,
@@ -527,10 +685,16 @@ extension ImageEditor {
 					return
 				}
 				
-				editingState.applyingFilters[String(describing: SobelEdgeDetection3x3.self)]?.setValue(bias, forKey: kCIInputBiasKey)
-				editingState.applyingFilters[String(describing: SobelEdgeDetection3x3.self)]?.setValue(weight, forKey: kCIInputWeightsKey)
-				editingState.control.outlineControl = (max(bias, 0.1), max(weight, 0.1))
+				editingState.applyingCIFilters[String(describing: SobelEdgeDetection3x3.self)]?.setValue(bias, forKey: kCIInputBiasKey)
+				editingState.applyingCIFilters[String(describing: SobelEdgeDetection3x3.self)]?.setValue(weight, forKey: kCIInputWeightsKey)
+				editingState.control.outlineControl = [max(bias, 0.1), max(weight, 0.1)]
 				setValueForFilter(editingState.getFilter(SobelEdgeDetection3x3.self))
+			case .Sketch:
+				let keys = [Sketch.thresholdKey, Sketch.noiseLevelKey, Sketch.edgeIntensityKey,
+								   kCIInputColorKey, kCIInputBackgroundImageKey]
+				keys.forEach {
+					print($0, state[$0] ?? "nil")
+				}
 			case .Vignette:
 				guard let edgeBrightness = state[kCIInputBrightnessKey] as? CGFloat,
 					  let intensity = state[kCIInputIntensityKey] as? CGFloat,
@@ -559,10 +723,23 @@ extension ImageEditor {
 				}
 				editingState.control.depthFocus = focus
 				setValueForFilter(editingState.getFilter(BackgroundToneRetouch.self))
+			case .perspective:
+				guard let topLeft = state["inputTopLeft"],
+					  let topRight = state["inputTopRight"],
+					  let bottomLeft = state["inputBottomLeft"],
+					  let bottomRight = state["inputBottomRight"] else {
+						  return
+					  }
+				print(topLeft, topRight, bottomLeft, bottomRight)
+			case .GammaAdjustment:
+				guard let parameter = state[kCIInputIntensityKey] as? GammaAdjustment.Parameter else{
+					assertionFailure("Fail to get parameter")
+					return
+				}
+				print("Gamma adjustment parameter: \(parameter)")
 			case .unManaged:
 				setImageForDisplay()
 				break
-			
 		}
 	}
 }
@@ -571,7 +748,8 @@ extension ImageEditor: AVCaptureVideoDataOutputSampleBufferDelegate {
 	
 	func applyFilterToVideo(input: CIImage) -> CIImage? {
 		var ciImage: CIImage? = input
-		editingState.applyingFilters.enumerated().forEach {
+		editingState.setImageSize(input.extent.size)
+		editingState.applyingCIFilters.enumerated().forEach {
 			let filter = $0.element.value
 			filter.setValue(ciImage, forKey: kCIInputImageKey)
 			ciImage = filter.outputImage

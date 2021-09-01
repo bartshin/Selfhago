@@ -10,6 +10,7 @@ import PhotosUI
 
 struct ImagePickerView: View {
 	
+	@Environment(\.colorScheme) var colorScheme
 	@Binding var navigationTag: String?
 	@State private var isShowingAlbum = false
 	@State private var isShowingLimitedPicker = false
@@ -48,8 +49,9 @@ struct ImagePickerView: View {
 					.frame(width: geometry.size.width,
 						   height: topbarHeight)
 					.background(Constant.backgroundColor
-									.frame(height: topbarHeight * 1.8))
-					.offset(y: topbarHeight * 0.4 )
+									.frame(height: topbarHeight * 2))
+					.offset(y: topbarHeight * 0.5)
+					.padding(.bottom, topbarHeight * 0.4)
 					.ignoresSafeArea(.container, edges: .top)
 					.zIndex(1)
 				ZStack {
@@ -67,6 +69,7 @@ struct ImagePickerView: View {
 			}
 			.onAppear {
 				imageEditor.editingState.isRecording = false
+				DesignConstant.setColorScheme(to: colorScheme == .dark ? .dark: .light)
 			}
 			HStack {
 				linkToEditView
@@ -131,9 +134,7 @@ struct ImagePickerView: View {
 		}
 		.background(Color(UIColor.systemBackground))
 		.allowsHitTesting(isShowingAlbum)
-		.opacity(isShowingAlbum ? 1: 0)
-		.offset(y: -size.height * (isShowingAlbum ? 0.05: 0.5))
-		.transition(.move(edge: .bottom))
+		.offset(y: isShowingAlbum ? -topbarHeight: -size.height)
 		.frame(height: size.height * 0.8)
 	}
 	
@@ -176,11 +177,11 @@ struct ImagePickerView: View {
 				openSettingBar
 			}
 		}
-		.padding(.top, topbarHeight * 0.5)
+		.padding(.top, topbarHeight)
 	}
 	
 	private var topbarHeight: CGFloat {
-		(UIApplication.shared.windows.first?.safeAreaInsets.top ?? 50) + 20
+		(UIApplication.shared.windows.first?.safeAreaInsets.top ?? 50)
 	}
 	
 	private var albumToggleBar: some View {
@@ -211,7 +212,6 @@ struct ImagePickerView: View {
 			}
 		}
 		.font(Constant.topbarFont)
-		.foregroundColor(.black)
 		.padding(.horizontal)
 	}
 	
@@ -226,7 +226,6 @@ struct ImagePickerView: View {
 			}
 		}
 		.font(Constant.topbarFont)
-		.foregroundColor(.black)
 		.padding(.horizontal)
 	}
 	
@@ -244,7 +243,9 @@ struct ImagePickerView: View {
 		static let albumRowSubTitleFont: Font = DesignConstant.getFont(.init(family: .NotoSansCJKkr, style: .Regular), size: 14)
 		static let topbarBottmMargin: CGFloat = 14
 		static let albumRowSubTitleColor: Color = .gray
-		static let backgroundColor = DesignConstant.getColor(for: .background)
+		static var backgroundColor: Color {
+			DesignConstant.getColor(for: .background)
+		}
 	}
 }
 

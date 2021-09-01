@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 class HistoryManager {
 	
@@ -13,9 +14,9 @@ class HistoryManager {
 	/// Original Image and results  by not tunable filters
 	private var sourceImages: [CIImage]
 	/// Suquence of used filters
-	private(set) var filterHistory: [FilterState]
+	private(set) var filterStateHistory: [FilterState]
 	/// Filter index for undo or redo
-	private(set) var nextFilterIndex: Int
+	private(set) var nextFilterIndex: Int 
 	private var currentImageIndex: Int {
 		nextFilterIndex
 	}
@@ -34,16 +35,23 @@ class HistoryManager {
 		currentImageIndex > 0 ? imageHistory[currentImageIndex - 1]: nil
 	}
 	
+	private(set) var lastFilter: CIFilter?
+	var imageWithoutCurrentFilter: CIImage?
+	private var currentState: FilterState?
+	
 	func clearHistory() {
-		filterHistory = []
+		filterStateHistory = []
 		imageHistory = []
 		sourceImages = []
 		nextFilterIndex = 0
 		setRedoAndUndo()
+		imageWithoutCurrentFilter = nil
+		lastFilter = nil
+		currentState = nil
 	}
 	
 	func reset() {
-		filterHistory = []
+		filterStateHistory = []
 		imageHistory = sourceImages.first == nil ? []: [sourceImages.first!]
 		sourceImages = sourceImages.first == nil ? []: [sourceImages.first!]
 		nextFilterIndex = 0
@@ -57,7 +65,7 @@ class HistoryManager {
 	
 	func undo() -> FilterState {
 		nextFilterIndex -= 1
-		let state = filterHistory[nextFilterIndex]
+		let state = filterStateHistory[nextFilterIndex]
 		if state.filter.isUnmanaged {
 			sourceImages.append(currentImage)
 		}
@@ -67,7 +75,7 @@ class HistoryManager {
 	
 	func redo() -> FilterState {
 		nextFilterIndex += 1
-		let state = filterHistory[nextFilterIndex - 1]
+		let state = filterStateHistory[nextFilterIndex - 1]
 		if state.filter.isUnmanaged {
 			sourceImages.append(currentImage)
 		}
@@ -75,49 +83,62 @@ class HistoryManager {
 		return state
 	}
 	
-	private func setRedoAndUndo() {
-		redoAble = filterHistory.count > nextFilterIndex
-		undoAble = nextFilterIndex > 0
+	func isCurrentEditingFilter(_ filter: CIFilter) -> Bool {
+		if filter == lastFilter {
+			return true
+		}else {
+			lastFilter = filter
+			return false
+		}
 	}
 	
-	func createState(for filter: CIFilter, specificKey: String = "") -> FilterState {
-		guard var state = FilterState(from: filter) ?? FilterState(by: specificKey) else {
-			assertionFailure("Fail to create state for \(filter) with key \(specificKey)")
-			return FilterState.unManagedFilter
+	func changeCurrentState(for filter: CIFilter, specificKey: String? = nil) {
+		guard var state = FilterState(from: filter) ?? FilterState(by: specificKey!) else {
+			assertionFailure("Fail to create state for \(filter) with key \(specificKey ?? "none")")
+			currentState = FilterState.unManagedFilter
+			return
 		}
-		if let lastState = filterHistory.last,
+		if let lastState = filterStateHistory.last,
 		   lastState.filter == state.filter{
 			state.beforeState = lastState.beforeState
 		}else {
-			let currentState = state.getState(from: filter)
+			let currentState = state.captureState(from: filter)
 			state.beforeState = currentState
 		}
-		return state
+		currentState = state
+	}
+	
+	func detachCurrentState() -> FilterState? {
+		if let state = currentState {
+			return state
+		}else {
+			return nil
+		}
 	}
 	
 	func writeHistory(filter: CIFilter, state: FilterState, image: CIImage) {
-		var state = state
-		state.afterState = state.getState(from: filter)
+		
+		lastFilter = nil
 		if state.filter.isUnmanaged {
 			sourceImages.append(image)
 		}
-		if filterHistory.isEmpty ||
-			(filterHistory.count == nextFilterIndex && filterHistory[nextFilterIndex - 1].filter != state.filter) {
+		if filterStateHistory.isEmpty ||
+			(filterStateHistory.count == nextFilterIndex && filterStateHistory[nextFilterIndex - 1].filter != state.filter) {
 			imageHistory.append(image)
-			filterHistory.append(state)
+			filterStateHistory.append(state)
 		}
-		else if nextFilterIndex != 0 && filterHistory[nextFilterIndex - 1].filter == state.filter {
+		else if nextFilterIndex != 0 && filterStateHistory[nextFilterIndex - 1].filter == state.filter {
 			// Changing last Not correspond to unmanaged filters
 			imageHistory[currentImageIndex] = image
 			nextFilterIndex -= 1
-			filterHistory[nextFilterIndex] = state
+			filterStateHistory[nextFilterIndex] = state
 		}
 		else {
 			// Write new history at medium
-			filterHistory[nextFilterIndex] = state
+			filterStateHistory[nextFilterIndex] = state
 			imageHistory[currentImageIndex + 1] = image
 			
-			filterHistory.removeLast(filterHistory.count - nextFilterIndex - 1)
+			filterStateHistory.removeLast(filterStateHistory.count - nextFilterIndex - 1)
 			imageHistory.removeLast(imageHistory.count - currentImageIndex - 2)
 		}
 		
@@ -125,10 +146,16 @@ class HistoryManager {
 		setRedoAndUndo()
 	}
 	
+	private func setRedoAndUndo() {
+		redoAble = filterStateHistory.count > nextFilterIndex
+		undoAble = nextFilterIndex > 0
+	}
+	
+	
 	init() {
 		imageHistory = []
 		sourceImages = []
-		filterHistory = []
+		filterStateHistory = []
 		nextFilterIndex = 0
 		undoAble = false
 		redoAble = false
@@ -149,8 +176,10 @@ class HistoryManager {
 			case saturation
 			case contrast
 			case KuwaharaMetal
+			case perspective
 			case BackgroundToneRetouch
-			
+			case Sketch
+			case GammaAdjustment
 			case unManaged
 			
 			static func ==(lhs: Filter, rhs: Filter) -> Bool {
@@ -170,7 +199,7 @@ class HistoryManager {
 		var beforeState = [String: Any]()
 		var afterState = [String: Any]()
 		
-		fileprivate func getState(from ciFilter: CIFilter) -> [String: Any] {
+		func captureState(from ciFilter: CIFilter) -> [String: Any] {
 			
 			let keys: [String]
 			switch filter {
@@ -184,6 +213,9 @@ class HistoryManager {
 					keys = [kCIInputMaskImageKey]
 				case .SobelEdgeDetection3x3:
 					keys = [kCIInputBiasKey, kCIInputWeightsKey, kCIInputScaleKey]
+				case .Sketch:
+					keys = [Sketch.thresholdKey, Sketch.noiseLevelKey, Sketch.edgeIntensityKey,
+					kCIInputColorKey, kCIInputBackgroundImageKey]
 				case .Vignette:
 					keys = [kCIInputIntensityKey, kCIInputRadiusKey,
 					kCIInputBrightnessKey]
@@ -192,6 +224,10 @@ class HistoryManager {
 				case .Kuwahara, .KuwaharaMetal:
 					keys = [ kCIInputRadiusKey ]
 				case .BackgroundToneRetouch:
+					keys = [ kCIInputIntensityKey ]
+				case .perspective:
+					keys = [ "inputTopLeft", "inputTopRight", "inputBottomLeft", "inputBottomRight" ]
+				case .GammaAdjustment:
 					keys = [ kCIInputIntensityKey ]
 				case .unManaged:
 					return [:]

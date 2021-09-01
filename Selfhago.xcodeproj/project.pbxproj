@@ -55,6 +55,7 @@
 		896F995326C1539A0080BC97 /* ColorPickerRing in Frameworks */ = {isa = PBXBuildFile; productRef = 896F995226C1539A0080BC97 /* ColorPickerRing */; };
 		896F995526C154470080BC97 /* ColorWheelHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F995426C154470080BC97 /* ColorWheelHelper.swift */; };
 		896FF713269EDDDF00533C23 /* ImageAnalyst.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896FF712269EDDDF00533C23 /* ImageAnalyst.swift */; };
+		8973A81426D2A83D0051B2E4 /* Sketch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8973A81326D2A83D0051B2E4 /* Sketch.swift */; };
 		897EB8F126C3C8B20085A5FF /* CropImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 897EB8F026C3C8B20085A5FF /* CropImageView.swift */; };
 		897EB8F526C3DC4B0085A5FF /* ViewFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 897EB8F426C3DC4B0085A5FF /* ViewFinder.swift */; };
 		8984D70426BBFDDE00D38E08 /* LinearGradientBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8984D6FD26BBFDDE00D38E08 /* LinearGradientBar.swift */; };
@@ -85,12 +86,18 @@
 		89B37F9B26C98E5B00AA191D /* UtilityFilter.metal in Sources */ = {isa = PBXBuildFile; fileRef = 89B37F9A26C98E5B00AA191D /* UtilityFilter.metal */; };
 		89B37F9D26C98E7000AA191D /* Bilateral.metal in Sources */ = {isa = PBXBuildFile; fileRef = 89B37F9C26C98E7000AA191D /* Bilateral.metal */; };
 		89B37F9F26C98E8800AA191D /* Main.metal in Sources */ = {isa = PBXBuildFile; fileRef = 89B37F9E26C98E8800AA191D /* Main.metal */; };
+		89BAE48D26D1F2C500353F4A /* QuadAngleControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BAE48C26D1F2C500353F4A /* QuadAngleControl.swift */; };
 		89C7A4732692E0000014E097 /* shader_helper.metal in Sources */ = {isa = PBXBuildFile; fileRef = 89C7A4722692E0000014E097 /* shader_helper.metal */; };
 		89CE6C8E26AE7D16005556CC /* MetalFilterBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89CE6C8D26AE7D16005556CC /* MetalFilterBase.swift */; };
 		89D32EEF26CB671B00E28B9E /* PencilKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 89D32EED26CB671700E28B9E /* PencilKit.framework */; };
+		89DDD3E726D9463400BDF6DD /* FilterpediaVImageFilters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89DDD3E626D9463400BDF6DD /* FilterpediaVImageFilters.swift */; };
+		89DDD3E926D9F3FE00BDF6DD /* GammaAdjustment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89DDD3E826D9F3FE00BDF6DD /* GammaAdjustment.swift */; };
+		89DDD3EC26DA19D300BDF6DD /* SwiftUICharts in Frameworks */ = {isa = PBXBuildFile; productRef = 89DDD3EB26DA19D300BDF6DD /* SwiftUICharts */; };
+		89DDD3EE26DA1A4500BDF6DD /* ChartState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89DDD3ED26DA1A4500BDF6DD /* ChartState.swift */; };
 		89E8726B26A190ED009C65EF /* SobelEdgeDetection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E8726A26A190ED009C65EF /* SobelEdgeDetection.swift */; };
 		89E8726D26A1912C009C65EF /* CIVector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E8726C26A1912C009C65EF /* CIVector.swift */; };
 		89E8727326A1A106009C65EF /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89E8727226A1A106009C65EF /* HistoryManager.swift */; };
+		89FD3E1626DE220C008474F7 /* MovingSegmentButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89FD3E1526DE220C008474F7 /* MovingSegmentButton.swift */; };
 		C19759F8267CCE0B006003CA /* SelfhagoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C19759F7267CCE0B006003CA /* SelfhagoApp.swift */; };
 		C19759FC267CCE0D006003CA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C19759FB267CCE0D006003CA /* Assets.xcassets */; };
 		C19759FF267CCE0D006003CA /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C19759FE267CCE0D006003CA /* Preview Assets.xcassets */; };
@@ -145,6 +152,7 @@
 		896F994F26C153790080BC97 /* ColorPickerWheel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPickerWheel.swift; sourceTree = "<group>"; };
 		896F995426C154470080BC97 /* ColorWheelHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorWheelHelper.swift; sourceTree = "<group>"; };
 		896FF712269EDDDF00533C23 /* ImageAnalyst.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnalyst.swift; sourceTree = "<group>"; };
+		8973A81326D2A83D0051B2E4 /* Sketch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sketch.swift; sourceTree = "<group>"; };
 		897EB8F026C3C8B20085A5FF /* CropImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropImageView.swift; sourceTree = "<group>"; };
 		897EB8F426C3DC4B0085A5FF /* ViewFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewFinder.swift; sourceTree = "<group>"; };
 		8984D6FD26BBFDDE00D38E08 /* LinearGradientBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LinearGradientBar.swift; sourceTree = "<group>"; };
@@ -180,13 +188,18 @@
 		89B37FA426C9919B00AA191D /* Refract.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Refract.h; sourceTree = "<group>"; };
 		89B37FA526C991DC00AA191D /* UtilityFilter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = UtilityFilter.h; sourceTree = "<group>"; };
 		89B37FA626C992E100AA191D /* ColorChannel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorChannel.h; sourceTree = "<group>"; };
+		89BAE48C26D1F2C500353F4A /* QuadAngleControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuadAngleControl.swift; sourceTree = "<group>"; };
 		89C7A4712692DFD00014E097 /* shader_helper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = shader_helper.h; sourceTree = "<group>"; };
 		89C7A4722692E0000014E097 /* shader_helper.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = shader_helper.metal; sourceTree = "<group>"; };
 		89CE6C8D26AE7D16005556CC /* MetalFilterBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalFilterBase.swift; sourceTree = "<group>"; };
 		89D32EED26CB671700E28B9E /* PencilKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PencilKit.framework; path = System/Library/Frameworks/PencilKit.framework; sourceTree = SDKROOT; };
+		89DDD3E626D9463400BDF6DD /* FilterpediaVImageFilters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterpediaVImageFilters.swift; sourceTree = "<group>"; };
+		89DDD3E826D9F3FE00BDF6DD /* GammaAdjustment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GammaAdjustment.swift; sourceTree = "<group>"; };
+		89DDD3ED26DA1A4500BDF6DD /* ChartState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartState.swift; sourceTree = "<group>"; };
 		89E8726A26A190ED009C65EF /* SobelEdgeDetection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SobelEdgeDetection.swift; sourceTree = "<group>"; };
 		89E8726C26A1912C009C65EF /* CIVector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CIVector.swift; sourceTree = "<group>"; };
 		89E8727226A1A106009C65EF /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
+		89FD3E1526DE220C008474F7 /* MovingSegmentButton.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MovingSegmentButton.swift; sourceTree = "<group>"; };
 		C19759F4267CCE0A006003CA /* Selfhago.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Selfhago.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C19759F7267CCE0B006003CA /* SelfhagoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelfhagoApp.swift; sourceTree = "<group>"; };
 		C19759FB267CCE0D006003CA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -200,6 +213,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				89DDD3EC26DA19D300BDF6DD /* SwiftUICharts in Frameworks */,
 				89D32EEF26CB671B00E28B9E /* PencilKit.framework in Frameworks */,
 				896F995326C1539A0080BC97 /* ColorPickerRing in Frameworks */,
 			);
@@ -304,6 +318,9 @@
 			isa = PBXGroup;
 			children = (
 				89A9707F26B2AD1C006B3DD8 /* VImageFilterBase.swift */,
+				89DDD3E826D9F3FE00BDF6DD /* GammaAdjustment.swift */,
+				89DDD3E626D9463400BDF6DD /* FilterpediaVImageFilters.swift */,
+				8941525126B56CD800A15557 /* BackgroundToneRetouch.swift */,
 				891684D526B2D1E0000EA6BD /* HistogramSpecification.swift */,
 			);
 			path = VImage;
@@ -313,10 +330,12 @@
 			isa = PBXGroup;
 			children = (
 				890C293C26BD06C400488B4F /* NormalizeControlValue.swift */,
+				89FD3E1526DE220C008474F7 /* MovingSegmentButton.swift */,
 				8984D70B26BBFE5600D38E08 /* DesignConstant.swift */,
 				89AA4E9126C8EA93001B03C5 /* GraduationRuler.swift */,
 				89AA4E9226C8EA93001B03C5 /* GraduationSlider.swift */,
 				896F995426C154470080BC97 /* ColorWheelHelper.swift */,
+				89BAE48C26D1F2C500353F4A /* QuadAngleControl.swift */,
 				89E8726C26A1912C009C65EF /* CIVector.swift */,
 				8996B28926A5610C0082527D /* CircularSlider.swift */,
 				8996B28B26A57FA00082527D /* RandomColor.swift */,
@@ -396,16 +415,7 @@
 			children = (
 				89A9707E26B2AD0E006B3DD8 /* VImage */,
 				896E74CA26AE98A900C470F8 /* Metal */,
-				895ECE33268C45D80050DF2E /* ColorChannel.swift */,
-				8941525126B56CD800A15557 /* BackgroundToneRetouch.swift */,
-				892672AE26AAF6C900C2B8A9 /* RefractedText.swift */,
-				892672B026AAFB1800C2B8A9 /* TextMask.swift */,
-				8996B28726A53AD50082527D /* Glitter.swift */,
-				894FD1E9268D7D0900511253 /* LUTCube.swift */,
-				894D897426A9B12900965CFF /* Kuwahara.swift */,
-				89E8726A26A190ED009C65EF /* SobelEdgeDetection.swift */,
-				890851AF26A324CC000ACBD2 /* Vignette.swift */,
-				8961DDF92691DDA100804606 /* Bilateral.swift */,
+				89D5624D26DA968300F36C99 /* CiFilter */,
 			);
 			path = Filter;
 			sourceTree = "<group>";
@@ -416,6 +426,23 @@
 				89D32EED26CB671700E28B9E /* PencilKit.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		89D5624D26DA968300F36C99 /* CiFilter */ = {
+			isa = PBXGroup;
+			children = (
+				895ECE33268C45D80050DF2E /* ColorChannel.swift */,
+				8973A81326D2A83D0051B2E4 /* Sketch.swift */,
+				892672AE26AAF6C900C2B8A9 /* RefractedText.swift */,
+				892672B026AAFB1800C2B8A9 /* TextMask.swift */,
+				8996B28726A53AD50082527D /* Glitter.swift */,
+				894FD1E9268D7D0900511253 /* LUTCube.swift */,
+				894D897426A9B12900965CFF /* Kuwahara.swift */,
+				89E8726A26A190ED009C65EF /* SobelEdgeDetection.swift */,
+				890851AF26A324CC000ACBD2 /* Vignette.swift */,
+				8961DDF92691DDA100804606 /* Bilateral.swift */,
+			);
+			path = CiFilter;
 			sourceTree = "<group>";
 		};
 		C19759EB267CCE0A006003CA = {
@@ -463,6 +490,7 @@
 				89B37F9726C98DE700AA191D /* Shader */,
 				89C9AAEE268D5C6300A63F33 /* Filter */,
 				89110C822680AD0E002779AA /* FilterCategory.swift */,
+				8934634126B0FCEF00768B46 /* CaptureProcessor.swift */,
 				89558B6F26BA5E5C0085AA76 /* Album.swift */,
 			);
 			path = Model;
@@ -473,8 +501,8 @@
 			children = (
 				89110C8C2680C729002779AA /* ImageEditor.swift */,
 				89965A3826B00B58007D15C7 /* CameraRecorder.swift */,
-				8934634126B0FCEF00768B46 /* CaptureProcessor.swift */,
 				89558B6D26B98A4F0085AA76 /* AlbumHandler.swift */,
+				89DDD3ED26DA1A4500BDF6DD /* ChartState.swift */,
 				89E8727226A1A106009C65EF /* HistoryManager.swift */,
 				896FF712269EDDDF00533C23 /* ImageAnalyst.swift */,
 				8916759926A2EE4D00B90B23 /* EditingState.swift */,
@@ -511,6 +539,7 @@
 			name = Selfhago;
 			packageProductDependencies = (
 				896F995226C1539A0080BC97 /* ColorPickerRing */,
+				89DDD3EB26DA19D300BDF6DD /* SwiftUICharts */,
 			);
 			productName = moody;
 			productReference = C19759F4267CCE0A006003CA /* Selfhago.app */;
@@ -541,6 +570,7 @@
 			mainGroup = C19759EB267CCE0A006003CA;
 			packageReferences = (
 				896F995126C1539A0080BC97 /* XCRemoteSwiftPackageReference "ColorPicker" */,
+				89DDD3EA26DA19D300BDF6DD /* XCRemoteSwiftPackageReference "ChartView" */,
 			);
 			productRefGroup = C19759F5267CCE0A006003CA /* Products */;
 			projectDirPath = "";
@@ -585,12 +615,16 @@
 				896E74CC26AE98BC00C470F8 /* Pixellate.swift in Sources */,
 				894FD1EA268D7D0900511253 /* LUTCube.swift in Sources */,
 				89AA4E9326C8EA93001B03C5 /* GraduationRuler.swift in Sources */,
+				89FD3E1626DE220C008474F7 /* MovingSegmentButton.swift in Sources */,
 				891684D626B2D1E0000EA6BD /* HistogramSpecification.swift in Sources */,
+				89DDD3E926D9F3FE00BDF6DD /* GammaAdjustment.swift in Sources */,
 				896F995526C154470080BC97 /* ColorWheelHelper.swift in Sources */,
 				892672A526AAB09A00C2B8A9 /* UIFontPickerRepresentable.swift in Sources */,
 				8996B28A26A5610C0082527D /* CircularSlider.swift in Sources */,
+				89DDD3E726D9463400BDF6DD /* FilterpediaVImageFilters.swift in Sources */,
 				8938E2DC268ADE1E00A2209F /* MetalFileData.swift in Sources */,
 				898C02CC2685BA78008A2B2C /* DrawingMaskView.swift in Sources */,
+				89BAE48D26D1F2C500353F4A /* QuadAngleControl.swift in Sources */,
 				891DF6912684277A00A314B8 /* ImagePreview.swift in Sources */,
 				89B37F9F26C98E8800AA191D /* Main.metal in Sources */,
 				89B37F9D26C98E7000AA191D /* Bilateral.metal in Sources */,
@@ -614,6 +648,8 @@
 				8984D70E26BC754600D38E08 /* FilterControlPannel.swift in Sources */,
 				89E8726D26A1912C009C65EF /* CIVector.swift in Sources */,
 				897EB8F526C3DC4B0085A5FF /* ViewFinder.swift in Sources */,
+				8973A81426D2A83D0051B2E4 /* Sketch.swift in Sources */,
+				89DDD3EE26DA1A4500BDF6DD /* ChartState.swift in Sources */,
 				89A85FF726CB9870001BD100 /* DrawingToolPicker.swift in Sources */,
 				891DF6932684283400A314B8 /* FeedBackView.swift in Sources */,
 				8961DDFA2691DDA100804606 /* Bilateral.swift in Sources */,
@@ -709,7 +745,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -764,7 +800,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -781,7 +817,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.02;
+				CURRENT_PROJECT_VERSION = 1.04;
 				DEVELOPMENT_ASSET_PATHS = "\"Selfhago/Preview Content\"";
 				DEVELOPMENT_TEAM = 96XCF965VW;
 				ENABLE_PREVIEWS = YES;
@@ -791,7 +827,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.02;
+				MARKETING_VERSION = 1.04;
 				MTLLINKER_FLAGS = "-fcikernel";
 				MTL_COMPILER_FLAGS = "-fcikernel";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -811,7 +847,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.02;
+				CURRENT_PROJECT_VERSION = 1.04;
 				DEVELOPMENT_ASSET_PATHS = "\"Selfhago/Preview Content\"";
 				DEVELOPMENT_TEAM = 96XCF965VW;
 				ENABLE_PREVIEWS = YES;
@@ -821,7 +857,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.02;
+				MARKETING_VERSION = 1.04;
 				MTLLINKER_FLAGS = "-fcikernel";
 				MTL_COMPILER_FLAGS = "-fcikernel";
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -866,6 +902,14 @@
 				minimumVersion = 2.1.0;
 			};
 		};
+		89DDD3EA26DA19D300BDF6DD /* XCRemoteSwiftPackageReference "ChartView" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AppPear/ChartView";
+			requirement = {
+				kind = exactVersion;
+				version = "2.0.0-beta.2";
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -873,6 +917,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 896F995126C1539A0080BC97 /* XCRemoteSwiftPackageReference "ColorPicker" */;
 			productName = ColorPickerRing;
+		};
+		89DDD3EB26DA19D300BDF6DD /* SwiftUICharts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 89DDD3EA26DA19D300BDF6DD /* XCRemoteSwiftPackageReference "ChartView" */;
+			productName = SwiftUICharts;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

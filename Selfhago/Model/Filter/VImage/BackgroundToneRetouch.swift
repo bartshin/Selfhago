@@ -11,7 +11,7 @@ class BackgroundToneRetouch: CIFilter {
 	
 	private lazy var toneRetouchFilter = HistogramSpecification()
 	private lazy var blendFilter = CIFilter(name: "CIBlendWithMask")!
-	private var targetImage: CIImage?
+	private var targetImage: CGImage?
 	private var depthMaskImage: CIImage?
 	private var inputImage: CIImage?
 	private var focus: CGFloat = 0
@@ -34,8 +34,8 @@ class BackgroundToneRetouch: CIFilter {
 				let mask = value as? CIImage?{
 			depthMaskImage = mask
 		}
-		else if key == kCIInputBackgroundImageKey,
-				let image = value as? CIImage {
+		else if key == kCIInputBackgroundImageKey {
+			let image: CGImage = (value as! CGImage)
 			if targetImage != image {
 				toneRetouchedImage = nil
 			}
@@ -62,7 +62,10 @@ class BackgroundToneRetouch: CIFilter {
 	}
 	
 	private func setToneRetouchedImage() {
-		toneRetouchFilter.setValue(inputImage!, forKey: kCIInputImageKey)
+		guard let cgImage = ciContext.createCGImage(inputImage!, from: inputImage!.extent) else {
+			fatalError("Fail to create cg image")
+		}
+		toneRetouchFilter.setValue(cgImage, forKey: kCIInputImageKey)
 		toneRetouchFilter.setValue(targetImage!, forKey: kCIInputTargetImageKey)
 		toneRetouchedImage = toneRetouchFilter.outputImage
 	}
@@ -76,9 +79,11 @@ class BackgroundToneRetouch: CIFilter {
 		if toneRetouchedImage == nil {
 			setToneRetouchedImage()
 		}
+		
 		blendFilter.setValue(toneRetouchedImage, forKey: kCIInputImageKey)
 		blendFilter.setValue(inputImage!, forKey: kCIInputBackgroundImageKey)
 		blendFilter.setValue(depthMaskImage!, forKey: kCIInputMaskImageKey)
 		return blendFilter.outputImage
 	}
+	
 }

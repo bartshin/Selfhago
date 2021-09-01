@@ -135,7 +135,8 @@ class AlbumHandler: NSObject, ObservableObject {
 	
 	private func requestAuthorization() {
 		if authorizaionStatus == .notDetermined {
-			PHPhotoLibrary.requestAuthorization(for: .readWrite) { _ in
+			PHPhotoLibrary.requestAuthorization(for: .readWrite) { [weak weakSelf = self] _ in
+				weakSelf?.createAlbums()
 			}
 		}
 	}
@@ -167,7 +168,6 @@ class AlbumHandler: NSObject, ObservableObject {
 		thumnailImages = [:]
 		super.init()
 		PHPhotoLibrary.shared().register(self)
-		requestAuthorization()
 		createAlbums()
 	}
 }

@@ -219,6 +219,9 @@ struct EditView: View, SavingDelegation  {
 		if newControl.isOutlineChanged {
 			activatedMenu.append(MultiSliderFilterControl.outline.labelStrings[languageCode])
 		}
+		if newControl.isLutChanged {
+			activatedMenu.append(OnOffFilter.presetFiter.labelStrings[languageCode])
+		}
 		
 		return activatedMenu
 	}
@@ -239,7 +242,7 @@ struct EditView: View, SavingDelegation  {
 		static let topbarHeight: CGFloat = 30/referenceHeight
 		static let imageViewHeight: CGFloat = 563/referenceHeight
 		static let menuViewHeight: CGFloat = 80/referenceHeight
-		static let overlayButtonColor = DesignConstant.getColor(for: .onPrimary)
+		static var overlayButtonColor = DesignConstant.getColor(for: .onPrimary)
 		static let overlayButtonSize = CGSize(width: 50, height: 50)
 		static let navigationButtonSize = CGSize(width: 18, height: 18)
 	}

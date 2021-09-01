@@ -12,8 +12,8 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 	private let title: String
 	private let drawGraph: Bool
 	private let numberOfSliders: Int
-	private let ranges: [ClosedRange<CGFloat>]
-	private var normalizedValues: [Binding<CGFloat>]
+	private let ranges: [ClosedRange<T>]
+	private var bindingValues: [Binding<T>]
 	private let onValueChanging: (Int) -> Void
 	private let horizontalMargin: CGFloat
 	
@@ -29,7 +29,7 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 							.stroke(Constant.graphColor, lineWidth: 2)
 					}
 					Group {
-						ForEach(0..<numberOfSliders) { index in
+						ForEach(0..<numberOfSliders, id: \.self) { index in
 							drawSlider(at: index, in: geometry.size)
 								.position(x: calcXPotionOfSlider(at: index, in: geometry.size),
 										  y: geometry.size.height / 2)
@@ -42,10 +42,12 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 	
 	private func getAllPoints(in size: CGSize) -> [CGPoint] {
 		let marginBetweenSliders = calcMarginBetweenSliders(in: size)
-		
+		let normalizedValues = bindingValues.enumerated().map { index, value in
+			CGFloat(Self.normalizeValue(value.wrappedValue, in: ranges[index]))
+		}
 		return normalizedValues.enumerated().map {
 			CGPoint(x: (horizontalMargin + marginBetweenSliders * CGFloat($0.offset)) / size.width,
-					y: 1 - $0.element.wrappedValue)
+					y: 1 - $0.element)
 		}
 	}
 	
@@ -68,14 +70,14 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 		DragGesture(minimumDistance: size.height / 10)
 			.onChanged { value in
 				let ratio = max(0, min(1 - value.location.y / size.height, 1))
-				normalizedValues[index].wrappedValue = ratio
+				setValueToBinding(ratio, at: index)
 				onValueChanging(index)
 			}
 	}
 	
 	private func calcHeightOfSlider(at index: Int, in size: CGSize) -> CGFloat {
-		let value = normalizedValues[index].wrappedValue
-		return size.height * value
+		let value = CGFloat(Self.normalizeValue(bindingValues[index].wrappedValue, in: ranges[index]))
+		return min(max(size.height * value, 0), size.height)
 	}
 	
 
@@ -87,6 +89,13 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 		(size.width - CGFloat(numberOfSliders) * Constant.sliderWidth - horizontalMargin * 2) / CGFloat(numberOfSliders - 1)
 	}
 	
+	private func getNormalizedValue(at index: Int) -> CGFloat {
+		CGFloat(Self.normalizeValue(bindingValues[index].wrappedValue, in: ranges[index]))
+	}
+	
+	private func setValueToBinding(_ value: CGFloat, at index: Int) {
+		bindingValues[index].wrappedValue = Self.deNormalizeValue(T(value), in: ranges[index])
+	}
 	
 	init(title: String,
 		 values: [Binding<T>],
@@ -96,18 +105,9 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 		 onValueChanged: @escaping (Int) -> Void = {_ in}) {
 		self.title = title
 		self.numberOfSliders = values.count
-		self.ranges = ranges.compactMap {
-			CGFloat($0.lowerBound)...CGFloat($0.upperBound)
-		}
+		self.ranges = ranges
+		self.bindingValues = values
 		self.drawGraph = drawGraph
-		normalizedValues = values.enumerated().map { index, value in
-			Binding<CGFloat> {
-				CGFloat(Self.normalizeValue(value.wrappedValue, in: ranges[index]))
-			} set: { normalizedValue in
-				values[index].wrappedValue = Self.deNormalizeValue(T(normalizedValue), in: ranges[index])
-			}
-
-		}
 		self.onValueChanging = onValueChanging
 		horizontalMargin = Constant.sliderHMargin * pow(CGFloat(5) / CGFloat(numberOfSliders), 2.5)
 	}

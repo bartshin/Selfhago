@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct SelfhagoApp: App {
+	
 	let albumHandler = AlbumHandler()
 	private var designConstant = DesignConstant.shared
 	@State private var navigationTag: String?
@@ -12,7 +13,6 @@ struct SelfhagoApp: App {
 			NavigationView {
 				ImagePickerView(navigationTag: $navigationTag)
 					.environmentObject(albumHandler)
-					.preferredColorScheme(.light)
 					.navigationBarHidden(true)
 			}
         }

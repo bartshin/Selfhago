@@ -9,6 +9,7 @@ import CoreImage
 import UIKit
 import CoreHaptics
 import PencilKit
+import Accelerate
 
 class EditingState: ObservableObject {
 	
@@ -17,15 +18,16 @@ class EditingState: ObservableObject {
 	private(set) var imageOrientaion: CGImagePropertyOrientation?
 	var lastFilterTrigger: TimeInterval?
 	var currentExcutingFilterTrigger: TimeInterval?
+	private(set) var currentEditingImage: CIImage?
 	var ciImage: CIImage {
 		CIImage(
 			cgImage: originalCgImage!,
 			options: [.applyOrientationProperty: true,
 					  .properties: [kCGImagePropertyOrientation: imageOrientaion!.rawValue]])
 	}
-	
 	/// [ Filter name : CI Filter] key = String(describing: FilterType.self)
-	private(set) var applyingFilters: [String: CIFilter]
+	private(set) var applyingCIFilters: [String: CIFilter]
+	private(set) var applyingVImageFilters: [String: VImageFilter]
 	@Published var control: ControlValue {
 		willSet {
 			generateHapticIfNeeded(newValue)
@@ -33,7 +35,7 @@ class EditingState: ObservableObject {
 	}
 	private(set) var drawingMaskView: PKCanvasView
 	@Published var isRecording = false
-	@Published var depthDataAvailable = false
+	@Published var depthDataAvailable: Bool?
 	@Published var imageFlipped = (horizontal: false, vertical: false) {
 		didSet {
 			restoreFlip()
@@ -59,39 +61,63 @@ class EditingState: ObservableObject {
 			return
 		}
 		imageOrientaion = image.imageOrientation.cgOrientation
-		DispatchQueue.main.async {
-			self.setImageSize(image.size)
-		}
+		setImageSize(image.size)
 	}
 	
 	func setImageSize(_ size: CGSize) {
-		imageSize = size
-		control.viewFinderRect = CGRect(origin: .zero, size: size)
+		self.imageSize = size
+	}
+	
+	func changeCurrentEditingImage(_ image: CIImage?) {
+		currentEditingImage = image
 	}
 	
 	func getFilter<T>(_ filterType: T.Type, name: String? = nil) -> T where T: CIFilter {
 		let key = name ?? String(describing: T.self)
 		
-		if applyingFilters[key] == nil {
-			applyingFilters[key] = name != nil ? CIFilter(name: name!): T()
+		if T.self is VImageFilter.Type {
+		   if applyingVImageFilters[key] == nil {
+			   applyingVImageFilters[key] = (T() as! VImageFilter)
+		   }
+			return applyingVImageFilters[key] as! T
 		}
-		return applyingFilters[key] as! T
+		else if	applyingCIFilters[key] == nil {
+			applyingCIFilters[key] = name != nil ? CIFilter(name: name!): T()
+		}
+		return applyingCIFilters[key] as! T
 	}
 	
 	func getMetalFilter<T>(initClosure: @escaping () -> T) -> T where T: MetalFilter {
 		let key = String(describing: T.self)
-		if applyingFilters[key] == nil {
+		if applyingCIFilters[key] == nil {
 			let filter = initClosure()
-			applyingFilters[key] = filter
+			applyingCIFilters[key] = filter
 		}
-		return applyingFilters[key] as! T
+		return applyingCIFilters[key] as! T
+	}
+	
+	func removeFilter<T>(_ filterType: T.Type, name: String? = nil) {
+		let key = name ?? String(describing: T.self)
+		applyingCIFilters[key] = nil
 	}
 	
 	func reset() {
 		DispatchQueue.main.async { [self] in
 			control = ControlValue.defaultValue
-			applyingFilters.removeAll()
+			applyingCIFilters.removeAll()
+			depthDataAvailable = nil
 		}
+	}
+	
+	func resetViewFinder() {
+		control.viewFinderRect = CGRect(origin: .zero, size: imageSize!)
+	}
+	
+	func detachEditingImage() -> CIImage? {
+		defer {
+			currentEditingImage = nil
+		}
+		return currentEditingImage
 	}
 	
 	func clearTextIfDefault() {
@@ -177,10 +203,26 @@ class EditingState: ObservableObject {
 		}
 	}
 	
+	func resetPerspectiveControl() {
+		control.perspectiveControl = [
+			CGPoint(x: 0, y: 0),
+			CGPoint(x: 1, y: 0),
+			CGPoint(x: 0, y: 1),
+			CGPoint(x: 1, y: 1)
+		]
+	}
+	
+	func resetOutlineColor(to filter: MultiSliderFilterControl.OutlineFilter) {
+		control.selectedOutlineFilter = filter
+		control.outlineControl = ControlValue.defaultValues(for: filter)
+	}
+	
 	init() {
 		control = ControlValue.defaultValue
-		applyingFilters = .init()
+		applyingCIFilters = .init()
+		applyingVImageFilters = .init()
 		drawingMaskView = PKCanvasView()
+		drawingMaskView.overrideUserInterfaceStyle = .light
 		drawingToolPicker = PKToolPicker()
 		if CHHapticEngine.capabilitiesForHardware().supportsHaptics {
 			hapticEngine = try? CHHapticEngine()
@@ -190,7 +232,25 @@ class EditingState: ObservableObject {
 	}
 	
 	struct ControlValue {
-		static let defaultText = "기본 텍스트"
+		// Color
+		var averageLuminance: CGFloat = 0.5
+		var ciColorControl: [SingleSliderFilterControl: CGFloat] = [
+			.brightness: 0,
+			.saturation: 1,
+			.contrast: 1
+		]
+		var colorChannelControl = [ColorChannel.InputParameter.Component.red, .green, .blue].reduce(
+			into: [:]) { dict , rgbComponent in
+				dict[rgbComponent] = ColorChannel.emptyValues
+			}
+		
+		var gammaParameter = GammaAdjustment.Parameter(
+			inputGamma: 1.0,
+			exponentialCoefficients: [1, 0, 0],
+			linearCoefficients: [1, 0],
+			linearBoundary: 0.5)
+		
+		// Drawing
 		var isDrawing = false
 		var drawingTool: PKInkingTool = {
 			let color: UIColor = DesignConstant.isDarkMode ? .black: .white
@@ -198,46 +258,68 @@ class EditingState: ObservableObject {
 								color: color,
 								width: 20)
 		}()
+		
 		var blurIntensity: CGFloat = 10
-		var averageLuminance: CGFloat = 0.5
-		var outlineControl: (bias: CGFloat, weight: CGFloat) = (0.1, 0.1)
+		
+		// Out line
+		static func defaultValues(for outlineFilter: MultiSliderFilterControl.OutlineFilter) -> [CGFloat] {
+			switch outlineFilter {
+				case .grayscale:
+					return [0.1, 0.07, 0.25]
+				case .color:
+					return [0.3, 0.3]
+			}
+		}
+		var selectedOutlineFilter: MultiSliderFilterControl.OutlineFilter = .grayscale
+		var outlineControl: [CGFloat] = defaultValues(for: .grayscale)
+		var outlineSketchColor: UIColor = .black
+		var outlineBackgroundColor: UIColor = .white
+		
 		var bilateralControl: (radius: CGFloat, intensity: CGFloat) = (0.1, 0.1)
+		
 		var vignetteControl: (radius: CGFloat, intensity: CGFloat, edgeBrightness: CGFloat) = (0, 0, 0)
+		
+		// Text
+		static let defaultText = "기본 텍스트"
 		var textStampFont: (fontSize: CGFloat, descriptor: UIFontDescriptor) = (30, .init())
 		var textStampControl: (opacity: CGFloat, rotation: CGFloat) = (1, 0)
 		var textStampContent = Self.defaultText
 		var textStampColor: UIColor = .black
-		var thresholdBrightness: CGFloat = 1.0
+		
 		var painterRadius: CGFloat = 0
-		var selectedLUTName: String?
+		
+		var selectedLutName: String?
+		
+		// Glitter
+		var thresholdBrightness: CGFloat = 1.0 
 		var glitterAnglesAndRadius: [CGFloat: CGFloat] = [:]
-		var depthFocus: CGFloat = 0
+		
+		var depthFocus: CGFloat = 0 // Background tone
+		
+		// Distortion
 		fileprivate(set) var viewFinderRatio: CGFloat? 
 		var viewFinderRect: CGRect = .zero
 		var rotation: Double = 0
-		
-		var basicColorControl: [SingleSliderFilterControl: CGFloat] = [
-			.brightness: 0,
-			.saturation: 1,
-			.contrast: 1
+		var perspectiveControl = [
+			CGPoint(x: 0, y: 0),
+			CGPoint(x: 1, y: 0),
+			CGPoint(x: 0, y: 1),
+			CGPoint(x: 1, y: 1)
 		]
-		var colorChannelControl = [ColorChannel.InputParameter.Component.red, .green, .blue].reduce(
-			into: [:]) { dict , rgbComponent in
-			dict[rgbComponent] = ColorChannel.emptyValues
-		}
+		
 		
 		fileprivate static let defaultValue = ControlValue()
 		private init() { }
 		
 		var isBrightnessChanged: Bool {
-			basicColorControl[.brightness] != Self.defaultValue.basicColorControl[.brightness] ||
+			ciColorControl[.brightness] != Self.defaultValue.ciColorControl[.brightness] ||
 			(colorChannelControl[.red] != Self.defaultValue.colorChannelControl[.red] &&
 			 colorChannelControl[.blue] != Self.defaultValue.colorChannelControl[.blue] &&
 			 colorChannelControl[.green] != Self.defaultValue.colorChannelControl[.green])
 		}
 		
 		var isSaturationChanged: Bool {
-			basicColorControl[.saturation] != Self.defaultValue.basicColorControl[.saturation] ||
+			ciColorControl[.saturation] != Self.defaultValue.ciColorControl[.saturation] ||
 			(!((colorChannelControl[.red] == colorChannelControl[.blue]) && (colorChannelControl[.red] == colorChannelControl[.green]))
 			 &&
 			(colorChannelControl[.red] != Self.defaultValue.colorChannelControl[.red] ||
@@ -246,7 +328,7 @@ class EditingState: ObservableObject {
 		}
 		
 		var isContrastChanged: Bool {
-			basicColorControl[.contrast] != Self.defaultValue.basicColorControl[.contrast]
+			ciColorControl[.contrast] != Self.defaultValue.ciColorControl[.contrast]
 		}
 		
 		var isPainterChanged: Bool {
@@ -274,7 +356,7 @@ class EditingState: ObservableObject {
 		}
 		
 		var isLutChanged: Bool {
-			selectedLUTName != nil
+			selectedLutName != nil
 		}
 	}
 }

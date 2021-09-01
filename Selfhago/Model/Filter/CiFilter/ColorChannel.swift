@@ -40,8 +40,6 @@ class ColorChannel: CIFilter {
 				green = selectedValues
 			case .blue:
 				blue = selectedValues
-			default:
-				break
 		}
 	}
 	
@@ -106,7 +104,6 @@ class ColorChannel: CIFilter {
 		}
 		
 		enum Component: String, CaseIterable {
-			case all
 			case red
 			case green
 			case blue
@@ -119,8 +116,6 @@ class ColorChannel: CIFilter {
 						return .blue
 					case .green:
 						return .green
-					case .all:
-						return .clear
 				}
 			}
 		}

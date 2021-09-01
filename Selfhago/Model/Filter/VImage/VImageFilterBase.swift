@@ -21,441 +21,47 @@
 import CoreImage
 import Accelerate
 
-// Circular Bokeh
-class CircularBokeh: CIFilter, VImageFilter
-{
-	var inputImage: CIImage?
-	var inputBlurRadius: CGFloat = 2
-	
-	var inputBokehRadius: CGFloat = 15
-	{
-		didSet
-		{
-			probe = nil
-		}
-	}
-	
-	var inputBokehBias: CGFloat = 0.25
-	{
-		didSet
-		{
-			probe = nil
-		}
-	}
-	
-	private var probe: [UInt8]?
-	
-	override var attributes: [String : Any]
-	{
-		return [
-			kCIAttributeFilterDisplayName: "Circular Bokeh",
-			"inputImage": [kCIAttributeIdentity: 0,
-						   kCIAttributeClass: "CIImage",
-						   kCIAttributeDisplayName: "Image",
-						   kCIAttributeType: kCIAttributeTypeImage],
-			
-			"inputBokehRadius": [kCIAttributeIdentity: 0,
-								 kCIAttributeClass: "NSNumber",
-								 kCIAttributeDefault: 15,
-								 kCIAttributeDisplayName: "Bokeh Radius",
-								 kCIAttributeMin: 0,
-								 kCIAttributeSliderMin: 0,
-								 kCIAttributeSliderMax: 20,
-								 kCIAttributeType: kCIAttributeTypeScalar],
-			
-			"inputBlurRadius": [kCIAttributeIdentity: 0,
-								kCIAttributeClass: "NSNumber",
-								kCIAttributeDefault: 2,
-								kCIAttributeDisplayName: "Blur Radius",
-								kCIAttributeMin: 0,
-								kCIAttributeSliderMin: 0,
-								kCIAttributeSliderMax: 10,
-								kCIAttributeType: kCIAttributeTypeScalar],
-			
-			"inputBokehBias": [kCIAttributeIdentity: 0,
-							   kCIAttributeClass: "NSNumber",
-							   kCIAttributeDefault: 0.25,
-							   kCIAttributeDisplayName: "Bokeh Bias",
-							   kCIAttributeMin: 0,
-							   kCIAttributeSliderMin: 0,
-							   kCIAttributeSliderMax: 1,
-							   kCIAttributeType: kCIAttributeTypeScalar],
-		]
-	}
-	
-	lazy var ciContext: CIContext =
-		{
-			return CIContext()
-		}()
-	
-	override var outputImage: CIImage?
-	{
-		guard let inputImage = inputImage,
-			  let imageRef = ciContext.createCGImage(
-				inputImage,
-				from: inputImage.extent)
-		 else
-		{
-			return nil
-		}
-		
-		
-		var imageBuffer = vImage_Buffer()
-		
-		vImageBuffer_InitWithCGImage(
-			&imageBuffer,
-			&format,
-			nil,
-			imageRef,
-			UInt32(kvImageNoFlags))
-		
-		let pixelBuffer = malloc(imageRef.bytesPerRow * imageRef.height)
-		
-		var outBuffer = vImage_Buffer(
-			data: pixelBuffer,
-			height: UInt(imageRef.height),
-			width: UInt(imageRef.width),
-			rowBytes: imageRef.bytesPerRow)
-		
-		let probeValue = UInt8((1 - inputBokehBias) * 30)
-		let radius = Int(inputBokehRadius)
-		let diameter = (radius * 2) + 1
-		
-		if probe == nil
-		{
-			probe = stride(from: 0, to: (diameter * diameter), by: 1).map
-			{
-				let x = Float(($0 % diameter) - radius)
-				let y = Float(($0 / diameter) - radius)
-				let r = Float(radius)
-				let length = hypot(Float(x), Float(y)) / r
-				
-				if length <= 1
-				{
-					let distanceToEdge = 1 - length
-					
-					return UInt8(distanceToEdge * Float(probeValue))
-				}
-				
-				return 255
-			}
-		}
-		
-		vImageDilate_ARGB8888(
-			&imageBuffer,
-			&outBuffer,
-			0,
-			0,
-			probe!,
-			UInt(diameter),
-			UInt(diameter),
-			UInt32(kvImageEdgeExtend))
-		
-		let outImage = CIImage(fromvImageBuffer: outBuffer)
-		
-		free(pixelBuffer)
-		free(imageBuffer.data)
-		
-		return outImage!.applyingFilter(
-			"CIGaussianBlur",
-			parameters: [kCIInputRadiusKey: inputBlurRadius])
-	}
-}
-
-// Histogram Equalization
-class HistogramEqualization: CIFilter, VImageFilter
-{
-	var inputImage: CIImage?
-	
-	override var attributes: [String : Any]
-	{
-		return [
-			kCIAttributeFilterDisplayName: "Histogram Equalization",
-			"inputImage": [kCIAttributeIdentity: 0,
-						   kCIAttributeClass: "CIImage",
-						   kCIAttributeDisplayName: "Image",
-						   kCIAttributeType: kCIAttributeTypeImage]
-		]
-	}
-	
-	lazy var ciContext: CIContext =
-		{
-			return CIContext()
-		}()
-	
-	override var outputImage: CIImage?
-	{
-		guard let inputImage = inputImage,
-			  let imageRef = ciContext.createCGImage(
-				inputImage,
-				from: inputImage.extent) else
-		{
-			return nil
-		}
-		
-		
-		var imageBuffer = vImage_Buffer()
-		
-		vImageBuffer_InitWithCGImage(
-			&imageBuffer,
-			&format,
-			nil,
-			imageRef,
-			UInt32(kvImageNoFlags))
-		
-		let pixelBuffer = malloc(imageRef.bytesPerRow * imageRef.height)
-		
-		var outBuffer = vImage_Buffer(
-			data: pixelBuffer,
-			height: UInt(imageRef.height),
-			width: UInt(imageRef.width),
-			rowBytes: imageRef.bytesPerRow)
-		
-		
-		vImageEqualization_ARGB8888(
-			&imageBuffer,
-			&outBuffer,
-			UInt32(kvImageNoFlags))
-		
-		let outImage = CIImage(fromvImageBuffer: outBuffer)
-		
-		free(imageBuffer.data)
-		free(pixelBuffer)
-		
-		return outImage!
-	}
-}
-
-// MARK: EndsInContrastStretch
-class EndsInContrastStretch: CIFilter, VImageFilter
-{
-	var inputImage: CIImage?
-	
-	var inputPercentLowRed: CGFloat = 0
-	var inputPercentLowGreen: CGFloat = 0
-	var inputPercentLowBlue: CGFloat = 0
-	
-	var inputPercentHiRed: CGFloat = 0
-	var inputPercentHiGreen: CGFloat = 0
-	var inputPercentHiBlue: CGFloat = 0
-	
-	override var attributes: [String : Any]
-	{
-		return [
-			kCIAttributeFilterDisplayName: "Ends In Contrast Stretch",
-			"inputImage": [kCIAttributeIdentity: 0,
-						   kCIAttributeClass: "CIImage",
-						   kCIAttributeDisplayName: "Image",
-						   kCIAttributeType: kCIAttributeTypeImage],
-			
-			"inputPercentLowRed": [kCIAttributeIdentity: 0,
-								   kCIAttributeClass: "NSNumber",
-								   kCIAttributeDefault: 0,
-								   kCIAttributeDisplayName: "Percent Low Red",
-								   kCIAttributeMin: 0,
-								   kCIAttributeSliderMin: 0,
-								   kCIAttributeSliderMax: 49,
-								   kCIAttributeType: kCIAttributeTypeScalar],
-			
-			"inputPercentLowGreen": [kCIAttributeIdentity: 0,
-									 kCIAttributeClass: "NSNumber",
-									 kCIAttributeDefault: 0,
-									 kCIAttributeDisplayName: "Percent Low Green",
-									 kCIAttributeMin: 0,
-									 kCIAttributeSliderMin: 0,
-									 kCIAttributeSliderMax: 49,
-									 kCIAttributeType: kCIAttributeTypeScalar],
-			
-			"inputPercentLowBlue": [kCIAttributeIdentity: 0,
-									kCIAttributeClass: "NSNumber",
-									kCIAttributeDefault: 0,
-									kCIAttributeDisplayName: "Percent Low Blue",
-									kCIAttributeMin: 0,
-									kCIAttributeSliderMin: 0,
-									kCIAttributeSliderMax: 49,
-									kCIAttributeType: kCIAttributeTypeScalar],
-			
-			"inputPercentHiRed": [kCIAttributeIdentity: 0,
-								  kCIAttributeClass: "NSNumber",
-								  kCIAttributeDefault: 0,
-								  kCIAttributeDisplayName: "Percent High Red",
-								  kCIAttributeMin: 0,
-								  kCIAttributeSliderMin: 0,
-								  kCIAttributeSliderMax: 49,
-								  kCIAttributeType: kCIAttributeTypeScalar],
-			
-			"inputPercentHiGreen": [kCIAttributeIdentity: 0,
-									kCIAttributeClass: "NSNumber",
-									kCIAttributeDefault: 0,
-									kCIAttributeDisplayName: "Percent High Green",
-									kCIAttributeMin: 0,
-									kCIAttributeSliderMin: 0,
-									kCIAttributeSliderMax: 49,
-									kCIAttributeType: kCIAttributeTypeScalar],
-			
-			"inputPercentHiBlue": [kCIAttributeIdentity: 0,
-								   kCIAttributeClass: "NSNumber",
-								   kCIAttributeDefault: 0,
-								   kCIAttributeDisplayName: "Percent High Blue",
-								   kCIAttributeMin: 0,
-								   kCIAttributeSliderMin: 0,
-								   kCIAttributeSliderMax: 49,
-								   kCIAttributeType: kCIAttributeTypeScalar],
-		]
-	}
-	
-	lazy var ciContext: CIContext =
-		{
-			return CIContext()
-		}()
-	
-	override var outputImage: CIImage?
-	{
-		guard let inputImage = inputImage,
-			  let imageRef = ciContext.createCGImage(
-				inputImage,
-				from: inputImage.extent) else
-		{
-			return nil
-		}
-		
-	
-		
-		var imageBuffer = vImage_Buffer()
-		
-		vImageBuffer_InitWithCGImage(
-			&imageBuffer,
-			&format,
-			nil,
-			imageRef,
-			UInt32(kvImageNoFlags))
-		
-		let pixelBuffer = malloc(imageRef.bytesPerRow * imageRef.height)
-		
-		var outBuffer = vImage_Buffer(
-			data: pixelBuffer,
-			height: UInt(imageRef.height),
-			width: UInt(imageRef.width),
-			rowBytes: imageRef.bytesPerRow)
-		
-		let low = [inputPercentLowRed, inputPercentLowGreen, inputPercentLowBlue, 0].map { return UInt32($0) }
-		let hi = [inputPercentHiRed, inputPercentHiGreen, inputPercentHiBlue, 0].map { return UInt32($0) }
-		
-		vImageEndsInContrastStretch_ARGB8888(
-			&imageBuffer,
-			&outBuffer,
-			low,
-			hi,
-			UInt32(kvImageNoFlags))
-		
-		let outImage = CIImage(fromvImageBuffer: outBuffer)
-		
-		free(imageBuffer.data)
-		free(pixelBuffer)
-		
-		return outImage!
-	}
-}
-
-// MARK: Contrast Stretch
-class ContrastStretch: CIFilter, VImageFilter
-{
-	var inputImage: CIImage?
-	
-	override var attributes: [String : Any]
-	{
-		return [
-			kCIAttributeFilterDisplayName: "Contrast Stretch",
-			"inputImage": [kCIAttributeIdentity: 0,
-						   kCIAttributeClass: "CIImage",
-						   kCIAttributeDisplayName: "Image",
-						   kCIAttributeType: kCIAttributeTypeImage]
-		]
-	}
-	
-	lazy var ciContext: CIContext =
-		{
-			return CIContext()
-		}()
-	
-	override var outputImage: CIImage?
-	{
-		guard let inputImage = inputImage,
-			  let imageRef = ciContext.createCGImage(
-				inputImage,
-				from: inputImage.extent) else
-		{
-			return nil
-		}
-		
-		
-		
-		var imageBuffer = vImage_Buffer()
-		
-		vImageBuffer_InitWithCGImage(
-			&imageBuffer,
-			&format,
-			nil,
-			imageRef,
-			UInt32(kvImageNoFlags))
-		
-		let pixelBuffer = malloc(imageRef.bytesPerRow * imageRef.height)
-		
-		var outBuffer = vImage_Buffer(
-			data: pixelBuffer,
-			height: UInt(imageRef.height),
-			width: UInt(imageRef.width),
-			rowBytes: imageRef.bytesPerRow)
-		
-		vImageContrastStretch_ARGB8888(
-			&imageBuffer,
-			&outBuffer,
-			UInt32(kvImageNoFlags))
-		
-		let outImage = CIImage(fromvImageBuffer: outBuffer)
-		
-		free(imageBuffer.data)
-		free(pixelBuffer)
-		
-		return outImage!
-	}
-}
-
 
 // MARK Support
-protocol VImageFilter {
+protocol VImageFilter: CIFilter {
+	var inputImage: CGImage? { get set }
+	var ciContext: CIContext! { get set }
+	var sourceBuffer: vImage_Buffer? { get set }
+	var outputCGImage: CGImage? { get }
 }
 
-let bitmapInfo:CGBitmapInfo = CGBitmapInfo(
-	rawValue: CGImageAlphaInfo.last.rawValue)
-
-var format = vImage_CGImageFormat(
-	bitsPerComponent: 8,
-	bitsPerPixel: 32,
-	colorSpace: nil,
-	bitmapInfo: bitmapInfo,
-	version: 0,
-	decode: nil,
-	renderingIntent: .defaultIntent)
-
-func vImageBufferFromCIImage(ciImage: CIImage, ciContext: CIContext) -> vImage_Buffer?
-{
-	guard let imageRef = ciContext.createCGImage(
-		ciImage,
-			from: ciImage.extent) else {
-		return nil
+extension vImage {
+	static var cgImageFormat8888: vImage_CGImageFormat {
+		let bitmapInfo:CGBitmapInfo = CGBitmapInfo(
+			rawValue: CGImageAlphaInfo.last.rawValue)
+		return vImage_CGImageFormat(
+			bitsPerComponent: 8,
+			bitsPerPixel: 32,
+			colorSpace: nil,
+			bitmapInfo: bitmapInfo,
+			version: 0,
+			decode: nil,
+			renderingIntent: .defaultIntent)
 	}
+}
+
+extension VImageFilter {
 	
-	var buffer = vImage_Buffer()
-	
-	vImageBuffer_InitWithCGImage(
-		&buffer,
-		&format,
-		nil,
-		imageRef,
-		UInt32(kvImageNoFlags))
-	
-	return buffer
+	func createSourceBufferFromCGImage(_ cgImage: CGImage, format: vImage_CGImageFormat?)
+	{
+		guard let format = format ?? vImage_CGImageFormat(cgImage: cgImage) else {
+			return
+		}
+		sourceBuffer?.free()
+		do {
+			
+			sourceBuffer = try vImage_Buffer(cgImage: cgImage,
+											 format: format,
+											 flags: .noFlags)
+		}catch {
+			print("Fail to set buffer \(error.localizedDescription)")
+		}
+	}
 }
 
 extension CIImage
@@ -464,7 +70,7 @@ extension CIImage
 	{
 		var mutableBuffer = fromvImageBuffer
 		var error = vImage_Error()
-		
+		var format = vImage.cgImageFormat8888
 		if let cgImage = vImageCreateCGImageFromBuffer(
 			&mutableBuffer,
 			&format,

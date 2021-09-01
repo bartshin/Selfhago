@@ -36,7 +36,7 @@ struct HistoryBar: View {
 				.renderingMode(.template)
 				.frame(width: Constant.iconSize.width,
 					   height: Constant.iconSize.height)
-				.foregroundColor(imageEditor.historyManager.nextFilterIndex > 0 ?
+				.foregroundColor(imageEditor.historyManager.undoAble || imageEditor.historyManager.redoAble ?
 									Constant.resetButtonColor:
 									Constant.disabledResetButtonColor)
 		}
@@ -78,6 +78,7 @@ struct HistoryBar: View {
 		Button(action: tapCofirmButton) {
 			Image("checkmark")
 				.resizable()
+				.renderingMode(.template)
 				.frame(width: Constant.iconSize.width,
 					   height: Constant.iconSize.height)
 				.foregroundColor(Constant.buttonColor)
@@ -109,16 +110,17 @@ struct HistoryBar: View {
 		}
 		else if category.subCategory == DistortionFilterControl.rotate.rawValue {
 			imageEditor.applyRotation()
+		}else {
+			imageEditor.storeCurrentState()
 		}
-		
 	}
 	
 	private struct Constant {
 		static let iconSize = CGSize(width: 32, height: 32)
-		static let buttonColor = DesignConstant.getColor(for: .onBackground)
-		static let disabledButtonColor = DesignConstant.chooseColor(in: (light: 0xB2B2B2, dark: 0x4D4D4D))
-		static let resetButtonColor = DesignConstant.chooseColor(in: (light: 0xFF3B30, dark: 0xFF453A))
-		static let disabledResetButtonColor = DesignConstant.chooseColor(in: (light: 0xFFC3C0, dark: 0x4D1511))
+		static var buttonColor = DesignConstant.getColor(for: .onBackground)
+		static var disabledButtonColor = DesignConstant.chooseColor(in: (light: 0xB2B2B2, dark: 0x4D4D4D))
+		static var resetButtonColor = DesignConstant.chooseColor(in: (light: 0xFF3B30, dark: 0xFF453A))
+		static var disabledResetButtonColor = DesignConstant.chooseColor(in: (light: 0xFFC3C0, dark: 0x4D1511))
 	}
 }
 

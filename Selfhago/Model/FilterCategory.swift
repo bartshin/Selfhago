@@ -13,6 +13,7 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 		let filters = SingleSliderFilterControl.allCases.compactMap{ $0.rawValue } +
 		[		DistortionFilterControl.crop.rawValue,
 				DistortionFilterControl.rotate.rawValue,
+				DistortionFilterControl.perspective.rawValue,
 				MultiSliderFilterControl.bilateral.rawValue,
 				MultiSliderFilterControl.vignette.rawValue,
 				MultiSliderFilterControl.outline.rawValue,
@@ -221,14 +222,14 @@ enum MultiSliderFilterControl: String {
 	case vignette
 	case outline
 	case textStamp
-	case rgb
+	case gamma
 	case red
 	case blue
 	case green
 	
 	var labelImage: UIImage {
 		switch self {
-			case .rgb:
+			case .gamma:
 				return UIImage(named: "rgb_circles")!
 			case .red:
 				return UIImage(systemName: "r.circle")!
@@ -249,14 +250,17 @@ enum MultiSliderFilterControl: String {
 	
 	var tunableFactors: Int {
 		switch self {
-			case .rgb, .red, .blue, .green:
+			case .gamma:
+				return 7
+			case .red, .blue, .green:
 				return 4
 			case .bilateral:
 				return 2
 			case .vignette:
 				return 3
 			case .outline:
-				return 2
+				assertionFailure("Outline filter has multiple filters ")
+				return 0
 			case .textStamp:
 				return 3
 		}
@@ -264,8 +268,22 @@ enum MultiSliderFilterControl: String {
 	
 	func getRange<T>(for index: Int) -> ClosedRange<T> where T: BinaryFloatingPoint {
 		switch self {
-			case .rgb:
-				return -0.5...0.5
+			case .gamma:
+				if index == 0 {
+					return 0.1...3.0		// Gamma
+				}else if index == 1 {
+					return 0.5...1.5 	// Exponentail coefficient
+				}else if index == 2 {
+					return 0...0.5   	// Exponentail coefficient
+				}else if	index == 3{
+					return -0.2...0.2 	// Exponentail bias
+				}else if index == 4 {
+					return 0.5...1.5 	// Linear coefficient
+				}else if index == 5{
+					return -0.5...0.5 	// Linear bias
+				}else {
+					return 0...1		// Linear boundary
+				}
 			case .red, .blue, .green:
 				return -0.8...0.8
 			case .bilateral:
@@ -281,12 +299,8 @@ enum MultiSliderFilterControl: String {
 					return -0.5...0.5
 				}
 			case .outline:
-				if index == 0 {
-					return 0.1...2
-				}else {
-					return 0.1...4
-				}
-
+				assertionFailure("Outline has multiple filters")
+				return 0...1
 			case .textStamp:
 				if index == 0 {
 					return 10...50
@@ -309,14 +323,66 @@ enum MultiSliderFilterControl: String {
 				return ["Text", "문구"]
 			case .vignette:
 				return ["Vignette", "비네트"]
-			case .rgb:
-				return ["Fine Tunning", "미세 조정"]
+			case .gamma:
+				return ["Gamma", "감마"]
 			case .red:
 				return ["Fine Tunning(R)", "미세 조정 (빨강)"]
 			case .blue:
 				return ["Fine Tunning(B)", "미세 조정 (파랑)"]
 			case .green:
 				return ["Fine Tunning(G)", "미세 조정 (초록)"]
+		}
+	}
+	
+	enum OutlineFilter {
+		case color
+		case grayscale
+		
+		var labelStrings: [String] {
+			switch self {
+				case .color:
+					return ["Color", "컬러"]
+				case .grayscale:
+					return ["Grayscale", "흑백"]
+			}
+		}
+		
+		var labelImage: UIImage {
+			switch self {
+				case .color:
+					return UIImage(systemName: "paintpalette")!
+				case .grayscale:
+					return UIImage(systemName: "pencil")!
+			}
+		}
+		
+		var tunableFactor: Int {
+			switch self {
+				case .color:
+					return 2
+				case .grayscale:
+					return 3
+			}
+		}
+		
+		func getRange<T>(for index: Int) -> ClosedRange<T> where T: BinaryFloatingPoint {
+			switch self {
+				case .color:
+					if index == 0 {
+						return 0.1...2
+					}else {
+						return 0.1...4
+					}
+
+				case .grayscale:
+					if index == 0 {
+						return 0...0.5 // Threshold
+					}else if index == 1 {
+						return 0...0.1 // Noise
+					}else {
+						return 0.1...0.5 // EdgeInetnsity
+					}
+			}
 		}
 	}
 }

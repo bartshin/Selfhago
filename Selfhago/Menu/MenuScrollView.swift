@@ -82,7 +82,7 @@ struct MenuScrollView: View {
 				.resizable()
 				.renderingMode(menu.renderingMode)
 				.colorMultiply(selectedMenuTitle == menu.title ? Constant.selectedFilterOverlayColor: .white)
-			if selectedMenuTitle == menu.title {
+			if selectedMenuTitle == menu.title || activeMenuTitles.contains(menu.title) {
 				Image(systemName: "checkmark")
 					.resizable()
 					.renderingMode(.template)
@@ -125,11 +125,11 @@ struct MenuScrollView: View {
 		static let iconCircleSize = CGSize(width: 52, height: 52)
 		static let iconImageSize = CGSize(width: 32, height: 32)
 		static let filterImageSize = CGSize(width: 65, height: 65)
-		static let iconCircleColor: ValiableColoor = (DesignConstant.getColor(for: .onBackground), DesignConstant.getColor(for: .onPrimary))
-		static let iconBackgroundColor: ValiableColoor = (DesignConstant.getColor(for: .background), DesignConstant.getColor(for: .primary))
-		static let iconFontColor: ValiableColoor = (DesignConstant.getColor(for: .onBackground), DesignConstant.getColor(for: .primary))
-		static let filterFontColor: ValiableColoor = (DesignConstant.getColor(for: .onBackground), DesignConstant.getColor(for: .link))
-		static let buttonForegroundColor: ValiableColoor = (DesignConstant.getColor(for: .onBackground), DesignConstant.getColor(for: .background))
+		static var iconCircleColor: ValiableColoor = (DesignConstant.getColor(for: .onBackground), DesignConstant.getColor(for: .onPrimary))
+		static var iconBackgroundColor: ValiableColoor = (DesignConstant.getColor(for: .background), DesignConstant.getColor(for: .primary))
+		static var iconFontColor: ValiableColoor = (DesignConstant.getColor(for: .onBackground), DesignConstant.getColor(for: .primary))
+		static var filterFontColor: ValiableColoor = (DesignConstant.getColor(for: .onBackground), DesignConstant.getColor(for: .link))
+		static var buttonForegroundColor: ValiableColoor = (DesignConstant.getColor(for: .onBackground), DesignConstant.getColor(for: .background))
 		static let selectedFilterOverlayColor: Color = .gray.opacity(0.5)
 		static let menuFont: Font = DesignConstant.getFont(.init(family: .NotoSansCJKkr, style: .Regular), size: 15)
 	}
