@@ -6,8 +6,7 @@
 //
 
 #include <CoreImage/CoreImage.h>
-#include "Header/shader_helper.h"
-#include "Header/ColorChannel.h"
+#include "Header/ShaderHelper.h"
 
 using namespace metal;
 

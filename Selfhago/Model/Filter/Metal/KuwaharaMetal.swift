@@ -19,13 +19,17 @@
 
 
 import CoreImage
+import Alloy
 
 // MARK: KuwaharaMetal
 class KuwaharaMetal: MetalImageFilter
 {
-	init()
-	{
-		super.init(functionName: "kuwahara_metal")
+	override var functionName: String {
+		"kuwahara_metal"
+	}
+	
+	override init() {
+		super.init()
 	}
 	
 	required init?(coder aDecoder: NSCoder)
@@ -37,9 +41,8 @@ class KuwaharaMetal: MetalImageFilter
 	
 	
 	override func setValue(_ value: Any?, forKey key: String) {
-		if key == kCIInputImageKey,
-		   let image = value as? CIImage {
-			inputImage = image
+		if key == kCIInputImageKey {
+			inputImage = (value as! CGImage)
 		}
 		if key == kCIInputRadiusKey,
 		   let radius = value as? CGFloat{

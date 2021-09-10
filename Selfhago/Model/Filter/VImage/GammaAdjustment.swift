@@ -10,7 +10,7 @@ import Accelerate
 
 class GammaAdjustment: CIFilter, VImageFilter {
 	 
-	struct Parameter {
+	struct Parameter: Equatable {
 		var inputGamma: Float
 		var exponentialCoefficients: [Float]
 		var linearCoefficients: [Float]
@@ -101,10 +101,5 @@ class GammaAdjustment: CIFilter, VImageFilter {
 				return Double(pow(parameter.exponentialCoefficients[0] * Float(x) + parameter.exponentialCoefficients[1], parameter.inputGamma) + parameter.exponentialCoefficients[2])
 			}
 		}
-	}
-	
-	deinit {
-		sourceBuffer?.free()
-		destinationBuffer?.free()
 	}
 }

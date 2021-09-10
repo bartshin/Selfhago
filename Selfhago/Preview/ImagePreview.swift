@@ -36,6 +36,15 @@ struct ImagePreview: View, TextImageProvider {
 		currentCategory != nil && currentCategory!.control is DrawableFilterControl
 	}
 	
+	private var isDroppingColor: Bool {
+		var isDroppingColor = false
+		if let multiSliderControl = currentCategory?.control as? MultiSliderFilterControl {
+			isDroppingColor = multiSliderControl == .toneAdjustment
+		}
+		gestureDelegate.isDroppingColor = isDroppingColor
+		return isDroppingColor
+	}
+	
 	var body: some View {
 		if imageEditor.uiImage != nil {
 			GeometryReader { geometry in
@@ -49,6 +58,7 @@ struct ImagePreview: View, TextImageProvider {
 						.clipped()
 					drawViewFinderIfNeeded(in: geometry.size)
 						.gesture(createGesture(in: geometry.size))
+					drawColorDropperIfNeeded(in: geometry.frame(in: .global))
 				}
 			}
 			.background(backgroundColor)
@@ -124,7 +134,7 @@ struct ImagePreview: View, TextImageProvider {
 					blurmaskView
 						.allowsHitTesting(isUsingPanningControl)
 				}
-				else if category.subCategory == MultiSliderFilterControl.textStamp.rawValue {
+				else if category.category == MultiSliderFilterControl.textStamp.rawValue {
 					textArrangeView
 						.gesture(gestureDelegate.createDragTextGesture(in: size))
 				}
@@ -134,7 +144,7 @@ struct ImagePreview: View, TextImageProvider {
 	
 	private func drawViewFinderIfNeeded(in size: CGSize) -> some View {
 		Group {
-			if currentCategory?.subCategory == DistortionFilterControl.crop.rawValue {
+			if currentCategory?.category == DistortionFilterControl.crop.rawValue {
 				CropImageView(imageSize: image.size,
 							  scale: zoomScale,
 							  viewFinderRect: $editingState.control.viewFinderRect,
@@ -142,6 +152,17 @@ struct ImagePreview: View, TextImageProvider {
 					.scaleEffect(zoomScale)
 			}
 		}
+	}
+	
+	private func drawColorDropperIfNeeded(in frame: CGRect) -> some View {
+		Group {
+			if isDroppingColor {
+				ColorDropper(location: $gestureDelegate.selectColorLocation, frame: frame) { newColor in
+					editingState.control.colorMaps.append((from: newColor, to: newColor))
+				}
+			}
+		}
+		
 	}
 	
 	private var textArrangeView: some View {
@@ -171,7 +192,7 @@ struct ImagePreview: View, TextImageProvider {
 	
 	private var blurmaskView: some View {
 		Group {
-			if currentCategory?.subCategory == DrawableFilterControl.maskBlur.rawValue{
+			if currentCategory?.category == DrawableFilterControl.maskBlur.rawValue{
 				DrawingMaskView(canvas: editingState.drawingMaskView,
 								drawingTool: editingState.control.drawingTool,
 								isDrawing: editingState.control.isDrawing,
@@ -208,7 +229,7 @@ struct ImagePreview: View, TextImageProvider {
 								in: size, count: editingState.isRecording ? 1: 2,
 								category: $currentCategory))
 	}
-	
+
 	//MARK:- Zooming
 	@State var fixedZoomScale: CGFloat = 1
 	@GestureState var viewGestureZoomScale: CGFloat = 1
@@ -219,6 +240,7 @@ struct ImagePreview: View, TextImageProvider {
 
 class GestureDelegate: NSObject, ObservableObject, UIGestureRecognizerDelegate {
 	
+	var isDroppingColor = false
 	var imageSize: CGSize = .zero
 	var geometrySize: CGSize = .zero
 	var zoomScale: CGFloat {
@@ -235,6 +257,7 @@ class GestureDelegate: NSObject, ObservableObject, UIGestureRecognizerDelegate {
 	@Published var textLabelPosition = CGPoint.zero
 	@Published var viewFinderOffset = CGSize.zero
 	@Published var viewFinderSize = CGSize.zero
+	@Published var selectColorLocation: CGPoint?
 	
 	private(set) lazy var pinchGestureRecognizer: UIPinchGestureRecognizer = {
 		let pinchGesture = UIPinchGestureRecognizer(target: self, action: #selector(pinchImage(_:)))
@@ -269,8 +292,12 @@ class GestureDelegate: NSObject, ObservableObject, UIGestureRecognizerDelegate {
 	}
 	
 	func createPanGesture(in size: CGSize) -> some Gesture {
-		DragGesture()
+		DragGesture(coordinateSpace: isDroppingColor ? .global: .local)
 			.onChanged { [self] gestureValue in
+				if isDroppingColor {
+					selectColorLocation = gestureValue.location
+					return
+				}
 				guard zoomScale > getScaleToFit(imageSize: imageSize, in: size) else {
 					return
 				}
@@ -279,6 +306,10 @@ class GestureDelegate: NSObject, ObservableObject, UIGestureRecognizerDelegate {
 					height: gestureValue.translation.height / zoomScale)
 			}
 			.onEnded { [self] endValue in
+				guard !isDroppingColor else {
+					selectColorLocation = nil
+					return
+				}
 				guard let panableSpace = calcPanableSpace(imageSize: imageSize, in: size) else {
 					return
 				}

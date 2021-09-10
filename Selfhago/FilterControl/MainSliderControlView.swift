@@ -31,6 +31,9 @@ struct MainSliderControlView: View {
 			if control == .brightness{
 				gammaControls
 			}
+			else if control == .contrast {
+				contrastControls
+			}
 			else if control == .saturation {
 				colorChannelControls
 			}
@@ -85,6 +88,8 @@ struct MainSliderControlView: View {
 					.frame(height: chartsHeight)
 					.offset(y: chartsHeight * min(max(-charts!.minValue + 0.2, -0.5), 0.3))
 			}
+		}.onChange(of: editingState.control.gammaParameter) { _ in
+			charts = ChartState(values: imageEditor.setGamma())
 		}
 	}
 	
@@ -94,7 +99,6 @@ struct MainSliderControlView: View {
 					y: 0.1)
 		} set: {
 			editingState.control.gammaParameter.linearBoundary = Float($0.x)
-			onGammaChange()
 		}
 	}
 	
@@ -120,6 +124,17 @@ struct MainSliderControlView: View {
 				.foregroundColor(DesignConstant.getColor(for: .primary, isDimmed: index != selectedIndex))
 			}
 		}
+	}
+	
+	private var contrastControls: some View {
+		DragableGraph(values: $editingState.control.contrastControls,
+					  lineColor: .blue,
+					  pointColor: DesignConstant.getColor(for: .primary),
+					  backgroundView: DesignConstant.getColor(for: .background)) {
+			editingState.brightnessMap = $0
+			imageEditor.setLabAdjust()
+		}
+			.frame(height: 200)
 	}
 	
 	private var colorChannelControls: some View {
@@ -234,27 +249,22 @@ struct MainSliderControlView: View {
 		return
 			VerticalSliderView(title: title,
 							   values: bindingValues,
-							   ranges: ranges, drawGraph: true,
-							   onValueChanging : { _ in
-								imageEditor.setColorChannel()
-							   }
-			)
+							   ranges: ranges,
+							   drawGraph: true)
 	}
 	
 	private var bindingValues: [Binding<CGFloat>] {
 		if control == .brightness {
 			if isControlLinear {
 				return (0...editingState.control.gammaParameter.linearCoefficients.count-1).compactMap {
-					convertBindingToCGFloat($editingState.control.gammaParameter.linearCoefficients[$0],
-											onChange: onGammaChange)
+					convertBindingToCGFloat($editingState.control.gammaParameter.linearCoefficients[$0])
 				}
 			} else {
 				return [
-					convertBindingToCGFloat($editingState.control.gammaParameter.inputGamma, onChange: onGammaChange)
+					convertBindingToCGFloat($editingState.control.gammaParameter.inputGamma)
 				] +
 				(0...editingState.control.gammaParameter.exponentialCoefficients.count-1).compactMap{
-					convertBindingToCGFloat($editingState.control.gammaParameter.exponentialCoefficients[$0],
-											onChange: onGammaChange)
+					convertBindingToCGFloat($editingState.control.gammaParameter.exponentialCoefficients[$0])
 				}
 			}
 		}
@@ -266,6 +276,7 @@ struct MainSliderControlView: View {
 						editingState.control.colorChannelControl[currentColorControl]![index]
 					} set: { value in
 						editingState.control.colorChannelControl[currentColorControl]![index] = value
+						imageEditor.setColorChannel()
 					}
 				)
 			}
@@ -276,18 +287,12 @@ struct MainSliderControlView: View {
 		
 	}
 	
-	private func onGammaChange() {
-		charts = ChartState(values: imageEditor.setGamma())
-	}
-	
-	private func convertBindingToCGFloat<T>(_ binding: Binding<T>, onChange: @escaping () -> Void = {}) -> Binding<CGFloat> where T: BinaryFloatingPoint {
+	private func convertBindingToCGFloat<T>(_ binding: Binding<T>) -> Binding<CGFloat> where T: BinaryFloatingPoint {
 		Binding<CGFloat> {
 			CGFloat(binding.wrappedValue)
 		} set: {
 			binding.wrappedValue = T($0)
-			onChange()
 		}
-
 	}
 	
 	

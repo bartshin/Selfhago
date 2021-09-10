@@ -1,12 +1,12 @@
 //
-//  shader_helper.h
+//  ShaderHelper.h
 //  Selfhago
 //
 //  Created by bart Shin on 05/07/2021.
 //
 
-#ifndef shader_helper
-#define shader_helper
+#ifndef ShaderHelper
+#define ShaderHelper
 constant float3 LUMINANCE_VECTOR(0.2125, 0.7154, 0.0721);
 constant half3 LUMINACE_VECTOR_HALF(0.2125, 0.7154, 0.0721);
 
@@ -16,4 +16,4 @@ float gauss(float x, float sigma);
 float gauss3(float3 x, float sigma);
 half3 rgb2hsv(half3 col);
 half3 hsv2rgb(half3 col);
-#endif /* metal_helper_h */
+#endif /* metalHelper_h */

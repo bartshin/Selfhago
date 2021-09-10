@@ -18,14 +18,17 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import CoreImage
-
+import Alloy
 
 // MARK: Perlin Noise
 class PerlinNoise: MetalGeneratorFilter
 {
-	init()
-	{
-		super.init(functionName: "perlin")
+	override var functionName: String {
+		"perlin"
+	}
+	
+	override init() {
+		super.init()
 	}
 	
 	required init?(coder aDecoder: NSCoder)

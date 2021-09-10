@@ -24,7 +24,7 @@ public struct ColorPickerWheel: View {
 		return ZStack(alignment: .center) {
 			// Color Gradient
 			Circle()
-				.strokeBorder(AngularGradient.conic, lineWidth: strokeWidth)
+				.strokeBorder(AngularGradient.createConic(for: 1), lineWidth: strokeWidth)
 				.gesture(DragGesture(minimumDistance: 0, coordinateSpace: .local)
 							.onChanged(self.update(value:))
 				)

@@ -11,7 +11,8 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 	
 	static var allCategories: [FilterCategory<FT>] {
 		let filters = SingleSliderFilterControl.allCases.compactMap{ $0.rawValue } +
-		[		DistortionFilterControl.crop.rawValue,
+		[		MultiSliderFilterControl.toneAdjustment.rawValue,
+				DistortionFilterControl.crop.rawValue,
 				DistortionFilterControl.rotate.rawValue,
 				DistortionFilterControl.perspective.rawValue,
 				MultiSliderFilterControl.bilateral.rawValue,
@@ -32,6 +33,7 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 		let filters = [SingleSliderFilterControl.brightness,
 					   .saturation,
 					   .contrast].compactMap{ $0.rawValue } + [
+						MultiSliderFilterControl.toneAdjustment.rawValue,
 						MultiSliderFilterControl.vignette.rawValue,
 						MultiSliderFilterControl.outline.rawValue,
 					] +
@@ -42,17 +44,24 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 	}
 	
 	private(set) var control: FT
-	let subCategory: String
+	let category: String
+	var subCategory: String? = nil
 	private(set) var labelImage: UIImage
 	private(set) var labelStrings: [String]
 	var hasSourceImage: Bool
 	
 	var id: String {
-		subCategory
+		category
 	}
 	
 	static func == (lhs: FilterCategory<FT>, rhs: FilterCategory<FT>) -> Bool {
-		lhs.subCategory == rhs.subCategory
+		if let lhsSub = lhs.subCategory,
+		   let rhsSub = rhs.subCategory {
+			return lhsSub == rhsSub
+		}
+		else {
+			return lhs.category == rhs.category
+		}
 	}
 	
 	func hash(into hasher: inout Hasher) {
@@ -65,25 +74,25 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 		if let drawbleFilter = DrawableFilterControl(rawValue: rawValue) {
 			control = drawbleFilter as! FT
 			labelImage = drawbleFilter.labelImage
-			subCategory = drawbleFilter.rawValue
+			category = drawbleFilter.rawValue
 			labelStrings = drawbleFilter.labelStrings
 		}
 		else if let multiSliderFilter = MultiSliderFilterControl(rawValue: rawValue) {
 			control = multiSliderFilter as! FT
 			labelImage = multiSliderFilter.labelImage
-			subCategory = multiSliderFilter.rawValue
+			category = multiSliderFilter.rawValue
 			labelStrings = multiSliderFilter.labelStrings
 		}
 		else if let onOffFilter = OnOffFilter(rawValue: rawValue) {
 			control = onOffFilter as! FT
 			labelImage = onOffFilter.labelImage
-			subCategory = onOffFilter.rawValue
+			category = onOffFilter.rawValue
 			labelStrings = onOffFilter.labelStrings
 		}
 		else if let sliderFilter = SingleSliderFilterControl(rawValue: rawValue) {
 			control = sliderFilter as! FT
 			labelImage = sliderFilter.labelImage
-			subCategory = sliderFilter.rawValue
+			category = sliderFilter.rawValue
 			labelStrings = sliderFilter.labelStrings
 			if sliderFilter == .backgroundTone {
 				hasSourceImage = true
@@ -92,7 +101,7 @@ struct FilterCategory<FT>: Equatable, Identifiable, Hashable{
 		else if let distortionFilter = DistortionFilterControl(rawValue: rawValue) {
 			control = distortionFilter as! FT
 			labelImage = distortionFilter.labelImage
-			subCategory = distortionFilter.rawValue
+			category = distortionFilter.rawValue
 			labelStrings = distortionFilter.labelStrings
 		}
 		else {
@@ -226,6 +235,7 @@ enum MultiSliderFilterControl: String {
 	case red
 	case blue
 	case green
+	case toneAdjustment
 	
 	var labelImage: UIImage {
 		switch self {
@@ -245,6 +255,8 @@ enum MultiSliderFilterControl: String {
 				return UIImage(named: "pencil")!
 			case .textStamp:
 				return UIImage(named: "textbox")!
+			case .toneAdjustment:
+				return UIImage(systemName: "eyedropper.halffull")!
 		}
 	}
 	
@@ -259,10 +271,11 @@ enum MultiSliderFilterControl: String {
 			case .vignette:
 				return 3
 			case .outline:
-				assertionFailure("Outline filter has multiple filters ")
-				return 0
+				fatalError("Outline filter has multiple filters ")
 			case .textStamp:
 				return 3
+			case .toneAdjustment:
+				fatalError("Tone adjustment has multiple filters")
 		}
 	}
 	
@@ -299,8 +312,7 @@ enum MultiSliderFilterControl: String {
 					return -0.5...0.5
 				}
 			case .outline:
-				assertionFailure("Outline has multiple filters")
-				return 0...1
+				fatalError("Outline has multiple filters")
 			case .textStamp:
 				if index == 0 {
 					return 10...50
@@ -309,9 +321,11 @@ enum MultiSliderFilterControl: String {
 				}else {
 					return 0...(2 * .pi)
 				}
-			
+			case .toneAdjustment:
+				fatalError("Tone adjustment has multiple filters")
 		}
 	}
+	
 	var labelStrings: [String] {
 	
 		switch self {
@@ -331,7 +345,27 @@ enum MultiSliderFilterControl: String {
 				return ["Fine Tunning(B)", "미세 조정 (파랑)"]
 			case .green:
 				return ["Fine Tunning(G)", "미세 조정 (초록)"]
+			case .toneAdjustment:
+				return ["Tone adjust", "색상 톤 조절"]
 		}
+	}
+	
+	enum ToneAdjustment: String {
+		case lab = "LAB"
+		case hue = "Hue"
+		
+		var tunableFactors: Int {
+			switch self {
+				case .lab:
+					return 2
+				case .hue:
+					return 1
+			}
+		}
+		func getRange<T>(for index: Int) -> ClosedRange<T> where T: BinaryFloatingPoint {
+			return -1...1
+		}
+		
 	}
 	
 	enum OutlineFilter {

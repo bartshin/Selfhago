@@ -6,8 +6,7 @@
 //
 #include <metal_stdlib>
 #include <CoreImage/CoreImage.h>
-#include "Header/shader_helper.h"
-#include "Header/Kuwahara.h"
+#include "Header/ShaderHelper.h"
 
 using namespace metal;
 

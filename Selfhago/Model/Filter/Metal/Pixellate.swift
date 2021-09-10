@@ -18,13 +18,17 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>
 
 import CoreImage
+import Alloy
 
 // MARK: Pixellate
 class Pixellate: MetalImageFilter
 {
-	init()
-	{
-		super.init(functionName: "pixellate")
+	override var functionName: String {
+		"pixellate"
+	}
+	
+	override init() {
+		super.init()
 	}
 	
 	required init?(coder aDecoder: NSCoder)

@@ -11,11 +11,17 @@ struct FilterControlPannel: View {
 	
 	@EnvironmentObject var imageEditor: ImageEditor
 	@EnvironmentObject var editingState: EditingState
-	let category: FilterCategory<Any>
+	@Binding var currentCategory: FilterCategory<Any>?
+	private var category: FilterCategory<Any> {
+		currentCategory!
+	}
 	let size: CGSize
 	
     var body: some View {
-		if let mainSliderControl = category.control as? SingleSliderFilterControl {
+		if currentCategory == nil {
+			EmptyView()
+		}
+		else if let mainSliderControl = category.control as? SingleSliderFilterControl {
 			MainSliderControlView(size: size, control: mainSliderControl)
 		}else if let drawableFilter = category.control as? DrawableFilterControl{
 			drawControls(for: drawableFilter)
@@ -102,27 +108,124 @@ struct FilterControlPannel: View {
 	}
 	
 	private func drawMultiSliderControl(for control: MultiSliderFilterControl) -> some View {
-		let title = control.labelStrings[LocaleManager.currentLanguageCode.rawValue]
-		let values = binding(to: control)
-		let ranges = getRanges(for: control)
+		
 		return VStack {
 			if control == .outline {
 				outlineFilterButtons
 			}
-			HStack {
-				VerticalSliderView(title: title,
-								   values: values,
-								   ranges: ranges,
-								   drawGraph: false,
-								   onValueChanging: { index in
-					onValueChanging(of: control)
-				})
-				if control == .textStamp {
-					TextConfigPanel()
+			if control == .toneAdjustment {
+				drawAdjustmentControl(for: control)
+			}else {
+				let title = control.labelStrings[LocaleManager.currentLanguageCode.rawValue]
+				let values = binding(to: control)
+				let ranges = getRanges(for: control)
+				HStack {
+					VerticalSliderView(title: title,
+									   values: values,
+									   ranges: ranges,
+									   drawGraph: false)
+					if control == .textStamp {
+						TextConfigPanel()
+					}
 				}
 			}
 		}
 		.frame(height: size.height * 0.25)
+	}
+	
+	@State private var currentToneAdjustment = MultiSliderFilterControl.ToneAdjustment.lab
+	
+	private var toneAdjustmentSelectButtons: some View {
+		HStack {
+			Button {
+				withAnimation {
+					currentToneAdjustment = .lab
+				}
+			} label: {
+				Image(systemName: "slider.horizontal.3")
+					.renderingMode(.template)
+					.resizable()
+			}
+			.buttonStyle(SubButtonStyle(isActive: currentToneAdjustment == .lab))
+			Button {
+				withAnimation {
+					currentToneAdjustment = .hue
+				}
+			} label: {
+				Image(systemName: "dial.min")
+					.renderingMode(.template)
+					.resizable()
+			}
+			.buttonStyle(SubButtonStyle(isActive: currentToneAdjustment == .hue))
+		}
+	}
+	
+	private func drawAdjustmentControl(for control: MultiSliderFilterControl) -> some View {
+		let values = binding(to: control)
+		let ranges: [ClosedRange<CGFloat>] = (0..<currentToneAdjustment.tunableFactors).compactMap { currentToneAdjustment.getRange(for: $0) }
+		return VStack {
+			toneAdjustmentSelectButtons
+			if currentToneAdjustment == .lab {
+				selectedColorLabel
+				ForEach(0..<currentToneAdjustment.tunableFactors) { index in
+					drawGradientSlider(for: values[index],
+										  range: ranges[index],
+										  gradient: createGradient(for: index == 0 ? "a": "b"))
+				}
+			}
+			else if currentToneAdjustment == .hue {
+				ColorRotateRing(colors: $editingState.control.colorMaps)
+					
+			}
+		}
+	}
+	
+	private var selectedColorLabel: some View {
+		HStack {
+			if editingState.control.colorMaps.isEmpty {
+				let language = LocaleManager.currentLanguageCode
+				Text(language == .en ? "Please tap image to pick color": "이미지를 클릭해 색상을 골라주세요")
+					.font(DesignConstant.getFont(.init(family: .NotoSansCJKkr, style: .Regular), size: 15))
+			}else {
+				ForEach(editingState.control.colorMaps, id: \.from.angle.radians) { colorMap in
+					Circle()
+						.fill(Color(colorMap.from))
+						.frame(width: Constant.subButtonSize.width,
+							   height: Constant.subButtonSize.height)
+				}
+			}
+		}
+	}
+	
+	private func createGradient(for component: String) -> LinearGradient {
+		var colors = [Color]()
+		switch component {
+			case "a":
+				colors = [.green, Color(.sRGB, white: 1, opacity: 0.5), Color(UIColor.magenta)]
+			case "b":
+				colors = [.blue, Color(.sRGB, white: 1, opacity: 0.5), .yellow]
+			default:
+				assertionFailure()
+		}
+		return LinearGradient(colors: colors,
+					   startPoint: .leading,
+					   endPoint: .trailing)
+	}
+	
+	private func drawGradientSlider<T>(for bindingValue: Binding<T>, range: ClosedRange<T>, gradient: LinearGradient) -> some View where T: BinaryFloatingPoint {
+		CustomSlider(value: bindingValue, range: range, knobWidth: nil) { modifiers in
+			ZStack {
+				gradient
+				ZStack {
+					Circle().fill(Color.white)
+					Circle().stroke(Color.black.opacity(0.2), lineWidth: 2)
+				}
+				.padding([.top, .bottom], 5)
+				.modifier(modifiers.knob)
+			}
+			.cornerRadius(15)
+		}
+		.frame(height: 40)
 	}
 	
 	private var outlineFilterButtons: some View {
@@ -184,37 +287,57 @@ struct FilterControlPannel: View {
 	}
 	
 	private func binding(to control: MultiSliderFilterControl) -> [Binding<CGFloat>] {
+		let bindingValues: [Binding<CGFloat>]
 		switch control {
 			case .bilateral:
-				return [
+				bindingValues = [
 					$editingState.control.bilateralControl.radius,
 					$editingState.control.bilateralControl.intensity
 				]
 			case .vignette:
-				return [
+				bindingValues = [
 					$editingState.control.vignetteControl.radius,
 					$editingState.control.vignetteControl.intensity,
 					$editingState.control.vignetteControl.edgeBrightness,
 				]
 			case .outline:
 				if editingState.control.selectedOutlineFilter == .color {
-					return [
+					bindingValues = [
 						$editingState.control.outlineControl[0],
 						$editingState.control.outlineControl[1]
 					]
 				}else {
-					return (0...2).compactMap {
+					bindingValues = (0...2).compactMap {
 						$editingState.control.outlineControl[$0]
 					}
 				}
 			case .textStamp:
-				return [
+				bindingValues = [
 					$editingState.control.textStampFont.fontSize,
 					$editingState.control.textStampControl.opacity,
 					$editingState.control.textStampControl.rotation
 				]
+			case .toneAdjustment:
+				switch currentToneAdjustment {
+					case .lab:
+						bindingValues = [
+							$editingState.control.labAdjust.greenToRed,
+							$editingState.control.labAdjust.blueToYellow
+						]
+					case .hue:
+						bindingValues = []
+				}
 			default:
-				return []
+				bindingValues = []
+		}
+		return bindingValues.compactMap { value in
+				.init {
+					value.wrappedValue
+				} set: {
+					value.wrappedValue = $0
+					onValueChanging(of: control)
+				}
+
 		}
 	}
 	
@@ -234,18 +357,23 @@ struct FilterControlPannel: View {
 	private func drawOnOffControl(for filter: OnOffFilter) -> some View {
 		Group {
 			if filter == .presetFiter {
-				HStack {
-					presetCategoryButtons
-					MenuScrollView(menus: presetFilterMenus, tapMenu: { menu in
-						editingState.control.selectedLutName = menu.title
-						imageEditor.setLutCube()
-					}, activeMenuTitles: .init {
-						editingState.control.selectedLutName != nil ? [editingState.control.selectedLutName!]: []
-					} set: { _ in })
+				VStack {
+					HStack {
+						presetCategoryButtons
+						MenuScrollView(menus: presetFilterMenus, tapMenu: { menu in
+							editingState.control.selectedLutName = menu.title
+							imageEditor.setLutCube()
+						}, activeMenuTitles: .init {
+							editingState.control.selectedLutName != nil ? [editingState.control.selectedLutName!]: []
+						} set: { _ in })
+					}
+					lutIntensitySlider
+						.disabled(editingState.control.selectedLutName == nil)
 				}
 			}
 		}
 	}
+
 	
 	private func onValueChanging(of control: MultiSliderFilterControl) {
 		switch control {
@@ -255,6 +383,13 @@ struct FilterControlPannel: View {
 				imageEditor.setOutline()
 			case .vignette:
 				imageEditor.setVignette()
+			case .toneAdjustment:
+				switch currentToneAdjustment {
+					case .lab:
+						imageEditor.setLabAdjust()
+					case .hue:
+						break
+				}
 			default:
 				break
 		}
@@ -277,6 +412,17 @@ struct FilterControlPannel: View {
 				}
 			}
 		}
+	}
+	
+	private var lutIntensitySlider: some View {
+		let bindingIntensity = Binding<CGFloat>{
+			editingState.control.lutIntensity
+		} set: {
+			editingState.control.lutIntensity = $0
+			imageEditor.setLutCube()
+		}
+		return Slider(value: bindingIntensity, in: 0...1)
+			.padding(.horizontal)
 	}
 	
 	@State private var currentRatioPresetCategory = "vertical"
@@ -536,12 +682,12 @@ struct FilterControlPannel: View {
 #if DEBUG
 struct FilterControlPannel_Previews: PreviewProvider {
 	static let imageEditor = ImageEditor.forPreview
-	
+	@State static private var category: FilterCategory<Any>? = .init(rawValue: MultiSliderFilterControl.bilateral.rawValue)!
 	static var previews: some View {
 		GeometryReader { geometry in
 			VStack{
 				Spacer()
-				FilterControlPannel(category: FilterCategory<Any>(rawValue: MultiSliderFilterControl.bilateral.rawValue)!,
+				FilterControlPannel(currentCategory: $category,
 									size: geometry.size)
 					.environmentObject(imageEditor)
 					.environmentObject(imageEditor.editingState)

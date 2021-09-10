@@ -7,8 +7,8 @@
 
 #include <metal_stdlib>
 #include <CoreImage/CoreImage.h>
-#include "Header/shader_helper.h"
-#include "Header/Refract.h"
+#include "Header/ShaderHelper.h"
+
 
 #define VIEW_POINT_VECTOR float3(0, 0, 1)
 

@@ -149,8 +149,8 @@ struct EditView: View, SavingDelegation  {
 				HistoryBar(currentCategory: $currentCategory)
 					.padding(.horizontal, 10)
 			}
-			if let category = currentCategory {
-				FilterControlPannel(category: category,
+			if currentCategory != nil {
+				FilterControlPannel(currentCategory: $currentCategory,
 									size: size)
 					.environmentObject(imageEditor.editingState)
 					.padding(.horizontal, 10)
@@ -242,7 +242,9 @@ struct EditView: View, SavingDelegation  {
 		static let topbarHeight: CGFloat = 30/referenceHeight
 		static let imageViewHeight: CGFloat = 563/referenceHeight
 		static let menuViewHeight: CGFloat = 80/referenceHeight
-		static var overlayButtonColor = DesignConstant.getColor(for: .onPrimary)
+		static var overlayButtonColor: Color {
+			DesignConstant.getColor(for: .onPrimary)
+		}
 		static let overlayButtonSize = CGSize(width: 50, height: 50)
 		static let navigationButtonSize = CGSize(width: 18, height: 18)
 	}

@@ -6,7 +6,7 @@
 //
 
 #include <metal_stdlib>
-#include "Header/shader_helper.h"
+#include "Header/ShaderHelper.h"
 using namespace metal;
 
 

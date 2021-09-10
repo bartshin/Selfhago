@@ -11,9 +11,15 @@ import UIKit
 
 class LUTCube: CIFilter {
 	
-	private var inputImage: CIImage? = nil
+	static let forceRefreshKey = "foreRefresh"
+	
+	private var inputImage: CIImage?
 	private var lutName: String?
 	private var lutData: Data?
+	private var inputIntensity: CGFloat = 1
+	private var storedOutputImage: CIImage?
+	private var forceRefresh = false
+	private lazy var transportKernel: CIKernel = findKernel("transport", in: "utilityFilter")
 	
 	override func setValue(_ value: Any?, forKey key: String) {
 		if key == kCIInputImageKey {
@@ -23,8 +29,17 @@ class LUTCube: CIFilter {
 				let newLutName = value as? String {
 			if newLutName != self.lutName {
 				lutData = nil
+				storedOutputImage = nil
 			}
 			self.lutName = newLutName
+		}
+		else if key == kCIInputIntensityKey,
+				let intensity = value as? CGFloat {
+			inputIntensity = intensity
+		}
+		else if key == Self.forceRefreshKey,
+				let refresh = value as? Bool{
+			self.forceRefresh = refresh
 		}
 	}
 	
@@ -32,13 +47,22 @@ class LUTCube: CIFilter {
 		if key == kCIInputMaskImageKey {
 			return lutName
 		}
+		else if key == kCIInputIntensityKey {
+			return inputIntensity
+		}
 		return nil
 	}
 	
 	override var outputImage: CIImage? {
+		guard lutName != nil else {
+			return inputImage
+		}
 		guard inputImage != nil,
 			  let lutImage = UIImage(named: lutName!)
-			 else { return nil }
+			 else {
+				 assertionFailure()
+				 return nil
+			 }
 		
 		if lutData == nil  {
 			guard let newLutData = getCubeData(
@@ -49,16 +73,24 @@ class LUTCube: CIFilter {
 			}
 			lutData = newLutData
 		}
-		if lutName == nil {
-			return inputImage
-		}
+		
 		let filter = CIFilter(name: "CIColorCube", parameters: [
 			"inputCubeDimension": 64,
 			"inputCubeData": lutData!,
 			"inputImage": inputImage!,
 		])
 		
-		return filter?.outputImage
+		if storedOutputImage == nil ||
+		forceRefresh{
+			storedOutputImage = filter?.outputImage
+		}
+		return transportKernel.apply(
+			extent: inputImage!.extent,
+			roiCallback: { index, rect in
+				rect
+			}, arguments: [inputImage!,
+						   storedOutputImage!,
+						   inputIntensity])
 	}
 	
 	override var attributes: [String : Any]
@@ -118,7 +150,6 @@ class LUTCube: CIFilter {
 														.pointee) / 255
 						
 						bitmapOffest += 4
-						
 					}
 					z += 1
 				}
@@ -129,7 +160,7 @@ class LUTCube: CIFilter {
 		
 		free(bitmap)
 		
-		let data = Data.init(bytes: array, count: dataSize)
+		let data = Data(bytes: array, count: dataSize)
 		return data
 	}
 	

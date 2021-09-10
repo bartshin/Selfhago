@@ -1,4 +1,3 @@
-//
 //  MetalFilters.swift
 //  Filterpedia
 //
@@ -23,9 +22,7 @@ import CoreImage
 
 import Metal
 import MetalKit
-
-
-
+import Alloy
 
 // MARK: MetalFilter types
 class MetalGeneratorFilter: MetalFilter
@@ -40,152 +37,147 @@ class MetalGeneratorFilter: MetalFilter
 			inputWidth = size.width
 			inputHeight = size.height
 		}
+		else if key == Self.sourceTextureKey {
+			sourceTexture = value as? MTLTexture
+		}
+		else if key == Self.destinationTextureKey {
+			destinationTexture = value as? MTLTexture
+		}
 	}
 	
 	override func textureInvalid() -> Bool
 	{
-		if let textureDescriptor = textureDescriptor,
-		   (textureDescriptor.width != Int(inputWidth)  ||
-			textureDescriptor.height != Int(inputHeight))
+		if let inputTextureSize = sourceTexture?.size,
+		   (inputTextureSize.width == Int(inputWidth) ||
+			inputTextureSize.height == Int(inputHeight) )
 		{
-			return true
+			return false
 		}
 		
-		return false
+		return true
 	}
 }
 
 class MetalImageFilter: MetalFilter
 {
-	var inputImage: CIImage?
+	var inputImage: CGImage?
 	
-
 	override func textureInvalid() -> Bool
 	{
-		if let textureDescriptor = textureDescriptor,
-		   let inputImage = inputImage ,
-		   (textureDescriptor.width != Int(inputImage.extent.width)  ||
-			textureDescriptor.height != Int(inputImage.extent.height))
+		if let inputImageWidth = inputImage?.width,
+		   let inputImageHeight = inputImage?.height,
+			let inputTextureSize = sourceTexture?.size,
+		   (inputTextureSize.width == Int(inputImageWidth) ||
+			inputTextureSize.height == Int(inputImageHeight) )
 		{
-			return true
+			return false
 		}
 		
-		return false
+		return true
 	}
 	
-	override init(functionName: String) {
-		super.init(functionName: functionName)
-	}
-	
-	required init?(coder aDecoder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
+	override func setValue(_ value: Any?, forKey key: String) {
+		
+		if key == Self.sourceTextureKey {
+			sourceTexture = value as? MTLTexture
+		}
+		else if key == Self.destinationTextureKey {
+			destinationTexture = value as? MTLTexture
+		}
 	}
 }
 
 // MARK: Base class
 /// `MetalFilter` is a Core Image filter that uses a Metal compute function as its engine.
-/// This version supports a single input image and an arbritrary number of `NSNumber`
-/// parameters. Numeric parameters require a properly set `kCIAttributeIdentity` which
+/// This version supports a single input image and an arbritrary number of `NSNumber` or `CIColor`
+/// parameters.  Parameters require a properly set `kCIAttributeIdentity` which
 /// defines their buffer index into the Metal kernel.
 class MetalFilter: CIFilter, MetalRenderable
 {
-	private let device: MTLDevice = MTLCreateSystemDefaultDevice()!
+	
+	static let sourceTextureKey = "sourceTexture"
+	static let destinationTextureKey = "destinationTexture"
 	private let colorSpace = CGColorSpaceCreateDeviceRGB()
-	
-	var ciContext: CIContext!
-	
-	private lazy var commandQueue: MTLCommandQueue =
-		{
-			[unowned self] in
-			
-			return self.device.makeCommandQueue()
-		}()!
-	
-	private lazy var defaultLibrary: MTLLibrary =
-		{
-			[unowned self] in
-			return self.device.makeDefaultLibrary()!
-		}()
-	
-	private var pipelineState: MTLComputePipelineState!
-	
-	private let functionName: String
-	
-	private var threadsPerThreadgroup: MTLSize!
-	
-	private var threadgroupsPerGrid: MTLSize?
-	
-	private(set) var textureDescriptor: MTLTextureDescriptor?
-	private var kernelInputTexture: MTLTexture?
-	private var kernelOutputTexture: MTLTexture?
-	
-	override var outputImage: CIImage!
-	{
-		if textureInvalid()
-		{
-			self.textureDescriptor = nil
+	private lazy var pipelineState: MTLComputePipelineState = {
+		let constantValues = MTLFunctionConstantValues()
+		constantValues.set(deviceSupportsNonuniformThreadgroups, at: 0)
+		do {
+			return try context.library(for: .main).computePipelineState(function: functionName, constants: constantValues)
+		}catch {
+			fatalError("Unable to create pipeline state for kernel function \(functionName)")
 		}
-		
-		if ciContext == nil {
-			ciContext = CIContext(mtlDevice: device, options: [.cacheIntermediates: false])
+	}()
+	private var deviceSupportsNonuniformThreadgroups = false
+	fileprivate var sourceTexture: MTLTexture?
+	fileprivate var destinationTexture: MTLTexture?
+	open var functionName: String {
+		fatalError()
+	}
+	var context: MTLContext! {
+		didSet {
+			deviceSupportsNonuniformThreadgroups = context.device.supports(feature: .nonUniformThreadgroups)
 		}
-		
-		if let imageFilter = self as? MetalImageFilter,
-		   let inputImage = imageFilter.inputImage
-		{
-			return createImageFromShader(width: inputImage.extent.width,
-										  height: inputImage.extent.height,
-										  inputImage: inputImage)
-		}
-		
-		if let generatorFilter = self as? MetalGeneratorFilter
-		{
-			return createImageFromShader(width: generatorFilter.inputWidth,
-										  height: generatorFilter.inputHeight,
-										  inputImage: nil)
-		}
-		
-		return nil
 	}
 	
-	init(functionName: String)
+	override init()
 	{
-		self.functionName = functionName
-		
 		super.init()
-		
-		guard let kernelFunction = defaultLibrary.makeFunction(name: self.functionName) else {
-			fatalError("Fail to find metal function \(functionName)")
-		}
-		
-		do
-		{
-			pipelineState = try self.device.makeComputePipelineState(function: kernelFunction)
-			
-			let maxTotalThreadsPerThreadgroup = Double(pipelineState.maxTotalThreadsPerThreadgroup)
-			let threadExecutionWidth = Double(pipelineState.threadExecutionWidth)
-			
-			let threadsPerThreadgroupSide = stride(from: 0, to: Int(sqrt(maxTotalThreadsPerThreadgroup)), by: 1).reduce(16)
-				{
-				return (Double($1 * $1) / threadExecutionWidth).truncatingRemainder(dividingBy: 1) == 0 ? $1 : $0
-				}
-			
-			threadsPerThreadgroup = MTLSize(width:threadsPerThreadgroupSide,
-											height:threadsPerThreadgroupSide,
-											depth:1)
-		}
-		catch
-		{
-			assertionFailure("Unable to create pipeline state for kernel function \(functionName)")
-			return
-		}
-		
-		
-		
-		if !(self is MetalImageFilter) && !(self is MetalGeneratorFilter)
+		guard (self is MetalImageFilter) || (self is MetalGeneratorFilter) else
 		{
 			fatalError("MetalFilters must subclass either MetalImageFilter or MetalGeneratorFilter")
 		}
+	}
+	
+	func commit(completion: @escaping (MTLTexture?) -> Void) {
+		do {
+			try context.schedule { commandBuffer in
+				commandBuffer.compute { encoder in
+					encoder.label = String(functionName)
+					encoder.setTextures(sourceTexture, destinationTexture)
+					setFloatArgument(to: encoder)
+					setColorArgument(to: encoder)
+					setFloatArray(to: encoder)
+					setFloat4Array(to: encoder)
+					if deviceSupportsNonuniformThreadgroups {
+						encoder.dispatch2d(state: pipelineState,
+										   exactly: destinationTexture!.size)
+					}else {
+						encoder.dispatch2d(state: pipelineState,
+										   covering: destinationTexture!.size)
+					}
+					commandBuffer.addScheduledHandler { [weak weakSelf = self] _ in
+						completion(weakSelf?.destinationTexture)
+					}
+				}
+			}
+		}catch {
+			assertionFailure("Fail to excute metal function \(functionName)")
+		}
+	}
+	
+	func syncCommit(completion: @escaping (MTLTexture?) -> Void) {
+		do {
+			try context.scheduleAndWait { commandBuffer in
+				commandBuffer.compute { encoder in
+					encoder.label = String(functionName)
+					encoder.setTextures(sourceTexture, destinationTexture)
+					setFloatArgument(to: encoder)
+					setColorArgument(to: encoder)
+					setFloatArray(to: encoder)
+					setFloat4Array(to: encoder)
+					if deviceSupportsNonuniformThreadgroups {
+						encoder.dispatch2d(state: pipelineState,
+										   exactly: destinationTexture!.size)
+					}else {
+						encoder.dispatch2d(state: pipelineState,
+										   covering: destinationTexture!.size)
+					}
+				}
+			}
+		}catch {
+			assertionFailure("Fail to excute metal function \(functionName)")
+		}
+		completion(destinationTexture)
 	}
 	
 	required init?(coder aDecoder: NSCoder)
@@ -198,72 +190,11 @@ class MetalFilter: CIFilter, MetalRenderable
 		fatalError("textureInvalid() not implemented in MetalFilter")
 	}
 	
-	func createImageFromShader(width: CGFloat, height: CGFloat, inputImage: CIImage?) -> CIImage?
-	{
-		initTextureDescriptorIfNeeded(width: width,
-									  height: height)
-		
-		guard let commandBuffer = commandQueue.makeCommandBuffer()  else {
-			assertionFailure("Fail to make command buffer for \(functionName)")
-			return nil
-		}
-	
-		renderInputImageIfNeeded(commandBuffer: commandBuffer)
-		guard let commandEncoder = commandBuffer.makeComputeCommandEncoder() else {
-			assertionFailure("Fail to create commandEncoder")
-			return nil
-		}
-		commandEncoder.setComputePipelineState(pipelineState)
-		setFloatArgument(to: commandEncoder)
-		
-		setColorArgument(to: commandEncoder)
-		
-		setTexture(to: commandEncoder)
-		
-		commandEncoder.dispatchThreadgroups(threadgroupsPerGrid!,
-											threadsPerThreadgroup: threadsPerThreadgroup)
-		
-		commandEncoder.endEncoding()
-		
-		commandBuffer.commit()
-		
-		return CIImage(mtlTexture: kernelOutputTexture!,
-					   options: [CIImageOption.colorSpace: colorSpace])
-			
+	override var outputImage: CIImage? {
+		fatalError("Metal Image Filter create output texture use getOutputTexture instead")
 	}
 	
-	private func initTextureDescriptorIfNeeded(width: CGFloat, height: CGFloat) {
-		if textureDescriptor == nil
-		{
-			textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm,
-																		 width: Int(width),
-																		 height: Int(height),
-																		 mipmapped: false)
-			textureDescriptor!.usage = [.shaderRead, .shaderWrite]
-			kernelInputTexture = device.makeTexture(descriptor: textureDescriptor!)
-			kernelOutputTexture = device.makeTexture(descriptor: textureDescriptor!)
-			
-			threadgroupsPerGrid = MTLSize(
-				width: textureDescriptor!.width / threadsPerThreadgroup.width,
-				height: textureDescriptor!.height / threadsPerThreadgroup.height,
-				depth: 1)
-		}
-	}
-	
-	private func renderInputImageIfNeeded(commandBuffer: MTLCommandBuffer) {
-		if let imageFilter = self as? MetalImageFilter,
-		   let inputImage = imageFilter.inputImage
-		{
-			ciContext.render(inputImage,
-							 to: kernelInputTexture!,
-							 commandBuffer: commandBuffer,
-							 bounds: inputImage.extent,
-							 colorSpace: colorSpace)
-		}
-		
-	}
-	
-	private func setFloatArgument(to commandEncoder: MTLComputeCommandEncoder) {
+	private func setFloatArgument(to encoder: MTLComputeCommandEncoder) {
 		
 		// populate float buffers using kCIAttributeIdentity as buffer index
 		for inputKey in inputKeys
@@ -272,13 +203,12 @@ class MetalFilter: CIFilter, MetalRenderable
 			   let bufferIndex = attribute[kCIAttributeIdentity] as? Int,
 			   let bufferValue = value(forKey: inputKey) as? CGFloat
 			{
-				var floatValue = Float(bufferValue)
-				commandEncoder.setBytes(&floatValue, length: MemoryLayout<Float>.stride, index: bufferIndex)
+				encoder.setValue(Float(bufferValue), at: bufferIndex)
 			}
 		}
 	}
 	
-	private func setColorArgument(to commandEncoder: MTLComputeCommandEncoder) {
+	private func setColorArgument(to encoder: MTLComputeCommandEncoder) {
 		// populate color buffers using kCIAttributeIdentity as buffer index
 		for inputKey in inputKeys where (attributes[inputKey] as? [String: Any])?[kCIAttributeClass] as? String == "CIColor"
 		{
@@ -286,35 +216,39 @@ class MetalFilter: CIFilter, MetalRenderable
 			   let bufferValue = value(forKey: inputKey) as? CIColor
 			{
 				
-				var color = SIMD4<Float>(Float(bufferValue.red),
+				let color = SIMD4<Float>(Float(bufferValue.red),
 										 Float(bufferValue.green),
 										 Float(bufferValue.blue),
 										 Float(bufferValue.alpha))
-				
-				commandEncoder.setBytes(&color, length: MemoryLayout<simd_float4>.stride, index: bufferIndex)
+				encoder.setValue(color, at: bufferIndex)
 			}
 		}
 	}
 	
-	private func setTexture(to commandEncoder: MTLComputeCommandEncoder) {
-		if self is MetalImageFilter
+	private func setFloatArray(to encoder: MTLComputeCommandEncoder) {
+		
+		for inputKey in inputKeys where (attributes[inputKey] as? [String: Any])?[kCIAttributeClass] as? String == "FloatArray"
 		{
-			commandEncoder.setTexture(kernelInputTexture, index: 0)
-			commandEncoder.setTexture(kernelOutputTexture, index: 1)
+			if let bufferIndex = (attributes[inputKey] as! [String:AnyObject])[kCIAttributeIdentity] as? Int,
+			   let bufferValue = value(forKey: inputKey) as? [Float]
+			{
+				encoder.setValue(bufferValue, at: bufferIndex)
+			}
 		}
-		else if self is MetalGeneratorFilter
+	}
+	
+	private func setFloat4Array(to encoder: MTLComputeCommandEncoder) {
+		for inputKey in inputKeys where (attributes[inputKey] as? [String: Any])?[kCIAttributeClass] as? String == "Float4Array"
 		{
-			commandEncoder.setTexture(kernelOutputTexture, index: 0)
+			if let bufferIndex = (attributes[inputKey] as! [String:AnyObject])[kCIAttributeIdentity] as? Int,
+			   let bufferValue = value(forKey: inputKey) as? [SIMD4<Float>]
+			{
+				
+				encoder.setValue(bufferValue, at: bufferIndex)
+			}
 		}
 	}
 }
-//
-//#else
-//class MetalFilter: CIFilter
-//{
-//}
-//
-//#endif
 
 protocol MetalRenderable {
 	

@@ -94,21 +94,21 @@ struct HistoryBar: View {
 				currentCategory = nil
 			}
 		}
-		if category.subCategory == MultiSliderFilterControl.textStamp.rawValue {
+		if category.category == MultiSliderFilterControl.textStamp.rawValue {
 			imageEditor.applyTextStamp()
 		}
-		else if category.subCategory == DrawableFilterControl.maskBlur.rawValue {
+		else if category.category == DrawableFilterControl.maskBlur.rawValue {
 			imageEditor.applyMaskBlur()
 			imageEditor.editingState.resetDrawing()
 		}
-		else if category.subCategory == DrawableFilterControl.drawing.rawValue {
+		else if category.category == DrawableFilterControl.drawing.rawValue {
 			imageEditor.addDrawing()
 			imageEditor.editingState.resetDrawing()
 		}
-		else if category.subCategory == DistortionFilterControl.crop.rawValue {
+		else if category.category == DistortionFilterControl.crop.rawValue {
 			imageEditor.applyCrop()
 		}
-		else if category.subCategory == DistortionFilterControl.rotate.rawValue {
+		else if category.category == DistortionFilterControl.rotate.rawValue {
 			imageEditor.applyRotation()
 		}else {
 			imageEditor.storeCurrentState()

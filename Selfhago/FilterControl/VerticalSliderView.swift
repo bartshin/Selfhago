@@ -14,8 +14,8 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 	private let numberOfSliders: Int
 	private let ranges: [ClosedRange<T>]
 	private var bindingValues: [Binding<T>]
-	private let onValueChanging: (Int) -> Void
 	private let horizontalMargin: CGFloat
+	private let onValueChanged: (Int) -> Void
 	
     var body: some View {
 		VStack (alignment: .leading, spacing: 14) {
@@ -71,7 +71,9 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 			.onChanged { value in
 				let ratio = max(0, min(1 - value.location.y / size.height, 1))
 				setValueToBinding(ratio, at: index)
-				onValueChanging(index)
+			}
+			.onEnded { _ in
+				onValueChanged(index)
 			}
 	}
 	
@@ -101,14 +103,13 @@ struct VerticalSliderView<T>: ControlView where T: BinaryFloatingPoint{
 		 values: [Binding<T>],
 		 ranges: [ClosedRange<T>],
 		 drawGraph: Bool,
-		 onValueChanging: @escaping (Int) -> Void = {_ in},
 		 onValueChanged: @escaping (Int) -> Void = {_ in}) {
 		self.title = title
 		self.numberOfSliders = values.count
 		self.ranges = ranges
 		self.bindingValues = values
 		self.drawGraph = drawGraph
-		self.onValueChanging = onValueChanging
+		self.onValueChanged = onValueChanged
 		horizontalMargin = Constant.sliderHMargin * pow(CGFloat(5) / CGFloat(numberOfSliders), 2.5)
 	}
 }

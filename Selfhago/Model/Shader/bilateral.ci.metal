@@ -7,8 +7,7 @@
 
 #include <metal_stdlib>
 #include <CoreImage/CoreImage.h>
-#include "Header/shader_helper.h"
-#include "Header/Bilateral.h"
+#include "Header/ShaderHelper.h"
 
 #define KERNEL_SIZE 7
 #define MAX_FACES 10
@@ -16,8 +15,6 @@
 using namespace metal;
 
 extern "C" {
-	
-	
 	
 	namespace coreimage {
 		

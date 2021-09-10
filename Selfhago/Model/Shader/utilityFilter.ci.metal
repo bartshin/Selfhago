@@ -7,8 +7,7 @@
 
 #include <metal_stdlib>
 #include <CoreImage/CoreImage.h>
-#include "Header/shader_helper.h"
-#include "Header/UtilityFilter.h"
+#include "Header/ShaderHelper.h"
 
 using namespace metal;
 
@@ -24,6 +23,13 @@ extern "C" {
 			float4 pixel = image.sample(image.coord());
 			float luma = dot(LUMINANCE_VECTOR, pixel.rgb);
 			return float4(step(criterion, luma));
+		}
+		
+		float4 transport(sample_t source,
+						 sample_t target,
+						 float intensity) {
+			float3 diff = target.rgb - source.rgb;
+			return float4(source.rgb + diff * intensity , source.a);
 		}
 	}
 }

@@ -180,6 +180,7 @@ class HistoryManager {
 			case BackgroundToneRetouch
 			case Sketch
 			case GammaAdjustment
+			case LabAdjustment
 			case unManaged
 			
 			static func ==(lhs: Filter, rhs: Filter) -> Bool {
@@ -229,6 +230,8 @@ class HistoryManager {
 					keys = [ "inputTopLeft", "inputTopRight", "inputBottomLeft", "inputBottomRight" ]
 				case .GammaAdjustment:
 					keys = [ kCIInputIntensityKey ]
+				case .LabAdjustment:
+					keys = [ LabAdjustment.brightnessAmountKey, LabAdjustment.greenToRedAmountKey, LabAdjustment.blueToYellowAmountKey ]
 				case .unManaged:
 					return [:]
 			}

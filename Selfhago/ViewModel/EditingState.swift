@@ -27,7 +27,7 @@ class EditingState: ObservableObject {
 	}
 	/// [ Filter name : CI Filter] key = String(describing: FilterType.self)
 	private(set) var applyingCIFilters: [String: CIFilter]
-	private(set) var applyingVImageFilters: [String: VImageFilter]
+	private(set) var applyingFiltersUsingCGImage: [String: CIFilter]
 	@Published var control: ControlValue {
 		willSet {
 			generateHapticIfNeeded(newValue)
@@ -53,6 +53,7 @@ class EditingState: ObservableObject {
 			return nil
 		}
 	}
+	var brightnessMap = [Float]()
 	
 	func setNewImage(_ image: UIImage) {
 		originalCgImage = image.cgImage
@@ -76,13 +77,19 @@ class EditingState: ObservableObject {
 		let key = name ?? String(describing: T.self)
 		
 		if T.self is VImageFilter.Type {
-		   if applyingVImageFilters[key] == nil {
-			   applyingVImageFilters[key] = (T() as! VImageFilter)
+		   if applyingFiltersUsingCGImage[key] == nil {
+			   applyingFiltersUsingCGImage[key] = T()
 		   }
-			return applyingVImageFilters[key] as! T
+			return applyingFiltersUsingCGImage[key] as! T
+		}
+		else if T.self is MetalFilter.Type {
+			if applyingFiltersUsingCGImage[key] == nil {
+				applyingFiltersUsingCGImage[key] = T()
+			}
+			return applyingFiltersUsingCGImage[key] as! T
 		}
 		else if	applyingCIFilters[key] == nil {
-			applyingCIFilters[key] = name != nil ? CIFilter(name: name!): T()
+			applyingCIFilters[key] = name != nil ? CIFilter(name: name!): filterType.init()
 		}
 		return applyingCIFilters[key] as! T
 	}
@@ -104,13 +111,18 @@ class EditingState: ObservableObject {
 	func reset() {
 		DispatchQueue.main.async { [self] in
 			control = ControlValue.defaultValue
+			resetViewFinder()
 			applyingCIFilters.removeAll()
+			applyingFiltersUsingCGImage.removeAll()
 			depthDataAvailable = nil
+			currentEditingImage = nil
 		}
 	}
 	
 	func resetViewFinder() {
-		control.viewFinderRect = CGRect(origin: .zero, size: imageSize!)
+		if imageSize != nil {
+			control.viewFinderRect = CGRect(origin: .zero, size: imageSize!)
+		}
 	}
 	
 	func detachEditingImage() -> CIImage? {
@@ -220,7 +232,7 @@ class EditingState: ObservableObject {
 	init() {
 		control = ControlValue.defaultValue
 		applyingCIFilters = .init()
-		applyingVImageFilters = .init()
+		applyingFiltersUsingCGImage = .init()
 		drawingMaskView = PKCanvasView()
 		drawingMaskView.overrideUserInterfaceStyle = .light
 		drawingToolPicker = PKToolPicker()
@@ -232,28 +244,38 @@ class EditingState: ObservableObject {
 	}
 	
 	struct ControlValue {
-		// Color
+		// Basic
 		var averageLuminance: CGFloat = 0.5
+		static let defaultGamma = GammaAdjustment.Parameter(
+			inputGamma: 1.0,
+			exponentialCoefficients: [1, 0, 0],
+			linearCoefficients: [1, 0],
+			linearBoundary: 0.5)
+		var gammaParameter = Self.defaultGamma
+		
 		var ciColorControl: [SingleSliderFilterControl: CGFloat] = [
 			.brightness: 0,
 			.saturation: 1,
 			.contrast: 1
 		]
+		
+		static let defaultContrast: [Double] = [0.25, 0.45, 0.65, 0.85]
+		var contrastControls = Self.defaultContrast
+		
 		var colorChannelControl = [ColorChannel.InputParameter.Component.red, .green, .blue].reduce(
 			into: [:]) { dict , rgbComponent in
 				dict[rgbComponent] = ColorChannel.emptyValues
 			}
 		
-		var gammaParameter = GammaAdjustment.Parameter(
-			inputGamma: 1.0,
-			exponentialCoefficients: [1, 0, 0],
-			linearCoefficients: [1, 0],
-			linearBoundary: 0.5)
+		// Tone
+		var labAdjust: (greenToRed: CGFloat, blueToYellow: CGFloat) = (0, 0)
+		var colorMaps: [(from: UIColor, to: UIColor)] = []
+		var hueAdjust: CGFloat = 0
 		
 		// Drawing
 		var isDrawing = false
 		var drawingTool: PKInkingTool = {
-			let color: UIColor = DesignConstant.isDarkMode ? .black: .white
+			let color: UIColor = .black
 			return PKInkingTool(.marker,
 								color: color,
 								width: 20)
@@ -288,7 +310,9 @@ class EditingState: ObservableObject {
 		
 		var painterRadius: CGFloat = 0
 		
+		// LUT
 		var selectedLutName: String?
+		var lutIntensity: CGFloat = 1
 		
 		// Glitter
 		var thresholdBrightness: CGFloat = 1.0 
@@ -315,7 +339,8 @@ class EditingState: ObservableObject {
 			ciColorControl[.brightness] != Self.defaultValue.ciColorControl[.brightness] ||
 			(colorChannelControl[.red] != Self.defaultValue.colorChannelControl[.red] &&
 			 colorChannelControl[.blue] != Self.defaultValue.colorChannelControl[.blue] &&
-			 colorChannelControl[.green] != Self.defaultValue.colorChannelControl[.green])
+			 colorChannelControl[.green] != Self.defaultValue.colorChannelControl[.green]) ||
+			gammaParameter != Self.defaultGamma
 		}
 		
 		var isSaturationChanged: Bool {
@@ -328,7 +353,11 @@ class EditingState: ObservableObject {
 		}
 		
 		var isContrastChanged: Bool {
-			ciColorControl[.contrast] != Self.defaultValue.ciColorControl[.contrast]
+			ciColorControl[.contrast] != Self.defaultValue.ciColorControl[.contrast] ||
+			contrastControls.indices.reduce(into: false, { isChanged, index in
+				if isChanged { return }
+				isChanged = abs(contrastControls[index] - Self.defaultContrast[index]) > 0.1
+			})
 		}
 		
 		var isPainterChanged: Bool {

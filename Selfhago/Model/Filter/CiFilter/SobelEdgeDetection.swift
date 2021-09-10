@@ -89,7 +89,7 @@ class SobelEdgeDetection5x5: SobelOutline
 
 class SobelOutline: CIFilter
 {
-	lazy var makeOpaqueKernel = findKernel("makeOpaque")
+	lazy var makeOpaqueKernel = findKernel("makeOpaque", in: "utilityFilter")
 	
 	func sobel(sourceImage: CIImage, filterName: String, horizontalWeights: CIVector, verticalWeights: CIVector) -> CIImage
 	{

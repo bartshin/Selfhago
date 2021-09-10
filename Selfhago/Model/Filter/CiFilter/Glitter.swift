@@ -13,7 +13,7 @@ class Glitter: CIFilter {
 	private var inputImage: CIImage?
 	private var anglesAndRadius = [CGFloat: CGFloat]()
 	private var threshold: CGFloat = 1
-	private lazy var thresholdKernel = findKernel("threshold")
+	private lazy var thresholdKernel = findKernel("threshold", in: "utilityFilter")
 	
 	override func setValue(_ value: Any?, forKey key: String) {
 		if key == kCIInputImageKey{

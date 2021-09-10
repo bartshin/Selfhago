@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ColorPickerRing
 
 struct TextConfigPanel: View {
 	
@@ -20,6 +21,7 @@ struct TextConfigPanel: View {
 					editTextSheet
 				}
 			GeometryReader { geometry in
+				
 				ColorPickerWheel(color: $editingState.control.textStampColor,
 								 frame: geometry.frame(in: .local),
 								 strokeWidth: 25)
